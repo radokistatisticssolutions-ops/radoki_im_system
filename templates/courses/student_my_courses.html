@@ -1,0 +1,378 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* ── Banner ── */
+  .mc-banner {
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px;
+  }
+  .mc-banner h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin: 0; }
+  .mc-banner p  { color: rgba(255,255,255,.78); margin: 3px 0 0; font-size: .85rem; }
+
+  /* ── Tab pills ── */
+  .mc-tabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 24px;
+  }
+  .mc-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 18px; border-radius: 50px;
+    font-size: .82rem; font-weight: 600;
+    text-decoration: none;
+    border: 1.5px solid #dce6f0;
+    background: #fff; color: #2c3e50;
+    transition: all .15s;
+  }
+  .mc-tab:hover { border-color: #2980b9; color: #2980b9; }
+  .mc-tab.active { background: #2980b9; color: #fff; border-color: #2980b9; }
+
+  /* ── Grid ── */
+  .mc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  /* ── Card ── */
+  .mc-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .mc-card-top {
+    height: 5px;
+  }
+  .mc-card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+  .mc-card-title { font-weight: 700; color: #1a5276; font-size: .97rem; margin-bottom: 4px; }
+  .mc-card-instructor { font-size: .78rem; color: #7f8c8d; margin-bottom: 14px; }
+
+  /* Status badge */
+  .mc-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: .7rem; font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .mc-status.approved  { background: #eafaf1; color: #27ae60; }
+  .mc-status.pending   { background: #fef9e7; color: #9a7d0a; }
+  .mc-status.completed { background: #eaf4fb; color: #1a5276; }
+  .mc-status.rejected  { background: #fdf2f2; color: #c0392b; }
+
+  /* Deadline alert */
+  .mc-deadline {
+    border-radius: 8px; padding: 8px 12px;
+    font-size: .78rem; margin-bottom: 12px;
+  }
+  .mc-deadline.passed { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  .mc-deadline.soon   { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+  .mc-deadline.ok     { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+  /* Action buttons */
+  .mc-actions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+  .mc-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 14px; border-radius: 9px;
+    font-size: .82rem; font-weight: 600;
+    text-decoration: none; border: none; cursor: pointer; width: 100%;
+    transition: opacity .15s;
+  }
+  .mc-btn:hover { opacity: .85; }
+  .mc-btn.view     { background: #2980b9; color: #fff; }
+  .mc-btn.upload   { background: #f39c12; color: #fff; }
+  .mc-btn.reupload { background: #e74c3c; color: #fff; }
+  .mc-btn.locked   { background: #e8eef2; color: #7f8c8d; cursor: not-allowed; }
+
+  /* Rejection note */
+  .mc-rejection {
+    background: #fdf2f2; border: 1px solid #f5c6cb; border-radius: 8px;
+    padding: 10px 12px; font-size: .78rem; color: #721c24; margin-bottom: 10px;
+  }
+  .mc-receipt-ok {
+    background: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px;
+    padding: 10px 12px; font-size: .78rem; color: #856404; margin-bottom: 10px;
+  }
+  .mc-access-ok {
+    background: #eafaf1; border-radius: 8px;
+    padding: 10px 12px; font-size: .78rem; color: #27ae60; margin-bottom: 10px;
+  }
+  .mc-completed-note {
+    background: #eaf4fb; border-radius: 8px;
+    padding: 10px 12px; font-size: .78rem; color: #1a5276; margin-bottom: 10px;
+  }
+
+  /* Empty state */
+  .mc-empty {
+    text-align: center; padding: 64px 24px; color: #95a5a6;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  }
+  .mc-empty i { font-size: 3rem; display: block; margin-bottom: 14px; }
+  .mc-empty p { font-size: .92rem; margin-bottom: 20px; }
+
+  @media (max-width: 768px) {
+    .mc-grid { grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); }
+  }
+  @media (max-width: 540px) {
+    .mc-banner { flex-direction: column; align-items: flex-start; padding: 18px 18px; }
+    .mc-grid { grid-template-columns: 1fr; }
+    .mc-tabs { gap: 6px; }
+    .mc-tab { padding: 7px 13px; font-size: .78rem; }
+  }
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+<div style="max-width:1100px; margin:0 auto; padding:0 16px 80px;">
+
+  <!-- Banner -->
+  {% if filter_key == 'enrolled' %}
+    <div class="mc-banner" style="background:linear-gradient(135deg,#1a5276 0%,#2980b9 100%);">
+      <div>
+        <h1><i class="fas fa-book me-2"></i>Enrolled Courses</h1>
+        <p>All courses you have enrolled in</p>
+      </div>
+      <span style="background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 16px;font-size:.85rem;font-weight:700;">
+        {{ total }} course{{ total|pluralize }}
+      </span>
+    </div>
+  {% elif filter_key == 'pending' %}
+    <div class="mc-banner" style="background:linear-gradient(135deg,#7d6608 0%,#d4ac0d 100%);">
+      <div>
+        <h1><i class="fas fa-hourglass-half me-2"></i>Pending Payments</h1>
+        <p>Courses awaiting payment approval</p>
+      </div>
+      <span style="background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 16px;font-size:.85rem;font-weight:700;">
+        {{ total }} pending
+      </span>
+    </div>
+  {% elif filter_key == 'paid' %}
+    <div class="mc-banner" style="background:linear-gradient(135deg,#145a32 0%,#27ae60 100%);">
+      <div>
+        <h1><i class="fas fa-check-circle me-2"></i>Paid Courses</h1>
+        <p>Active courses with approved payment</p>
+      </div>
+      <span style="background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 16px;font-size:.85rem;font-weight:700;">
+        {{ total }} active
+      </span>
+    </div>
+  {% elif filter_key == 'completed' %}
+    <div class="mc-banner" style="background:linear-gradient(135deg,#0e6655 0%,#1abc9c 100%);">
+      <div>
+        <h1><i class="fas fa-graduation-cap me-2"></i>Completed Courses</h1>
+        <p>Courses you have finished</p>
+      </div>
+      <span style="background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 16px;font-size:.85rem;font-weight:700;">
+        {{ total }} completed
+      </span>
+    </div>
+  {% endif %}
+
+  <!-- Filter tabs -->
+  <div class="mc-tabs">
+    <a href="{% url 'courses:course_list' %}" class="mc-tab">
+      <i class="fas fa-globe"></i> All Courses
+    </a>
+    <a href="{% url 'courses:student_enrolled' %}" class="mc-tab {% if filter_key == 'enrolled' %}active{% endif %}">
+      <i class="fas fa-book"></i> Enrolled
+    </a>
+    <a href="{% url 'courses:student_pending' %}" class="mc-tab {% if filter_key == 'pending' %}active{% endif %}">
+      <i class="fas fa-hourglass-half"></i> Pending
+    </a>
+    <a href="{% url 'courses:student_paid' %}" class="mc-tab {% if filter_key == 'paid' %}active{% endif %}">
+      <i class="fas fa-check-circle"></i> Paid
+    </a>
+    <a href="{% url 'courses:student_completed' %}" class="mc-tab {% if filter_key == 'completed' %}active{% endif %}">
+      <i class="fas fa-graduation-cap"></i> Completed
+    </a>
+  </div>
+
+  <!-- Search bar -->
+  <form method="get" class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+    <div class="input-group" style="max-width:380px;">
+      <span class="input-group-text bg-white border-end-0" style="border-radius:10px 0 0 10px;">
+        <i class="fas fa-search text-secondary" style="font-size:.82rem;"></i>
+      </span>
+      <input type="text" name="search" value="{{ search_query }}"
+             class="form-control border-start-0" style="border-left:none;"
+             placeholder="Search by course or instructor…">
+      <button type="submit" class="btn btn-primary"
+              style="border-radius:0 10px 10px 0; font-size:.85rem; font-weight:600; padding:0 16px;">
+        <i class="fas fa-search me-1"></i>Search
+      </button>
+    </div>
+    {% if search_query %}
+    <a href="?" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+      <i class="fas fa-times me-1"></i>Clear
+    </a>
+    {% endif %}
+  </form>
+
+  {% if items %}
+    <div class="mc-grid">
+      {% for item in items %}
+      <div class="mc-card">
+        <!-- Top colour band -->
+        {% if item.enrollment.completed %}
+          <div class="mc-card-top" style="background:linear-gradient(90deg,#0e6655,#1abc9c);"></div>
+        {% elif item.enrollment.approved %}
+          <div class="mc-card-top" style="background:linear-gradient(90deg,#145a32,#27ae60);"></div>
+        {% else %}
+          <div class="mc-card-top" style="background:linear-gradient(90deg,#7d6608,#d4ac0d);"></div>
+        {% endif %}
+
+        <div class="mc-card-body">
+          <div class="mc-card-title">{{ item.enrollment.course.title }}</div>
+          <div class="mc-card-instructor">
+            <i class="fas fa-chalkboard-user me-1"></i>
+            {{ item.enrollment.course.instructor.first_name }} {{ item.enrollment.course.instructor.last_name|default:item.enrollment.course.instructor.username }}
+          </div>
+
+          <!-- Status badge -->
+          {% if item.enrollment.completed %}
+            <span class="mc-status completed"><i class="fas fa-graduation-cap" style="font-size:.55rem;"></i> Completed</span>
+          {% elif item.enrollment.approved %}
+            <span class="mc-status approved"><i class="fas fa-circle" style="font-size:.45rem;"></i> Active</span>
+          {% else %}
+            <span class="mc-status pending"><i class="fas fa-circle" style="font-size:.45rem;"></i> Pending</span>
+          {% endif %}
+
+          <!-- Payment deadline (only for unapproved) -->
+          {% if item.enrollment.course.payment_deadline and not item.enrollment.approved %}
+            {% if item.enrollment.course.is_deadline_passed %}
+              <div class="mc-deadline passed">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                <strong>Deadline passed</strong> — {{ item.enrollment.course.payment_deadline|date:"M d, Y" }}
+              </div>
+            {% elif item.enrollment.course.is_deadline_soon %}
+              <div class="mc-deadline soon">
+                <i class="fas fa-clock me-1"></i>
+                <strong>Due soon</strong> — {{ item.enrollment.course.payment_deadline|date:"M d, Y" }}
+                ({{ item.enrollment.course.days_until_deadline }} days)
+              </div>
+            {% else %}
+              <div class="mc-deadline ok">
+                <i class="fas fa-calendar me-1"></i>
+                <strong>Payment due:</strong> {{ item.enrollment.course.payment_deadline|date:"M d, Y" }}
+                ({{ item.enrollment.course.days_until_deadline }} days)
+              </div>
+            {% endif %}
+          {% endif %}
+
+          <!-- Actions -->
+          <div class="mc-actions">
+            {% if item.enrollment.completed %}
+              <div class="mc-completed-note">
+                <i class="fas fa-graduation-cap me-1"></i> Course completed
+              </div>
+              <a href="{% url 'courses:enrollment_detail' item.enrollment.id %}" class="mc-btn view">
+                <i class="fas fa-file-invoice"></i> View Details
+              </a>
+              <a href="{% url 'courses:course_detail' item.enrollment.course.id %}" class="mc-btn view" style="background: #7f8c8d;">
+                <i class="fas fa-eye"></i> View Course
+              </a>
+
+            {% elif item.enrollment.approved %}
+              <div class="mc-access-ok">
+                <i class="fas fa-unlock me-1"></i> Access granted
+              </div>
+              <a href="{% url 'courses:enrollment_detail' item.enrollment.id %}" class="mc-btn view">
+                <i class="fas fa-file-invoice"></i> View Details
+              </a>
+              <a href="{% url 'courses:course_detail' item.enrollment.course.id %}" class="mc-btn view" style="background: #7f8c8d;">
+                <i class="fas fa-eye"></i> View Course
+              </a>
+
+            {% else %}
+              {% if item.has_uploaded_receipt %}
+                {% if item.payment and not item.payment.approved and item.payment.rejection_reason %}
+                  <div class="mc-rejection">
+                    <i class="fas fa-times-circle me-1"></i>
+                    <strong>Receipt rejected:</strong> {{ item.payment.rejection_reason }}
+                  </div>
+                  <a href="{% url 'payments:upload_receipt' item.enrollment.id %}" class="mc-btn reupload">
+                    <i class="fas fa-redo"></i> Re-upload Receipt
+                  </a>
+                {% else %}
+                  <div class="mc-receipt-ok">
+                    <i class="fas fa-check-circle me-1"></i> Receipt submitted — awaiting approval
+                  </div>
+                  <button class="mc-btn locked" disabled>
+                    <i class="fas fa-lock"></i> Awaiting Approval
+                  </button>
+                {% endif %}
+              {% else %}
+                <a href="{% url 'payments:upload_receipt' item.enrollment.id %}" class="mc-btn upload">
+                  <i class="fas fa-upload"></i> Upload Receipt
+                </a>
+              {% endif %}
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  <!-- Pagination -->
+  {% if page_obj and paginator.num_pages > 1 %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 px-1">
+    <small class="text-muted">
+      Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+      of {{ total }} course{{ total|pluralize }}
+    </small>
+    <nav aria-label="My courses pagination">
+      <ul class="pagination pagination-sm mb-0 flex-wrap">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+          {% if page_obj.has_previous %}
+          <a class="page-link" href="?search={{ search_query|urlencode }}&page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+          {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+        </li>
+        {% for item in page_window %}
+          {% if not item %}
+          <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% elif item == page_obj.number %}
+          <li class="page-item active"><span class="page-link">{{ item }}</span></li>
+          {% else %}
+          <li class="page-item"><a class="page-link" href="?search={{ search_query|urlencode }}&page={{ item }}">{{ item }}</a></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+          {% if page_obj.has_next %}
+          <a class="page-link" href="?search={{ search_query|urlencode }}&page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+          {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+    <div class="mc-empty">
+      {% if filter_key == 'enrolled' %}
+        <i class="fas fa-book-open"></i>
+        <p>You haven't enrolled in any courses yet.</p>
+        <a href="{% url 'courses:course_list' %}" class="mc-btn view" style="width:auto; display:inline-flex;">
+          <i class="fas fa-compass"></i> Explore Courses
+        </a>
+      {% elif filter_key == 'pending' %}
+        <i class="fas fa-check-double"></i>
+        <p>No pending payments — all your enrollments are approved.</p>
+      {% elif filter_key == 'paid' %}
+        <i class="fas fa-lock-open"></i>
+        <p>No active paid courses at the moment.</p>
+      {% elif filter_key == 'completed' %}
+        <i class="fas fa-graduation-cap"></i>
+        <p>You haven't completed any courses yet. Keep going!</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+</div>
+{% endblock %}

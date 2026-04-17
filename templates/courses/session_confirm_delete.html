@@ -1,0 +1,83 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+<div style="max-width:560px; margin:0 auto; padding:0 16px;">
+
+  <!-- Back -->
+  <div class="mb-4">
+    <a href="{% url 'courses:instructor_live_sessions' %}"
+       style="color:#2980b9; text-decoration:none; font-size:.88rem; font-weight:600;">
+      <i class="fas fa-arrow-left me-1"></i> Back to Live Sessions
+    </a>
+  </div>
+
+  <!-- Confirmation card -->
+  <div style="background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.08);
+              border-top:4px solid #e74c3c; padding:32px 28px;">
+
+    <!-- Icon + heading -->
+    <div class="text-center mb-4">
+      <div style="width:64px; height:64px; border-radius:50%; background:#fdf2f2;
+                  display:inline-flex; align-items:center; justify-content:center;
+                  font-size:1.6rem; color:#e74c3c; margin-bottom:14px;">
+        <i class="fas fa-trash"></i>
+      </div>
+      <h4 style="color:#2c3e50; font-weight:800; margin:0;">Delete Live Session?</h4>
+      <p class="text-muted mt-2" style="font-size:.85rem;">This action cannot be undone.</p>
+    </div>
+
+    <!-- Warning -->
+    <div style="background:#fef9e7; border-left:4px solid #f39c12;
+                border-radius:8px; padding:12px 16px; margin-bottom:20px;
+                font-size:.85rem; color:#7d6608;">
+      <i class="fas fa-exclamation-triangle me-2" style="color:#f39c12;"></i>
+      Students will no longer see this session on their dashboard.
+    </div>
+
+    <!-- Session details -->
+    <div style="background:#f7fafc; border-radius:10px; padding:16px 18px; margin-bottom:24px;">
+      <div style="font-size:.7rem; font-weight:700; color:#95a5a6;
+                  text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px;">
+        Session to delete
+      </div>
+      <div style="font-weight:700; color:#1a5276; font-size:1rem; margin-bottom:6px;">
+        {{ session.title }}
+      </div>
+      <div style="font-size:.83rem; color:#7f8c8d; margin-bottom:4px;">
+        <i class="fas fa-calendar-alt me-2" style="color:#2980b9;"></i>
+        {{ session.scheduled_at|date:"M d, Y" }} at {{ session.scheduled_at|time:"H:i" }}
+      </div>
+      <div style="font-size:.83rem; color:#7f8c8d;">
+        <i class="fas fa-book me-2" style="color:#2980b9;"></i>
+        {{ session.course.title }}
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <form method="post">
+      {% csrf_token %}
+      <div class="d-flex gap-3">
+        <button type="submit" class="btn btn-danger fw-bold flex-grow-1"
+                style="border-radius:10px; padding:10px;">
+          <i class="fas fa-trash me-2"></i>Delete Session
+        </button>
+        <a href="{% url 'courses:instructor_live_sessions' %}"
+           class="btn btn-outline-secondary fw-semibold flex-grow-1"
+           style="border-radius:10px; padding:10px;">
+          <i class="fas fa-times me-2"></i>Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+</div>
+</div>
+
+<style>
+  @media (max-width: 480px) {
+    .d-flex.gap-3 { flex-direction: column; }
+  }
+</style>
+{% endblock %}

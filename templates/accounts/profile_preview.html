@@ -1,0 +1,306 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Hero Banner ── */
+.profile-hero {
+  background: linear-gradient(135deg, #1a5276 0%, #2980b9 60%, #5dade2 100%);
+  border-radius: 16px;
+  padding: 40px 32px 80px;
+  position: relative;
+  margin-bottom: 70px;
+  box-shadow: 0 8px 32px rgba(41, 128, 185, 0.25);
+}
+
+.profile-hero-actions {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Avatar ── */
+.profile-avatar-wrap {
+  position: absolute;
+  bottom: -56px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.profile-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,.18);
+  object-fit: cover;
+  background: linear-gradient(135deg, #2980b9, #1a5276);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* ── Info Item ── */
+.info-item {
+  background: #f8fbff;
+  border-left: 3px solid #2980b9;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.info-label {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #7f8c8d;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.info-value {
+  font-size: .95rem;
+  font-weight: 500;
+  color: #1a202c;
+  word-break: break-word;
+}
+
+.info-value.empty {
+  color: #adb5bd;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ── Section card ── */
+.section-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 700;
+  font-size: .95rem;
+  color: #1a5276;
+}
+
+.section-card-header i {
+  color: #2980b9;
+  width: 20px;
+  text-align: center;
+}
+
+.section-card-body {
+  padding: 20px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 575.98px) {
+  .profile-hero {
+    padding: 32px 16px 72px;
+    border-radius: 12px;
+    margin-bottom: 62px;
+  }
+  .profile-hero-actions {
+    position: static;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .profile-avatar-wrap { bottom: -50px; }
+  .profile-avatar { width: 100px; height: 100px; font-size: 2.4rem; }
+  .section-card-body { padding: 14px; }
+  .section-card-header { padding: 12px 14px; }
+}
+</style>
+
+<div class="container py-4" style="max-width: 860px;">
+
+  <!-- Hero Banner -->
+  <div class="profile-hero text-white text-center">
+    <!-- Action buttons -->
+    <div class="profile-hero-actions">
+      <a href="{% url 'accounts:profile_update' %}" class="btn btn-light btn-sm fw-semibold">
+        <i class="fas fa-edit me-1"></i>Edit Profile
+      </a>
+      <a href="{% url 'dashboard:index' %}" class="btn btn-outline-light btn-sm fw-semibold">
+        <i class="fas fa-arrow-left me-1"></i>Dashboard
+      </a>
+    </div>
+
+    <h2 class="fw-bold mb-1" style="font-size: 1.5rem; text-shadow: 0 1px 4px rgba(0,0,0,.2);">
+      My Profile
+    </h2>
+    <p class="mb-0" style="opacity: .8; font-size: .85rem;">Your account information</p>
+
+    <!-- Floating avatar -->
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar">
+        {% if user.profile_picture %}
+          <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name|default:user.username }}">
+        {% else %}
+          {{ user.username|first|upper }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Name + role under avatar -->
+  <div class="text-center mb-4">
+    <h3 class="fw-bold mb-1" style="color: #1a1a2e;">
+      {{ user.get_full_name|default:user.username }}
+    </h3>
+    <p class="text-muted small mb-2">@{{ user.username }}</p>
+    {% if user.is_instructor %}
+      <span class="badge" style="background-color: #f39c12; font-size: .8rem; padding: 6px 14px;">
+        <i class="fas fa-chalkboard-teacher me-1"></i>Instructor
+      </span>
+    {% else %}
+      <span class="badge bg-info" style="font-size: .8rem; padding: 6px 14px;">
+        <i class="fas fa-user-graduate me-1"></i>Student
+      </span>
+    {% endif %}
+    {% if user.email %}
+    <div class="text-muted small mt-2">
+      <i class="fas fa-envelope me-1"></i>{{ user.email }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Personal Information -->
+  <div class="section-card">
+    <div class="section-card-header">
+      <i class="fas fa-id-card"></i>Personal Information
+    </div>
+    <div class="section-card-body">
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">First Name</span>
+            <span class="info-value {% if not user.first_name %}empty{% endif %}">
+              {{ user.first_name|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">Last Name</span>
+            <span class="info-value {% if not user.last_name %}empty{% endif %}">
+              {{ user.last_name|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">Age</span>
+            <span class="info-value {% if not user.age %}empty{% endif %}">
+              {{ user.age|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">Gender</span>
+            <span class="info-value {% if not user.sex %}empty{% endif %}">
+              {{ user.get_sex_display|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Information -->
+  <div class="section-card">
+    <div class="section-card-header">
+      <i class="fas fa-phone-alt"></i>Contact Information
+    </div>
+    <div class="section-card-body">
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">Email Address</span>
+            <span class="info-value {% if not user.email %}empty{% endif %}">
+              {{ user.email|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">Phone Number</span>
+            <span class="info-value {% if not user.phone_number %}empty{% endif %}">
+              {{ user.phone_number|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">Region / State</span>
+            <span class="info-value {% if not user.region %}empty{% endif %}">
+              {{ user.region|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="info-item">
+            <span class="info-label">Country</span>
+            <span class="info-value {% if not user.country %}empty{% endif %}">
+              {{ user.country|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Professional Information -->
+  <div class="section-card">
+    <div class="section-card-header">
+      <i class="fas fa-briefcase"></i>Professional Information
+    </div>
+    <div class="section-card-body">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="info-item">
+            <span class="info-label">Professional Qualification</span>
+            <span class="info-value {% if not user.professional_qualification %}empty{% endif %}">
+              {{ user.professional_qualification|default:"Not provided" }}
+            </span>
+          </div>
+        </div>
+        {% if user.bio %}
+        <div class="col-12">
+          <div class="info-item" style="border-left-color: #27ae60;">
+            <span class="info-label">Biography</span>
+            <span class="info-value" style="line-height: 1.7;">{{ user.bio }}</span>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Access Denied - RADOKI IMS Admin" %}{% endblock %}
+
+{% block content %}
+  <div class="module" style="max-width: 740px; margin: 2em auto;">
+    <h1>{% trans "Access denied" %}</h1>
+    <div class="alert alert-warning" style="padding: 1rem; margin: 1rem 0;">
+      <strong>{% trans "You don’t have permission to view this resource." %}</strong>
+      <p>{% trans "If you believe you should have access, contact a superuser to update your permissions." %}</p>
+    </div>
+    <p>
+      <a class="button" href="{% url 'admin:index' %}">{% trans "Back to Admin Dashboard" %}</a>
+      <a class="button" href="{% url 'core:home' %}" style="margin-left: 10px;">{% trans "Back to Website" %}</a>
+    </p>
+  </div>
+{% endblock %}

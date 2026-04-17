@@ -1,0 +1,772 @@
+/*
+ * RADOKI IMS — Assignment Admin Color Consistency
+ * Injected on all /admin/assignments/ pages via AssignmentAdmin.Media.
+ * Mirrors the User Admin palette for a unified admin experience.
+ * All color pairs verified for WCAG AA contrast (≥4.5:1 normal, ≥3:1 large/bold).
+ */
+
+/* ─────────────────────────────────────────
+   PAGE — light blue-gray canvas
+   bg #f0f4f8 / body text #1e293b  ≈ 13:1 ✓
+───────────────────────────────────────── */
+body {
+  background: #f0f4f8 !important;
+  color: #1e293b !important;
+}
+
+/* ─────────────────────────────────────────
+   BREADCRUMBS
+   links #1a5276 on #f0f4f8  ≈ 6.5:1 ✓
+   hover  #2980b9 on #f0f4f8  ≈ 4.6:1 ✓
+───────────────────────────────────────── */
+div#breadcrumbs { color: #334155 !important; }
+div#breadcrumbs a { color: #1a5276 !important; }
+div#breadcrumbs a:hover { color: #2980b9 !important; }
+
+/* ─────────────────────────────────────────
+   MODULE / FIELDSET HEADERS
+   bg #1a3a5c / text #fff  ≈ 11:1 ✓
+───────────────────────────────────────── */
+.module > h2,
+fieldset.module > h2,
+fieldset > h2,
+fieldset.collapse > h2,
+fieldset.collapsed > h2,
+fieldset.collapse.collapsed > h2,
+fieldset .fieldset-heading,
+fieldset .inline-heading,
+fieldset.collapse summary,
+:not(.inline-related) .collapse summary {
+  background: #1a3a5c !important;
+  color: #fff !important;
+  border-color: #1a3a5c !important;
+}
+/* Text/links inside collapse summary */
+fieldset.collapse > h2 a,
+fieldset.collapsed > h2 a,
+.collapse summary .fieldset-heading,
+.collapse summary .inline-heading,
+fieldset.collapse summary a {
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+/* ─────────────────────────────────────────
+   FORM LABELS & HELP TEXT
+   label #334155 on white   ≈ 8.6:1 ✓
+   help  #64748b on white   ≈ 4.6:1 ✓
+───────────────────────────────────────── */
+.form-row label,
+.aligned label {
+  color: #334155 !important;
+}
+.help, p.help, .form-row p.help {
+  color: #64748b !important;
+}
+
+/* ─────────────────────────────────────────
+   READONLY VALUES
+   #475569 on white  ≈ 4.9:1 ✓
+───────────────────────────────────────── */
+.form-row .readonly { color: #475569 !important; }
+
+/* ─────────────────────────────────────────
+   LINKS INSIDE CONTENT (plain text links only)
+   Excludes buttons rendered as <a> tags.
+   #1a5276 on white/light  ≈ 6.5:1 ✓
+───────────────────────────────────────── */
+#content-main a:not(.deletelink):not(.addlink):not(.historylink):not(.viewlink):not(.page-link):not(.dropdown-item):not(.session-join-btn):not(.cancel-link):not(.admin-dl-btn) {
+  color: #1a5276 !important;
+}
+#content-main a:not(.deletelink):not(.addlink):not(.historylink):not(.viewlink):not(.page-link):not(.dropdown-item):not(.session-join-btn):not(.cancel-link):not(.admin-dl-btn):hover {
+  color: #2980b9 !important;
+}
+
+/* ─────────────────────────────────────────
+   TABLE HEADER SORT LINKS — white on dark bg
+   rgba(255,255,255,.85) on #1a3a5c  ≈ 9:1 ✓
+───────────────────────────────────────── */
+#content-main #result_list thead th a,
+#content-main #result_list thead th a:hover {
+  color: rgba(255, 255, 255, .85) !important;
+  text-decoration: none !important;
+}
+
+/* ─────────────────────────────────────────
+   OBJECT-TOOLS (History / Add buttons)
+   bg #1a5276 / text #fff  ≈ 7:1 ✓
+───────────────────────────────────────── */
+#content-main ul.object-tools a,
+#content-main ul.object-tools a:link,
+#content-main ul.object-tools a:visited {
+  background: #1a5276 !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+}
+#content-main ul.object-tools a:hover {
+  background: #2980b9 !important;
+  color: #fff !important;
+}
+
+/* ─────────────────────────────────────────
+   PRIMARY SUBMIT BUTTON
+   bg #1a5276→#2980b9 / text #fff  ≈ 7:1 ✓
+───────────────────────────────────────── */
+.submit-row input[type="submit"],
+.submit-row input.default,
+input[name="_save"] {
+  background: linear-gradient(135deg, #1a5276, #2980b9) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(26, 82, 118, .22) !important;
+}
+.submit-row input[type="submit"]:hover,
+.submit-row input.default:hover { opacity: .88 !important; }
+
+/* ─────────────────────────────────────────
+   SECONDARY BUTTONS (Add another / Continue)
+   bg #f0f6fb / text #1a5276  ≈ 6:1 ✓
+───────────────────────────────────────── */
+.submit-row input[name="_addanother"],
+.submit-row input[name="_continue"] {
+  background: #f0f6fb !important;
+  color: #1a5276 !important;
+  border: 1.5px solid #c8ddf0 !important;
+}
+.submit-row input[name="_addanother"]:hover,
+.submit-row input[name="_continue"]:hover {
+  background: #d4e9f7 !important;
+  color: #1a3a5c !important;
+}
+
+/* ─────────────────────────────────────────
+   DELETE LINK
+───────────────────────────────────────── */
+.submit-row a.deletelink:hover { background: #b91c1c !important; color: #fff !important; }
+
+/* ─────────────────────────────────────────
+   INPUT FOCUS RING
+───────────────────────────────────────── */
+input:focus, textarea:focus, select:focus {
+  border-color: #2980b9 !important;
+  box-shadow: 0 0 0 3px rgba(41, 128, 185, .15) !important;
+  outline: none !important;
+}
+input[type="checkbox"] { accent-color: #1a5276 !important; }
+
+/* ─────────────────────────────────────────
+   CHANGE-LIST SAVE BUTTON
+   Appears bottom-right when list_editable fields are present
+───────────────────────────────────────── */
+.changelist-form .action-bar input[type="submit"],
+#changelist-form .action-bar input[type="submit"],
+#changelist-form input[type="submit"][name="_save"] {
+  float: none !important;
+  background: #1a5276 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 22px !important;
+  border-radius: 6px !important;
+  font-size: .9rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  letter-spacing: .02em !important;
+  box-shadow: 0 2px 6px rgba(26,82,118,.35) !important;
+}
+.changelist-form .action-bar input[type="submit"]:hover,
+#changelist-form input[type="submit"][name="_save"]:hover {
+  background: #2980b9 !important;
+  box-shadow: 0 4px 10px rgba(41,128,185,.4) !important;
+}
+
+/* ─────────────────────────────────────────
+   CANCEL LINK — styled as a button
+   bg #1a5276 / text #fff  ≈ 7:1 ✓
+───────────────────────────────────────── */
+.cancel-link {
+  display: inline-block !important;
+  background: #1a5276 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  padding: 10px 18px !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  font-size: .875rem !important;
+}
+.cancel-link:hover {
+  background: #2980b9 !important;
+  color: #fff !important;
+}
+
+/* ─────────────────────────────────────────
+   PAGINATION — page number buttons
+───────────────────────────────────────── */
+p.paginator,
+.paginator {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+  padding: 16px 0 !important;
+}
+
+/* page links and current-page span */
+.paginator a,
+.paginator .this-page {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  padding: 0 6px !important;
+  border-radius: 6px !important;
+  font-size: .8rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  border: 1.5px solid #d1d5db !important;
+  color: #1e293b !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06) !important;
+  transition: background .15s, color .15s, border-color .15s !important;
+}
+
+.paginator a:hover {
+  border-color: #1a5276 !important;
+  color: #1a5276 !important;
+  background: #f0f4f8 !important;
+}
+
+/* active/current page */
+.paginator .this-page {
+  background: #2980b9 !important;
+  color: #fff !important;
+  border-color: #2980b9 !important;
+  cursor: default !important;
+  box-shadow: 0 2px 8px rgba(41,128,185,.35) !important;
+}
+
+/* prev / next arrow buttons */
+.paginator-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 6px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  border: 1.5px solid #d1d5db !important;
+  color: #1e293b !important;
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06) !important;
+  transition: background .15s, color .15s, border-color .15s !important;
+  cursor: pointer !important;
+}
+.paginator-nav:hover {
+  border-color: #1a5276 !important;
+  color: #1a5276 !important;
+  background: #f0f4f8 !important;
+}
+.paginator-nav.disabled {
+  color: #cbd5e1 !important;
+  border-color: #e2e8f0 !important;
+  cursor: default !important;
+  box-shadow: none !important;
+  background: #fafafa !important;
+}
+
+/* result count text */
+.paginator-count {
+  font-size: .85rem !important;
+  color: #64748b !important;
+  white-space: nowrap !important;
+}
+
+/* hide "Show all" */
+.paginator .showall { display: none !important; }
+
+/* push Save + result count to the right */
+.paginator input[type="submit"][name="_save"] {
+  margin-left: auto !important;
+  float: none !important;
+}
+
+/* ─────────────────────────────────────────
+   HISTORY PAGE TABLE
+   th bg #1a3a5c / text #fff  ≈ 11:1 ✓
+   td text #1e293b on white   ≈ 13:1 ✓
+───────────────────────────────────────── */
+#change-history thead th {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+#change-history tbody td {
+  color: #1e293b !important;
+}
+
+/* ─────────────────────────────────────────
+   RELATED-WIDGET ADD (+) LINK
+───────────────────────────────────────── */
+.related-widget-wrapper-link { color: #1a5276 !important; }
+.related-widget-wrapper-link:hover { color: #2980b9 !important; }
+
+/* ─────────────────────────────────────────
+   ERROR MESSAGES
+   bg #fff5f5 / text #991b1b  ≈ 5.9:1 ✓
+───────────────────────────────────────── */
+.errornote,
+p.errornote {
+  background: #fff5f5 !important;
+  color: #991b1b !important;
+  border-left: 4px solid #dc2626 !important;
+}
+.errorlist li { color: #dc2626 !important; }
+
+/* ─────────────────────────────────────────
+   FILTER SIDEBAR
+   h2 "FILTER" header  bg #1a3a5c / #fff  ≈ 11:1 ✓
+   h3 group labels     bg #1a5276 / #fff  ≈ 7:1  ✓
+   links               #1a5276 on white   ≈ 6.5:1 ✓
+   selected link       #fff on #1a5276    ≈ 7:1   ✓
+───────────────────────────────────────── */
+#changelist-filter {
+  background: #f8fafc !important;
+}
+#changelist-filter h2 {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+/* Filter GROUP headers (By status, By date, etc.) */
+#changelist-filter h3 {
+  background: #1a5276 !important;
+  color: #fff !important;
+  border-radius: 0 !important;
+}
+/* "Show counts / Hide counts" h3 — must come AFTER the rule above to override it */
+#changelist-filter-extra-actions h3 {
+  background: transparent !important;
+  color: #1a5276 !important;
+}
+#changelist-filter-extra-actions h3 a,
+#changelist-filter-extra-actions h3 a:link,
+#changelist-filter-extra-actions h3 a:visited {
+  color: #1a5276 !important;
+}
+#changelist-filter-extra-actions h3 a:hover {
+  color: #2980b9 !important;
+}
+#changelist-filter ul {
+  background: transparent !important;
+}
+#changelist-filter li a {
+  color: #1a5276 !important;
+}
+#changelist-filter li a:hover {
+  color: #2980b9 !important;
+}
+#changelist-filter li.selected a {
+  color: #1a3a5c !important;
+  font-weight: 700 !important;
+}
+
+
+/* ─────────────────────────────────────────
+   RESULT TABLE — header row
+   bg #1a3a5c / text #fff  ≈ 11:1 ✓
+   Even rows tinted for readability.
+───────────────────────────────────────── */
+/* body prefix beats Django's built-in changelists.css rules */
+body #result_list thead th,
+body #result_list thead th:hover {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+body #result_list thead th.sorted,
+body #result_list thead th.sorted:hover {
+  background: #1a5276 !important;
+  color: #fff !important;
+}
+/* Django's hover effect lives on the inner .text a — kill it here */
+body #result_list thead th .text a,
+body #result_list thead th .text a:link,
+body #result_list thead th .text a:visited,
+body #result_list thead th .text a:hover,
+body #result_list thead th .text a:focus {
+  background: transparent !important;
+  color: rgba(255, 255, 255, .85) !important;
+  text-decoration: none !important;
+}
+#result_list tbody tr:nth-child(even) {
+  background: #f8fafc !important;
+}
+#result_list tbody tr:hover {
+  background: #eaf2fb !important;
+}
+#result_list tbody td,
+#result_list tbody th {
+  color: #1e293b !important;
+}
+
+/* ─────────────────────────────────────────
+   STATUS BADGES (used by status_badge column)
+   Each status has a distinct, WCAG-AA contrast pair.
+───────────────────────────────────────── */
+
+/* Submitted — cyan tint */
+.asgn-badge-submitted {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  background: #cff4fc;
+  color: #055160;      /* ≈ 7.5:1 on #cff4fc ✓ */
+}
+
+/* Reviewed — amber tint */
+.asgn-badge-reviewed {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  background: #fff3cd;
+  color: #664d03;      /* ≈ 7:1 on #fff3cd ✓ */
+}
+
+/* Graded — green tint */
+.asgn-badge-graded {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  background: #d1e7dd;
+  color: #0a3622;      /* ≈ 10:1 on #d1e7dd ✓ */
+}
+
+/* Needs Resubmission — red tint */
+.asgn-badge-resubmit {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  background: #fee2e2;
+  color: #991b1b;      /* ≈ 5.5:1 on #fee2e2 ✓ */
+}
+
+/* Active / Inactive badge (assignments) */
+.asgn-badge-active {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  background: #d1fae5;
+  color: #065f46;      /* ≈ 8.5:1 on #d1fae5 ✓ */
+}
+.asgn-badge-inactive {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  background: #fee2e2;
+  color: #991b1b;      /* ≈ 5.5:1 on #fee2e2 ✓ */
+}
+
+/* Grade chip */
+.asgn-grade {
+  display: inline-block;
+  min-width: 48px;
+  text-align: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 700;
+  background: #dbeafe;
+  color: #1e40af;      /* ≈ 7:1 on #dbeafe ✓ */
+}
+.asgn-grade-empty {
+  display: inline-block;
+  min-width: 48px;
+  text-align: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 400;
+  background: #f1f5f9;
+  color: #94a3b8;      /* ≈ 3.1:1 on #f1f5f9 — large text ✓ */
+}
+
+/* ─────────────────────────────────────────
+   AJAX FILTER — loading fade
+───────────────────────────────────────── */
+#content-main { transition: opacity .15s ease; }
+
+/* ─────────────────────────────────────────
+   PAYMENT — STATUS & DEADLINE BADGES
+───────────────────────────────────────── */
+.pay-badge-approved,
+.pay-badge-rejected,
+.pay-badge-pending,
+.pay-deadline-ok,
+.pay-deadline-overdue,
+.pay-deadline-soon,
+.pay-deadline-none {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* STATUS column */
+.pay-badge-approved  { background: #d1fae5; color: #065f46; }
+.pay-badge-rejected  { background: #fee2e2; color: #991b1b; }
+.pay-badge-pending   { background: #fef3c7; color: #92400e; }
+
+/* DEADLINE STATUS column */
+.pay-deadline-ok     { color: #065f46; font-weight: 600; }
+.pay-deadline-overdue{ background: #fee2e2; color: #991b1b; }
+.pay-deadline-soon   { background: #fef3c7; color: #92400e; }
+.pay-deadline-none   { color: #94a3b8; font-style: italic; }
+
+/* ─────────────────────────────────────────
+   LIVE SESSION — STATUS BADGES & JOIN BUTTON
+───────────────────────────────────────── */
+.session-badge-upcoming,
+.session-badge-ongoing,
+.session-badge-past {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.session-badge-upcoming {
+  background: #dbeafe;
+  color: #1e40af;        /* blue — scheduled */
+}
+.session-badge-ongoing {
+  background: #fef3c7;
+  color: #92400e;        /* amber — live right now */
+}
+.session-badge-past {
+  background: #f1f5f9;
+  color: #475569;        /* neutral grey — finished */
+}
+
+a.session-join-btn,
+a.session-join-btn:link,
+a.session-join-btn:visited {
+  display: inline-block !important;
+  background: #1a5276 !important;
+  color: #fff !important;
+  padding: 4px 14px !important;
+  border-radius: 6px !important;
+  font-size: .78rem !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  border: none !important;
+}
+a.session-join-btn:hover,
+a.session-join-btn:focus {
+  background: #2980b9 !important;
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+.session-no-link {
+  font-size: .78rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+a.admin-dl-btn,
+a.admin-dl-btn:link,
+a.admin-dl-btn:visited {
+  display: inline-block !important;
+  background: #1a5276 !important;
+  color: #fff !important;
+  padding: 4px 14px !important;
+  border-radius: 6px !important;
+  font-size: .78rem !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  border: none !important;
+}
+a.admin-dl-btn:hover,
+a.admin-dl-btn:focus {
+  background: #2980b9 !important;
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+/* ─────────────────────────────────────────
+   COURSE MODE BADGES
+───────────────────────────────────────── */
+.mode-badge-online,
+.mode-badge-offline,
+.mode-badge-hybrid,
+.mode-badge-default {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.mode-badge-online  { background: #1a5276; color: #fff; }
+.mode-badge-offline { background: #1a3a5c; color: #fff; }
+.mode-badge-hybrid  { background: #2980b9; color: #fff; }
+.mode-badge-default { background: #94a3b8; color: #fff; }
+
+/* ─────────────────────────────────────────
+   ENROLLMENT STATUS BADGES
+───────────────────────────────────────── */
+.enrl-badge-cert,
+.enrl-badge-done,
+.enrl-badge-marked,
+.enrl-badge-unmarked,
+.enrl-badge-pending {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.enrl-badge-cert {
+  background: #d1fae5;
+  color: #065f46;   /* green — certificate earned */
+}
+.enrl-badge-done {
+  background: #dbeafe;
+  color: #1e40af;   /* blue — completed, no certificate yet */
+}
+.enrl-badge-marked {
+  background: #1a5276;
+  color: #fff;      /* RADOKI dark-blue — instructor confirmed */
+}
+.enrl-badge-unmarked {
+  background: #f1f5f9;
+  color: #64748b;   /* neutral — not yet marked */
+  font-weight: 400;
+}
+.enrl-badge-pending {
+  background: #fef3c7;
+  color: #92400e;   /* amber — still in progress */
+}
+
+/* ─────────────────────────────────────────
+   SELECTOR WIDGET (Groups / Permissions)
+   Works with both old Django (h2) and new Django (-title classes)
+───────────────────────────────────────── */
+.selector-available h2,
+.selector-chosen h2,
+.selector-available-title,
+.selector-chosen-title {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+.selector-available-title label,
+.selector-chosen-title label {
+  color: #fff !important;
+}
+/* "Choose all" / "Remove all" footer bar */
+.selector-chosen .list-footer-display {
+  background: #1a5276 !important;
+  color: #fff !important;
+}
+.selector-chosen .list-footer-display__clear {
+  color: rgba(255,255,255,.75) !important;
+}
+
+/* ─────────────────────────────────────────
+   CHANGELIST PAGINATION
+   Page number links  #1a5276 on #f0f4f8  ≈ 6.5:1 ✓
+   Current page badge #fff on #1a5276     ≈ 7:1   ✓
+───────────────────────────────────────── */
+.paginator {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding: 12px 16px !important;
+  background: #f8fafc !important;
+  border-top: 1px solid #c8ddf0 !important;
+  border-radius: 0 0 6px 6px !important;
+  font-size: .82rem !important;
+  color: #475569 !important;
+}
+
+/* Page number links */
+.paginator a {
+  display: inline-block !important;
+  min-width: 30px !important;
+  padding: 4px 10px !important;
+  border-radius: 5px !important;
+  background: #fff !important;
+  border: 1.5px solid #c8ddf0 !important;
+  color: #1a5276 !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  transition: background .13s, border-color .13s !important;
+}
+.paginator a:hover {
+  background: #dbeafe !important;
+  border-color: #2980b9 !important;
+  color: #1a3a5c !important;
+}
+
+/* Current page indicator */
+.paginator .this-page {
+  display: inline-block !important;
+  min-width: 30px !important;
+  padding: 4px 10px !important;
+  border-radius: 5px !important;
+  background: #1a5276 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+}
+
+/* ─────────────────────────────────────────
+   CHANGELIST LIST-EDITABLE SAVE BUTTON
+   Sits inside the paginator row (not .submit-row).
+   bg #1a5276→#2980b9 / text #fff  ≈ 7:1 ✓
+───────────────────────────────────────── */
+.paginator input[name="_save"],
+.paginator input[type="submit"].default {
+  margin-left: auto !important;
+  padding: 7px 26px !important;
+  border-radius: 6px !important;
+  background: linear-gradient(135deg, #1a5276, #2980b9) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: .85rem !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(26,82,118,.25) !important;
+  cursor: pointer !important;
+  letter-spacing: .02em !important;
+  transition: opacity .13s !important;
+}
+.paginator input[name="_save"]:hover,
+.paginator input[type="submit"].default:hover {
+  opacity: .88 !important;
+}

@@ -1,0 +1,12 @@
+{% extends "admin/change_list.html" %}
+{% comment %}
+  Global admin change_list override.
+  Loads ajax_filters.js on every list page so filter/pagination/search
+  clicks update results without a full page reload.
+{% endcomment %}
+{% load static %}
+
+{% block footer %}
+{{ block.super }}
+<script src="{% static 'admin/js/ajax_filters.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,773 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  /* ── Page base ── */
+  body { background: #f0f4f8 !important; }
+  #content-main { padding: 0 !important; }
+  .content { background: transparent !important; }
+
+  /* ── Wrapper ── */
+  .ci-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  /* ── Banner ── */
+  .ci-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 4px 18px rgba(26,82,118,.25);
+  }
+  .ci-banner-left h1 {
+    color: #fff;
+    font-size: 1.55rem;
+    font-weight: 800;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ci-banner-left p {
+    color: rgba(255,255,255,.72);
+    font-size: .85rem;
+    margin: 0;
+  }
+  .ci-banner-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ci-banner-chip {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    border-radius: 10px;
+    padding: 7px 16px;
+    font-size: .82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ci-analytics-btn {
+    background: rgba(255,255,255,.22);
+    color: #fff !important;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-size: .84rem;
+    font-weight: 700;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: background .15s;
+  }
+  .ci-analytics-btn:hover { background: rgba(255,255,255,.32); }
+
+  /* ── Section heading ── */
+  .ci-section {
+    font-size: .68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #64748b;
+    margin: 30px 0 14px;
+    padding-left: 8px;
+    border-left: 3px solid #2980b9;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── Stat grid ── */
+  .ci-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Stat card ── */
+  .ci-stat {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 20px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: box-shadow .18s, transform .18s;
+  }
+  .ci-stat:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,.11);
+    transform: translateY(-2px);
+  }
+  .ci-stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+  .ic-blue   { background: #dbeafe; color: #1d4ed8; }
+  .ic-green  { background: #d1fae5; color: #065f46; }
+  .ic-amber  { background: #fef3c7; color: #92400e; }
+  .ic-purple { background: #ede9fe; color: #5b21b6; }
+  .ic-red    { background: #fee2e2; color: #991b1b; }
+  .ic-teal   { background: #ccfbf1; color: #0f766e; }
+  .ic-indigo { background: #e0e7ff; color: #3730a3; }
+  .ic-sky    { background: #e0f2fe; color: #0369a1; }
+
+  .ci-stat-body { flex: 1; min-width: 0; }
+  .ci-stat-label {
+    font-size: .67rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #94a3b8;
+    margin-bottom: 3px;
+  }
+  .ci-stat-value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .ci-stat-sub {
+    font-size: .72rem;
+    color: #64748b;
+  }
+
+  /* ── Two-column layout ── */
+  .ci-cols {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    margin-top: 4px;
+  }
+
+  /* ── Card ── */
+  .ci-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .ci-card-header {
+    padding: 14px 22px;
+    border-bottom: 2px solid #e8f4fd;
+    background: #f8fbff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ci-card-title {
+    font-weight: 800;
+    color: #1a5276;
+    font-size: .92rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ci-card-body { padding: 0; }
+
+  /* ── Table ── */
+  .ci-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .ci-table thead th {
+    background: #1e293b;
+    color: #94a3b8;
+    padding: 10px 16px;
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    white-space: nowrap;
+  }
+  .ci-table tbody tr {
+    border-bottom: 1px solid #f0f4f8;
+    transition: background .12s;
+  }
+  .ci-table tbody tr:last-child { border-bottom: none; }
+  .ci-table tbody tr:hover { background: #f8fbff; }
+  .ci-table td {
+    padding: 11px 16px;
+    font-size: .85rem;
+    color: #2c3e50;
+    vertical-align: middle;
+  }
+  .ci-badge-count {
+    background: #e8f4fd;
+    color: #1a5276;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: .72rem;
+    font-weight: 700;
+  }
+  .ci-status-active {
+    color: #065f46;
+    font-weight: 700;
+    font-size: .8rem;
+  }
+  .ci-status-inactive {
+    color: #991b1b;
+    font-weight: 700;
+    font-size: .8rem;
+  }
+
+  /* ── App list sidebar ── */
+  .ci-app-list { padding: 10px; }
+  .ci-app-group { margin-bottom: 6px; }
+
+  /* Dropdown toggle button */
+  .ci-app-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border: none;
+    background: #f0f4f8;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .ci-app-toggle:hover { background: #e2e8f0; }
+  .ci-app-toggle-label {
+    font-size: .68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-align: left;
+    flex: 1;
+  }
+  .ci-app-toggle-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ci-app-count {
+    background: #cbd5e1;
+    color: #334155;
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-size: .62rem;
+    font-weight: 700;
+  }
+  .ci-app-chevron {
+    font-size: .6rem;
+    color: #94a3b8;
+    transition: transform .2s;
+  }
+  .ci-app-toggle[aria-expanded="true"] .ci-app-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Models list (collapsible) */
+  .ci-models-body { padding: 4px 4px 4px 6px; }
+  .ci-model-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 7px;
+    margin-bottom: 2px;
+    transition: background .12s;
+  }
+  .ci-model-item:hover { background: #f0f4f8; }
+  .ci-model-name {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ci-model-name:hover { color: #1a5276; }
+  .ci-model-actions { display: flex; gap: 4px; }
+  .ci-model-link {
+    font-size: .65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    text-decoration: none;
+  }
+  .ci-model-link.add    { background: #d1fae5; color: #065f46; }
+  .ci-model-link.change { background: #e0e7ff; color: #3730a3; }
+  .ci-model-link:hover  { opacity: .85; }
+
+  /* ── Quick actions ── */
+  .ci-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+  .ci-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 14px 10px;
+    border-radius: 10px;
+    background: #f8fbff;
+    border: 1px solid #e2e8f0;
+    text-decoration: none !important;
+    color: #1e293b !important;
+    transition: border-color .15s, background .15s, transform .15s;
+    gap: 6px;
+  }
+  .ci-action:hover {
+    background: #eaf4fd;
+    border-color: #2980b9;
+    transform: translateY(-2px);
+  }
+  .ci-action i {
+    font-size: 1.3rem;
+    color: #2980b9;
+  }
+  .ci-action span {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #334155;
+  }
+
+  /* ── Recent Actions ── */
+  .ci-ra-list { padding: 8px 0; }
+  .ci-ra-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 16px;
+    border-bottom: 1px solid #f0f4f8;
+    transition: background .12s;
+  }
+  .ci-ra-item:last-child { border-bottom: none; }
+  .ci-ra-item:hover { background: #f8fbff; }
+  .ci-ra-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .72rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .ci-ra-icon.add    { background: #d1fae5; color: #065f46; }
+  .ci-ra-icon.change { background: #dbeafe; color: #1d4ed8; }
+  .ci-ra-icon.delete { background: #fee2e2; color: #991b1b; }
+  .ci-ra-body { flex: 1; min-width: 0; }
+  .ci-ra-obj {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1a5276;
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ci-ra-obj:hover { text-decoration: underline; }
+  .ci-ra-obj.deleted { color: #64748b; font-style: italic; }
+  .ci-ra-meta {
+    font-size: .7rem;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .ci-ra-empty {
+    padding: 20px 16px;
+    color: #94a3b8;
+    font-size: .82rem;
+    text-align: center;
+  }
+  .ci-ra-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 16px;
+    border-top: 1px solid #f0f4f8;
+    flex-wrap: wrap;
+  }
+  .ci-ra-pg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 7px;
+    font-size: .78rem;
+    font-weight: 600;
+    color: #1a5276;
+    background: #f0f6fb;
+    text-decoration: none;
+    border: 1px solid #dde9f5;
+    transition: background .12s, border-color .12s;
+  }
+  .ci-ra-pg-btn:hover { background: #ddeefb; border-color: #2980b9; color: #1a5276; }
+  .ci-ra-pg-btn.active { background: #1a5276; color: #fff; border-color: #1a5276; }
+  .ci-ra-pg-btn.disabled { color: #c0cdd8; background: #f8fafc; cursor: default; border-color: #e8edf2; }
+  .ci-ra-pg-info { font-size: .72rem; color: #94a3b8; padding: 0 4px; }
+  #ci-ra-content { transition: opacity .18s; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1199px) {
+    .ci-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .ci-cols { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 767px) {
+    .ci-stat-grid { grid-template-columns: 1fr 1fr; }
+    .ci-banner { flex-direction: column; align-items: flex-start; padding: 20px; }
+    .ci-banner-left h1 { font-size: 1.2rem; }
+    .ci-stat-value { font-size: 1.5rem; }
+  }
+  @media (max-width: 480px) {
+    .ci-stat-grid { grid-template-columns: 1fr; }
+    .ci-actions-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ci-wrap">
+
+  <!-- Banner -->
+  <div class="ci-banner">
+    <div class="ci-banner-left">
+      <h1><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h1>
+      <p>Welcome back, {{ request.user.get_full_name|default:request.user.username }} &mdash; RADOKI IMS Control Panel</p>
+    </div>
+    <div class="ci-banner-right">
+      <div class="ci-banner-chip"><i class="fas fa-users"></i> {{ total_users }} Users</div>
+      <div class="ci-banner-chip"><i class="fas fa-book"></i> {{ total_courses }} Courses</div>
+      <a href="/admin/analytics/" class="ci-analytics-btn">
+        <i class="fas fa-chart-line"></i> Full Analytics
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats row 1 -->
+  <div class="ci-section"><i class="fas fa-users"></i> Users &amp; Courses</div>
+  <div class="ci-stat-grid">
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-blue"><i class="fas fa-users"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Total Users</div>
+        <div class="ci-stat-value">{{ total_users }}</div>
+        <div class="ci-stat-sub">All accounts</div>
+      </div>
+    </div>
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-green"><i class="fas fa-user-graduate"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Students</div>
+        <div class="ci-stat-value">{{ total_students }}</div>
+        <div class="ci-stat-sub">Active learners</div>
+      </div>
+    </div>
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-amber"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Instructors</div>
+        <div class="ci-stat-value">{{ total_instructors }}</div>
+        <div class="ci-stat-sub">Teaching staff</div>
+      </div>
+    </div>
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-purple"><i class="fas fa-book-open"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Courses</div>
+        <div class="ci-stat-value">{{ total_courses }}</div>
+        <div class="ci-stat-sub">Total courses</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats row 2 -->
+  <div class="ci-section"><i class="fas fa-clipboard-check"></i> Enrollments &amp; Payments</div>
+  <div class="ci-stat-grid">
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-indigo"><i class="fas fa-clipboard-list"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Total Enrollments</div>
+        <div class="ci-stat-value">{{ total_enrollments }}</div>
+        <div class="ci-stat-sub">All requests</div>
+      </div>
+    </div>
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-green"><i class="fas fa-check-circle"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Approved</div>
+        <div class="ci-stat-value">{{ approved_enrollments }}</div>
+        <div class="ci-stat-sub">Active enrollments</div>
+      </div>
+    </div>
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-amber"><i class="fas fa-hourglass-half"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Pending Payments</div>
+        <div class="ci-stat-value">{{ pending_payments }}</div>
+        <div class="ci-stat-sub">Awaiting action</div>
+      </div>
+    </div>
+    <div class="ci-stat">
+      <div class="ci-stat-icon ic-teal"><i class="fas fa-money-bill-wave"></i></div>
+      <div class="ci-stat-body">
+        <div class="ci-stat-label">Revenue</div>
+        <div class="ci-stat-value" style="font-size:1.3rem;">TZS {{ total_revenue|floatformat:0 }}</div>
+        <div class="ci-stat-sub">From approved enrollments</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main two-column section -->
+  <div class="ci-section"><i class="fas fa-th-large"></i> Overview</div>
+  <div class="ci-cols">
+
+    <!-- Left: tables -->
+    <div>
+      <!-- Top Courses -->
+      {% if courses_with_most_students %}
+      <div class="ci-card">
+        <div class="ci-card-header">
+          <div class="ci-card-title">
+            <i class="fas fa-star" style="color:#f59e0b;"></i> Top Courses by Students
+          </div>
+        </div>
+        <div class="ci-card-body">
+          <div class="table-responsive">
+          <table class="ci-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Course</th>
+                <th>Instructor</th>
+                <th>Students</th>
+                <th>Mode</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for course in courses_with_most_students %}
+              <tr>
+                <td style="color:#b2bec3; font-size:.78rem;">{{ forloop.counter }}</td>
+                <td><strong>{{ course.title }}</strong></td>
+                <td style="color:#64748b;">{{ course.instructor.get_full_name|default:course.instructor.username }}</td>
+                <td><span class="ci-badge-count">{{ course.student_count }}</span></td>
+                <td style="font-size:.78rem; color:#64748b;">{{ course.get_mode_display }}</td>
+                <td style="font-size:.78rem; color:#94a3b8; white-space:nowrap;">{{ course.created_at|date:"d M Y" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Top Instructors -->
+      {% if instructors_data %}
+      <div class="ci-card">
+        <div class="ci-card-header">
+          <div class="ci-card-title">
+            <i class="fas fa-award" style="color:#2980b9;"></i> Top Instructors by Courses
+          </div>
+        </div>
+        <div class="ci-card-body">
+          <div class="table-responsive">
+          <table class="ci-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Instructor</th>
+                <th>Email</th>
+                <th>Courses</th>
+                <th>Status</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inst in instructors_data %}
+              <tr>
+                <td style="color:#b2bec3; font-size:.78rem;">{{ forloop.counter }}</td>
+                <td><strong>{{ inst.get_full_name|default:inst.username }}</strong></td>
+                <td style="color:#64748b; font-size:.82rem;">{{ inst.email }}</td>
+                <td><span class="ci-badge-count">{{ inst.course_count }}</span></td>
+                <td>
+                  {% if inst.is_active %}
+                    <span class="ci-status-active"><i class="fas fa-check-circle"></i> Active</span>
+                  {% else %}
+                    <span class="ci-status-inactive"><i class="fas fa-times-circle"></i> Inactive</span>
+                  {% endif %}
+                </td>
+                <td style="font-size:.78rem; color:#94a3b8; white-space:nowrap;">{{ inst.date_joined|date:"d M Y" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recent Actions (AJAX paginated) -->
+      <div class="ci-card">
+        <div class="ci-card-header">
+          <div class="ci-card-title">
+            <i class="fas fa-history" style="color:#8b5cf6;"></i> Recent Actions
+          </div>
+        </div>
+        <div class="ci-card-body">
+          <div id="ci-ra-content" class="ci-ra-list">
+            <div class="ci-ra-empty"><i class="fas fa-spinner fa-spin"></i><br>Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+      function loadRA(page) {
+        var container = document.getElementById('ci-ra-content');
+        container.style.opacity = '.4';
+        fetch('/admin/recent-actions/?ra_page=' + page, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          container.innerHTML = html;
+          container.style.opacity = '1';
+        })
+        .catch(function() {
+          container.innerHTML = '<div class="ci-ra-empty"><i class="fas fa-exclamation-circle"></i><br>Failed to load</div>';
+          container.style.opacity = '1';
+        });
+      }
+      document.addEventListener('DOMContentLoaded', function() { loadRA(1); });
+      </script>
+
+    </div>
+
+    <!-- Right: App list + Quick actions -->
+    <div>
+
+      <!-- Quick Actions -->
+      <div class="ci-card" style="margin-bottom:20px;">
+        <div class="ci-card-header">
+          <div class="ci-card-title">
+            <i class="fas fa-bolt" style="color:#f59e0b;"></i> Quick Actions
+          </div>
+        </div>
+        <div class="ci-card-body">
+          <div class="ci-actions-grid">
+            <a href="/admin/accounts/user/add/" class="ci-action">
+              <i class="fas fa-user-plus"></i>
+              <span>Add User</span>
+            </a>
+            <a href="/admin/courses/course/add/" class="ci-action">
+              <i class="fas fa-plus-circle"></i>
+              <span>Add Course</span>
+            </a>
+            <a href="/admin/accounts/user/" class="ci-action">
+              <i class="fas fa-users"></i>
+              <span>Manage Users</span>
+            </a>
+            <a href="/admin/courses/enrollment/" class="ci-action">
+              <i class="fas fa-clipboard-list"></i>
+              <span>Enrollments</span>
+            </a>
+            <a href="/admin/payments/payment/" class="ci-action">
+              <i class="fas fa-credit-card"></i>
+              <span>Payments</span>
+            </a>
+            <a href="/admin/analytics/" class="ci-action">
+              <i class="fas fa-chart-bar"></i>
+              <span>Analytics</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- App list -->
+      {% if app_list %}
+      <div class="ci-card">
+        <div class="ci-card-header">
+          <div class="ci-card-title">
+            <i class="fas fa-database" style="color:#2980b9;"></i> All Models
+          </div>
+        </div>
+        <div class="ci-card-body">
+          <div class="ci-app-list">
+            {% for app in app_list %}
+            <div class="ci-app-group">
+              <button class="ci-app-toggle" type="button" onclick="ciToggle(this)">
+                <span class="ci-app-toggle-label">
+                  <i class="fas fa-layer-group"></i>
+                  {{ app.name }}
+                </span>
+                <span class="ci-app-toggle-right">
+                  <span class="ci-app-count">{{ app.models|length }}</span>
+                  <i class="fas fa-chevron-down ci-app-chevron"></i>
+                </span>
+              </button>
+              <div class="ci-models-body" style="display:none;">
+                {% for model in app.models %}
+                <div class="ci-model-item">
+                  <a href="{{ model.admin_url }}" class="ci-model-name">
+                    <i class="fas fa-circle" style="font-size:.35rem; color:#cbd5e1;"></i>
+                    {{ model.name }}
+                  </a>
+                  <div class="ci-model-actions">
+                    {% if model.add_url %}
+                    <a href="{{ model.add_url }}" class="ci-model-link add" title="Add">+</a>
+                    {% endif %}
+                    <a href="{{ model.admin_url }}" class="ci-model-link change" title="View">&#8594;</a>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+function ciToggle(btn) {
+  const body = btn.nextElementSibling;
+  const chevron = btn.querySelector('.ci-app-chevron');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  chevron.style.transform = open ? '' : 'rotate(180deg)';
+}
+</script>
+{% endblock %}

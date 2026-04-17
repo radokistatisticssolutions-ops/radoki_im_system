@@ -1,0 +1,127 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+<div style="max-width:700px; margin:0 auto; padding:0 16px;">
+
+  <!-- Back -->
+  <div class="mb-4">
+    <a href="{% url 'courses:instructor_live_sessions' %}"
+       style="color:#2980b9; text-decoration:none; font-size:.88rem; font-weight:600;">
+      <i class="fas fa-arrow-left me-1"></i> Back to Live Sessions
+    </a>
+  </div>
+
+  <!-- Banner -->
+  <div style="background:linear-gradient(135deg,#1a5276 0%,#2980b9 100%);
+              border-radius:14px; padding:24px 28px; margin-bottom:24px;">
+    <h2 style="color:#fff; font-size:1.3rem; font-weight:800; margin:0;">
+      <i class="fas fa-video me-2"></i>
+      {% if action == 'Edit' %}Edit{% else %}Schedule{% endif %} Live Session
+    </h2>
+    <p style="color:rgba(255,255,255,.8); margin:4px 0 0; font-size:.85rem;">
+      {{ course.title }}
+    </p>
+  </div>
+
+  <!-- Form card -->
+  <div style="background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.08); padding:28px;">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-4">
+        <label for="{{ form.title.id_for_label }}"
+               class="form-label fw-semibold" style="color:#2c3e50; font-size:.88rem;">
+          <i class="fas fa-heading me-2" style="color:#2980b9;"></i>Session Title
+        </label>
+        {{ form.title }}
+        {% if form.title.errors %}
+          <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="mb-4">
+        <label for="{{ form.scheduled_at.id_for_label }}"
+               class="form-label fw-semibold" style="color:#2c3e50; font-size:.88rem;">
+          <i class="fas fa-calendar-alt me-2" style="color:#2980b9;"></i>Date &amp; Time
+        </label>
+        {{ form.scheduled_at }}
+        {% if form.scheduled_at.errors %}
+          <div class="text-danger small mt-1">{{ form.scheduled_at.errors }}</div>
+        {% endif %}
+        <div class="form-text">When will this session be held?</div>
+      </div>
+
+      <div class="mb-4">
+        <label for="{{ form.meeting_link.id_for_label }}"
+               class="form-label fw-semibold" style="color:#2c3e50; font-size:.88rem;">
+          <i class="fas fa-link me-2" style="color:#2980b9;"></i>Meeting Link
+        </label>
+        {{ form.meeting_link }}
+        {% if form.meeting_link.errors %}
+          <div class="text-danger small mt-1">{{ form.meeting_link.errors }}</div>
+        {% endif %}
+        <div class="form-text">Zoom, Google Meet, Jitsi, or any meeting URL</div>
+      </div>
+
+      <div class="mb-4">
+        <label for="{{ form.description.id_for_label }}"
+               class="form-label fw-semibold" style="color:#2c3e50; font-size:.88rem;">
+          <i class="fas fa-align-left me-2" style="color:#2980b9;"></i>Description
+          <span class="text-muted fw-normal">(optional)</span>
+        </label>
+        {{ form.description }}
+        {% if form.description.errors %}
+          <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="d-flex gap-3 mt-2">
+        <button type="submit" class="btn btn-primary fw-bold flex-grow-1"
+                style="border-radius:10px; padding:10px;">
+          <i class="fas fa-save me-2"></i>
+          {% if action == 'Edit' %}Update Session{% else %}Schedule Session{% endif %}
+        </button>
+        <a href="{% url 'courses:instructor_live_sessions' %}"
+           class="btn btn-outline-secondary fw-semibold flex-grow-1"
+           style="border-radius:10px; padding:10px;">
+          <i class="fas fa-times me-2"></i>Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tips -->
+  <div style="background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.06);
+              padding:18px 22px; margin-top:20px; border-left:4px solid #f39c12;">
+    <h6 style="color:#2c3e50; margin-bottom:8px;">
+      <i class="fas fa-lightbulb me-2" style="color:#f39c12;"></i>Tips
+    </h6>
+    <ul style="font-size:.84rem; color:#636e72; margin:0; padding-left:18px; line-height:1.9;">
+      <li>Use a clear, descriptive title — e.g. <em>"Week 3: Data Visualisation"</em></li>
+      <li>Test your meeting link before the session starts</li>
+      <li>Add an agenda or learning objectives in the description</li>
+    </ul>
+  </div>
+
+</div>
+</div>
+
+<style>
+  input[type="text"], input[type="url"], input[type="datetime-local"],
+  textarea, select, .form-control {
+    border: 1px solid #dce6f0; border-radius: 9px;
+    padding: 9px 12px; font-size: .88rem; width: 100%;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus, textarea:focus, select:focus, .form-control:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 0 3px rgba(41,128,185,.12);
+    outline: none;
+  }
+  @media (max-width: 520px) {
+    .d-flex.gap-3 { flex-direction: column; }
+  }
+</style>
+{% endblock %}

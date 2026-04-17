@@ -1,0 +1,220 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Referral Settings - Radoki Training{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div style="max-width: 900px; margin: 0 auto;">
+        <!-- Header Section -->
+        <div class="mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <a href="{% url 'referrals:instructor_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-cog me-2" style="color: #6366F1;"></i>
+                        Referral System Settings
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Form -->
+        <div class="card border-0 shadow-sm">
+            <!-- Gradient Header -->
+            <div style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); height: 4px;"></div>
+            
+            <div class="card-body p-4">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if message.tags %}check{% else %}info{% endif %}-circle me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <!-- Section 1: System Status -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-toggle-on me-2" style="color: #6366F1;"></i>
+                                System Status
+                            </h5>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                       {% if settings.is_active %}checked{% endif %} style="width: 3rem; height: 1.5rem;">
+                                <label class="form-check-label" for="is_active">
+                                    <strong>Enable Referral System</strong>
+                                </label>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                When enabled, students can use referral links. When disabled, the system is paused.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Reward Configuration -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-gift me-2" style="color: #10B981;"></i>
+                                Reward Configuration
+                            </h5>
+
+                            <div class="row">
+                                <!-- Reward Type -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="reward_type" class="form-label">
+                                        <strong>Reward Type</strong>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="reward_type" name="reward_type" required>
+                                        {% for value, label in reward_type_choices %}
+                                            <option value="{{ value }}" {% if settings.reward_type == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted d-block mt-2">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        Choose how rewards are given to referrers
+                                    </small>
+                                </div>
+
+                                <!-- Reward Value -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="reward_value" class="form-label">
+                                        <strong>Reward Amount</strong>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="reward_value" name="reward_value" 
+                                               value="{{ settings.reward_per_successful_referral|floatformat:2 }}" 
+                                               step="0.01" min="0" required>
+                                        <span class="input-group-text" id="reward-unit">
+                                            {% if settings.reward_type == 'DISCOUNT_PERCENTAGE' %}%{% else %}TZS{% endif %}
+                                        </span>
+                                    </div>
+                                    <small class="form-text text-muted d-block mt-2">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        Amount or percentage given per successful referral
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Validity & Limits -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-hourglass-half me-2" style="color: #F59E0B;"></i>
+                                Reward Validity & Limits
+                            </h5>
+
+                            <div class="row">
+                                <!-- Reward Validity Days -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="reward_validity_days" class="form-label">
+                                        <strong>Reward Validity (days)</strong>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="reward_validity_days" 
+                                           name="reward_validity_days" 
+                                           value="{{ settings.reward_validity_days }}" 
+                                           min="1" required>
+                                    <small class="form-text text-muted d-block mt-2">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        How long rewards are valid before expiring
+                                    </small>
+                                </div>
+
+                                <!-- Max Rewards Per Student -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="max_rewards_per_student" class="form-label">
+                                        <strong>Max Rewards per Student</strong>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="max_rewards_per_student" 
+                                           name="max_rewards_per_student" 
+                                           value="{{ settings.max_rewards_per_student }}" 
+                                           min="0">
+                                    <small class="form-text text-muted d-block mt-2">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        0 = unlimited rewards per student
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Minimum Requirements -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-filter me-2" style="color: #EF4444;"></i>
+                                Minimum Requirements
+                            </h5>
+
+                            <div class="row">
+                                <!-- Min Course Price -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="min_course_price" class="form-label">
+                                        <strong>Minimum Course Price (TZS)</strong>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="min_course_price" 
+                                           name="min_course_price" 
+                                           value="{{ settings.min_course_price|floatformat:2 }}" 
+                                           step="0.01" min="0" required>
+                                    <small class="form-text text-muted d-block mt-2">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        Only courses above this price qualify for referral rewards
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Information Box -->
+                    <div class="alert alert-info border-0" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-lightbulb me-2"></i>About These Settings
+                        </h5>
+                        <p class="mb-0">
+                            These settings apply to the entire referral system and affect all instructors and students. 
+                            When you update these settings, they take effect immediately for all new referrals. Existing 
+                            rewards are not affected retroactively.
+                        </p>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'referrals:instructor_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Update reward unit when reward type changes
+    document.getElementById('reward_type').addEventListener('change', function() {
+        const unit = this.value === 'DISCOUNT_PERCENTAGE' ? '%' : 'TZS';
+        document.getElementById('reward-unit').textContent = unit;
+    });
+</script>
+{% endblock %}

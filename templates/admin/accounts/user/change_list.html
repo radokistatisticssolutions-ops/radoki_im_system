@@ -1,0 +1,696 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block content_title %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<style>
+/* ── Page shell ── */
+body { background: #f0f4f8 !important; font-family: 'Segoe UI', Arial, sans-serif !important; }
+#content { padding: 0 !important; }
+#content-main { padding: 0 20px 60px !important; max-width: 1400px; margin: 0 auto; }
+
+/* ── Django flash messages ── */
+ul.messagelist { list-style: none; padding: 0; margin: 0 0 10px; }
+ul.messagelist li { padding: 10px 16px; border-radius: 8px; font-size: .84rem; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+ul.messagelist .success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+ul.messagelist .warning { background: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
+ul.messagelist .error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+ul.messagelist .info    { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+
+/* ── Reset Django admin floats & layout ── */
+#changelist                { display: block !important; }
+.changelist-form-container { float: none !important; width: 100% !important; }
+#changelist-filter         { display: none !important; }
+ul.object-tools            { margin: 0 !important; padding: 0 !important; float: none !important; list-style: none !important; flex-shrink: 0 !important; }
+ul.object-tools li         { margin: 0 !important; }
+
+/* ══════════════════════════════════════════════
+   TOP ROW  — explicit 44 px height on every
+   interactive leaf element; containers just flex.
+══════════════════════════════════════════════ */
+#cl-toprow {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 16px !important;
+}
+#toolbar {
+  flex: 1 !important; min-width: 0 !important;
+  display: flex !important; align-items: center !important;
+  margin: 0 !important; padding: 0 !important;
+  background: none !important; border: none !important;
+}
+#changelist-search {
+  flex: 1 !important; min-width: 0 !important;
+  display: flex !important; align-items: center !important;
+  background: none !important; border: none !important; padding: 0 !important;
+}
+#changelist-search label { display: none !important; }
+/* Inner <div> Django renders inside the form */
+#changelist-search > div { flex: 1 !important; display: flex !important; align-items: center !important; min-width: 0 !important; }
+
+/* ── Search input — EXPLICIT 44px ── */
+#searchbar {
+  height: 44px !important; flex: 1 !important; min-width: 0 !important;
+  font-size: .87rem !important; padding: 0 14px !important;
+  border: 1.5px solid #dde4ec !important; border-right: none !important;
+  border-radius: 9px 0 0 9px !important;
+  background: #fff !important; color: #1e293b !important;
+  outline: none !important; box-sizing: border-box !important;
+}
+#searchbar:focus { border-color: #2980b9 !important; box-shadow: none !important; }
+
+/* ── Search submit — EXPLICIT 44px ── */
+#changelist-search [type="submit"] {
+  height: 44px !important; flex-shrink: 0 !important;
+  padding: 0 22px !important; font-size: .87rem !important; font-weight: 700 !important;
+  white-space: nowrap !important; cursor: pointer !important;
+  background: linear-gradient(135deg,#1a5276,#2980b9) !important;
+  color: #fff !important; border: none !important;
+  border-radius: 0 9px 9px 0 !important;
+  font-family: 'Segoe UI', Arial, sans-serif !important;
+  box-sizing: border-box !important;
+}
+#changelist-search [type="submit"]:hover { opacity: .9 !important; }
+
+/* ── Clear link ── */
+#changelist-search a {
+  flex-shrink: 0 !important; font-size: .74rem !important;
+  color: #94a3b8 !important; text-decoration: none !important; margin-left: 5px !important;
+}
+#changelist-search a:hover { color: #ef4444 !important; }
+
+/* ── Result-count text Django injects inside the form's inner div ── */
+#changelist-search > div > span,
+#changelist-search span.small,
+#changelist-search .quiet {
+  flex-shrink: 0 !important; font-size: .74rem !important;
+  color: #64748b !important; white-space: nowrap !important;
+  margin-left: 8px !important; background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important; padding: 3px 10px !important;
+  border-radius: 20px !important;
+}
+
+/* ── Add User button (lives inside the banner) ── */
+ul.object-tools { list-style: none !important; margin: 0 !important; padding: 0 !important; display: flex !important; align-items: center !important; }
+ul.object-tools a, ul.object-tools a:link {
+  display: inline-flex !important; align-items: center !important; gap: 8px !important;
+  height: 40px !important; padding: 0 22px !important;
+  font-size: .88rem !important; font-weight: 700 !important;
+  white-space: nowrap !important; text-decoration: none !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,.18) !important;
+  border: 2px solid rgba(255,255,255,.55) !important;
+  color: #fff !important;
+  transition: background .15s !important;
+  box-sizing: border-box !important;
+}
+ul.object-tools a:hover { background: rgba(255,255,255,.28) !important; }
+
+/* ── Table — dark-blue header matching system ── */
+#result_list { width: 100% !important; border-collapse: collapse !important; font-size: .84rem !important; }
+#result_list thead tr { background: #1a3a5c !important; }
+#result_list thead th { padding: 13px 14px !important; border: none !important; white-space: nowrap !important; }
+#result_list thead th,
+#result_list thead th a,
+#result_list thead th a:link,
+#result_list thead th a:visited {
+  color: rgba(255,255,255,.85) !important; font-size: .68rem !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: .08em !important;
+  background: transparent !important; text-decoration: none !important;
+}
+#result_list thead th a:hover  { color: #fbbf24 !important; }
+#result_list thead .sorted a   { color: #fbbf24 !important; }
+#result_list thead th.ascending a::after  { content: ' ↑'; font-size: .65rem; }
+#result_list thead th.descending a::after { content: ' ↓'; font-size: .65rem; }
+
+/* ── Table body ── */
+#result_list tbody td,
+#result_list tbody th {
+  padding: 11px 14px !important; vertical-align: middle !important;
+  border: none !important; border-top: 1px solid #f1f5f9 !important;
+  color: #334155 !important; font-size: .84rem !important;
+}
+#result_list tbody td a, #result_list tbody th a {
+  color: #1a5276 !important; font-weight: 600 !important; text-decoration: none !important;
+}
+#result_list tbody td a:hover      { color: #2980b9 !important; text-decoration: underline !important; }
+#result_list tbody tr:hover        { background: #f0f7ff !important; }
+#result_list tbody tr.cl-selected  { background: #dbeafe !important; }
+#result_list tbody td.empty        { text-align: center !important; padding: 40px !important; color: #94a3b8 !important; font-style: italic !important; }
+input[type="checkbox"] { accent-color: #1a5276 !important; cursor: pointer !important; }
+
+/* ── Actions bar ── */
+.actions {
+  background: #f8fafc !important; border-bottom: 1px solid #f1f5f9 !important;
+  padding: 10px 16px !important; margin: 0 !important;
+  display: flex !important; align-items: center !important; gap: 10px !important; flex-wrap: wrap !important;
+}
+.actions label          { font-size: .72rem !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; }
+span.action-counter     { font-size: .74rem !important; color: #94a3b8 !important; margin-left: auto !important; }
+
+/* ── Date hierarchy row ── */
+.date-hierarchy-row {
+  padding: 8px 16px; border-bottom: 1px solid #f1f5f9;
+  font-size: .8rem; color: #64748b;
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center; background: #fafbfc;
+}
+.date-hierarchy-row a       { color: #1a5276 !important; font-weight: 600; text-decoration: none; }
+.date-hierarchy-row a:hover { text-decoration: underline; }
+
+/* ── Loading overlay ── */
+#cl-loading {
+  display: none; position: absolute; inset: 0;
+  background: rgba(255,255,255,.8); z-index: 30;
+  align-items: center; justify-content: center;
+  font-size: 1.5rem; color: #1a5276;
+}
+#cl-main-card { position: relative; }
+
+/* ── Hide Django native paginator (replaced by BS5) ── */
+.paginator { display: none !important; }
+
+/* ── Filter dropdowns ── */
+.clf-dd-btn {
+  background: #f0f6fb; color: #475569;
+  border: 1.5px solid #dde4ec; border-radius: 8px;
+  font-size: .78rem; padding: 6px 12px;
+  white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
+  cursor: pointer; transition: all .12s; line-height: 1.4;
+}
+.clf-dd-btn:hover, .clf-dd-btn:focus { background: #e8f3fb; border-color: #2980b9; color: #1a5276; }
+.clf-dd-btn.clf-active { background: #1a5276; color: #fff; border-color: #1a5276; }
+.clf-dd-btn.clf-active:hover { background: #2980b9; border-color: #2980b9; }
+.clf-dd-btn .clf-dd-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; opacity: .65; }
+.clf-dd-btn .clf-dd-value { font-weight: 700; }
+.clf-dd-btn.clf-active .clf-dd-label { opacity: .8; }
+.clf-dd-menu {
+  min-width: 155px; border-radius: 10px !important;
+  padding: 5px !important; border: none !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,.13) !important;
+}
+.clf-dd-item {
+  font-size: .8rem !important; padding: 6px 11px !important;
+  border-radius: 6px !important; color: #334155 !important;
+  cursor: pointer;
+}
+.clf-dd-item:hover { background: #f0f6fb !important; color: #1a5276 !important; }
+.clf-dd-item.active, .clf-dd-item:active {
+  background: #1a5276 !important; color: #fff !important; font-weight: 600 !important;
+}
+
+/* ── Table column widths (table-layout: fixed for predictable sizing) ──
+   Col: 1=checkbox  2=username  3=email  4=role  5=status  6=staff  7=date  8=sort-arrow
+── */
+#result_list { table-layout: fixed !important; width: 100% !important; }
+
+#result_list th:nth-child(1), #result_list td:nth-child(1) { width: 42px  !important; padding: 11px 6px 11px 14px !important; }
+#result_list th:nth-child(2), #result_list td:nth-child(2) { width: 155px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+#result_list th:nth-child(3), #result_list td:nth-child(3) { /* auto — takes remaining space */ overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+#result_list th:nth-child(4), #result_list td:nth-child(4) { width: 125px !important; text-align: center !important; white-space: nowrap !important; }
+#result_list th:nth-child(5), #result_list td:nth-child(5) { width: 110px !important; text-align: center !important; white-space: nowrap !important; }
+#result_list th:nth-child(6), #result_list td:nth-child(6) { width: 110px !important; text-align: center !important; white-space: nowrap !important; }
+#result_list th:nth-child(7), #result_list td:nth-child(7) { width: 195px !important; white-space: nowrap !important; }
+#result_list th:nth-child(8), #result_list td:nth-child(8) { width: 18px  !important; padding: 0 !important; }
+
+/* ── Mobile: stacked card rows ── */
+@media (max-width: 640px) {
+  #content-main { padding: 0 10px 40px !important; }
+  .table-responsive { overflow-x: unset !important; }
+  #result_list { min-width: unset !important; }
+  #result_list thead { display: none !important; }
+  #result_list tbody tr {
+    display: block !important; margin: 8px 0 !important;
+    border: 1px solid #e2e8f0 !important; border-left: 4px solid #2980b9 !important;
+    border-radius: 10px !important; background: #fff !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06) !important; padding: 2px 0 !important;
+  }
+  #result_list tbody td, #result_list tbody th {
+    display: flex !important; justify-content: space-between !important; align-items: center !important;
+    padding: 8px 14px !important; border-top: 1px solid #f0f4f8 !important;
+    border-left: none !important; font-size: .83rem !important; white-space: normal !important;
+  }
+  #result_list tbody tr td:first-child { border-top: none !important; }
+  #result_list tbody td.action-checkbox { justify-content: flex-start !important; }
+  #result_list tbody td.action-checkbox::before { display: none !important; }
+  #result_list tbody td::before {
+    content: attr(data-label); font-weight: 700; color: #64748b;
+    font-size: .68rem; text-transform: uppercase; letter-spacing: .05em;
+    flex-shrink: 0; margin-right: 8px; min-width: 80px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block footer %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  function qs(s,c)  { return (c||document).querySelector(s); }
+  function qsa(s,c) { return Array.from((c||document).querySelectorAll(s)); }
+
+  /* ══════════════════════════════
+     BANNER  — Add User button lives here
+  ══════════════════════════════ */
+  function buildBanner() {
+    var main = qs('#content-main');
+    if (!main || qs('#cl-banner')) return;
+
+    var el = document.createElement('div');
+    el.id = 'cl-banner';
+    el.className = 'rounded-3 p-4 mt-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-3';
+    el.style.cssText = 'background:linear-gradient(135deg,#0e3d5c,#1a5276 55%,#2471a3);box-shadow:0 4px 18px rgba(26,82,118,.22);';
+    el.innerHTML =
+      '<div class="d-flex align-items-center gap-3">' +
+        '<div class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0" ' +
+             'style="width:50px;height:50px;background:rgba(240,192,64,.18);border:2px solid rgba(240,192,64,.4);color:#f0c040;font-size:1.25rem;">' +
+          '<i class="fas fa-users"></i>' +
+        '</div>' +
+        '<div>' +
+          '<div class="fw-bold text-white mb-1" style="font-size:1.15rem;letter-spacing:.2px;">User Management</div>' +
+          '<div style="color:rgba(255,255,255,.6);font-size:.78rem;">Accounts, roles &amp; permissions</div>' +
+        '</div>' +
+      '</div>' +
+      '<div id="cl-banner-right" class="d-flex gap-2 align-items-center flex-wrap"></div>';
+
+    main.insertBefore(el, main.firstChild);
+
+    /* Move ul.object-tools (Add User) into banner right */
+    var tools = qs('ul.object-tools', main);
+    var right  = qs('#cl-banner-right');
+    if (tools && right) {
+      /* Prepend icon if missing */
+      var addLink = qs('a', tools);
+      if (addLink && !qs('.fas', addLink)) {
+        var ic = document.createElement('i');
+        ic.className = 'fas fa-user-plus';
+        addLink.insertBefore(ic, addLink.firstChild);
+      }
+      right.appendChild(tools);
+    }
+  }
+
+  /* ══════════════════════════════
+     TOP ROW: SEARCH + ADD BUTTON
+     Layout is fully CSS-driven.
+     JS only adds the icon and assembles the row div.
+  ══════════════════════════════ */
+  function buildTopRow() {
+    var main    = qs('#content-main');
+    var toolbar = qs('#toolbar', main);
+    if (!main || qs('#cl-toprow')) return;
+
+    /* Add magnifier icon to submit button text */
+    var sbtn = qs('#changelist-search [type="submit"]');
+    if (sbtn && !qs('i', sbtn)) {
+      sbtn.innerHTML = '<i class="fas fa-search" style="margin-right:6px;"></i>' + (sbtn.value || 'Search');
+    }
+
+    /* Set placeholder */
+    var sb = qs('#searchbar');
+    if (sb && !sb.placeholder) sb.placeholder = 'Search users…';
+
+    /* Build the row — only toolbar (tools is in the banner now) */
+    var row = document.createElement('div');
+    row.id = 'cl-toprow';
+    if (toolbar) row.appendChild(toolbar);
+    var anchor = qs('#changelist', main) || qs('.changelist-form-container', main);
+    main.insertBefore(row, anchor);
+  }
+
+  /* ══════════════════════════════
+     FILTER BAR — Bootstrap dropdown per group
+  ══════════════════════════════ */
+  function buildFilterBar() {
+    var filter = qs('#changelist-filter');
+    var old    = qs('#cl-filter-bar');
+    if (old) old.remove();
+    if (!filter) return;
+
+    /* Collect groups — legacy h3+ul OR modern details>summary+ul */
+    var groups = [];
+    qsa('h3', filter).forEach(function (h3) {
+      var ul = h3.nextElementSibling;
+      if (ul && ul.tagName === 'UL') groups.push({ label: h3.textContent.trim(), ul: ul });
+    });
+    if (!groups.length) {
+      qsa('details', filter).forEach(function (det) {
+        var summary = qs('summary', det);
+        var ul = qs('ul', det);
+        if (summary && ul) groups.push({ label: summary.textContent.trim(), ul: ul });
+      });
+    }
+    if (!groups.length) return;
+
+    /* Outer card */
+    var card = document.createElement('div');
+    card.id = 'cl-filter-bar';
+    card.className = 'card border-0 shadow-sm mb-3';
+
+    var body = document.createElement('div');
+    body.className = 'card-body py-2 px-3 d-flex align-items-center gap-2 flex-wrap';
+
+    /* Icon + label */
+    var lbl = document.createElement('div');
+    lbl.className = 'd-flex align-items-center gap-2 me-1';
+    lbl.innerHTML =
+      '<span class="d-flex align-items-center justify-content-center rounded-2" ' +
+           'style="width:26px;height:26px;background:#eef4fb;color:#1a5276;font-size:.74rem;">' +
+        '<i class="fas fa-sliders-h"></i>' +
+      '</span>' +
+      '<span class="fw-semibold text-uppercase" style="font-size:.67rem;letter-spacing:.1em;color:#64748b;">Filters</span>';
+    body.appendChild(lbl);
+
+    /* Separator */
+    var sep = document.createElement('div');
+    sep.style.cssText = 'width:1px;height:22px;background:#e2e8f0;flex-shrink:0;';
+    body.appendChild(sep);
+
+    /* One dropdown per group */
+    groups.forEach(function (g) {
+      var items = qsa('li', g.ul);
+      if (!items.length) return;
+
+      /* Find selected item */
+      var selLi = null;
+      items.forEach(function (li) { if (li.classList.contains('selected')) selLi = li; });
+      var selA    = selLi ? qs('a', selLi) : null;
+      var selText = selLi ? (selA ? selA.textContent.trim() : selLi.textContent.trim()) : 'All';
+      var isActive = selText.toLowerCase() !== 'all';
+
+      /* Clean label */
+      var groupName = g.label.replace(/^By\s+/i, '');
+
+      /* Dropdown wrapper */
+      var wrap = document.createElement('div');
+      wrap.className = 'dropdown';
+
+      /* Toggle button */
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'clf-dd-btn' + (isActive ? ' clf-active' : '');
+      btn.setAttribute('data-bs-toggle', 'dropdown');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.innerHTML =
+        '<span class="clf-dd-label">' + groupName + ':</span>' +
+        '<span class="clf-dd-value">' + selText + '</span>' +
+        '<i class="fas fa-chevron-down ms-1" style="font-size:.55rem;opacity:.7;"></i>';
+
+      /* Dropdown menu */
+      var menu = document.createElement('ul');
+      menu.className = 'dropdown-menu clf-dd-menu';
+
+      items.forEach(function (li) {
+        var a       = qs('a', li);
+        var text    = a ? a.textContent.trim() : li.textContent.trim();
+        var isSel   = li.classList.contains('selected');
+        var href    = a ? a.getAttribute('href') : null;
+
+        var mLi = document.createElement('li');
+        var mA  = document.createElement('a');
+        mA.className = 'dropdown-item clf-dd-item' + (isSel ? ' active' : '');
+        mA.href = href || '#';
+        if (!href) mA.setAttribute('data-no-nav', '1');
+        if (isSel) {
+          mA.innerHTML = '<i class="fas fa-check me-1" style="font-size:.65rem;"></i>' + text;
+        } else {
+          mA.textContent = text;
+        }
+        mLi.appendChild(mA);
+        menu.appendChild(mLi);
+      });
+
+      wrap.appendChild(btn);
+      wrap.appendChild(menu);
+      body.appendChild(wrap);
+    });
+
+    card.appendChild(body);
+
+    var anchor = qs('#changelist') || qs('.changelist-form-container');
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(card, anchor);
+  }
+
+  /* ══════════════════════════════
+     WRAP TABLE IN CARD + BOOTSTRAP TABLE
+  ══════════════════════════════ */
+  function wrapCard() {
+    var container = qs('.changelist-form-container');
+    if (!container || qs('#cl-main-card')) return;
+
+    var card = document.createElement('div');
+    card.id = 'cl-main-card';
+    card.className = 'card border-0 shadow-sm overflow-hidden';
+    card.style.position = 'relative';
+
+    var loading = document.createElement('div');
+    loading.id = 'cl-loading';
+    loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    card.appendChild(loading);
+
+    /* Date hierarchy */
+    var dh = qs('.date-hierarchy', container) || qs('div.xfull', container);
+    if (dh) {
+      var dhRow = document.createElement('div');
+      dhRow.className = 'date-hierarchy-row';
+      dhRow.innerHTML = dh.innerHTML;
+      card.appendChild(dhRow);
+      dh.style.display = 'none';
+    }
+
+    var form = qs('#changelist-form', container);
+    if (form) card.appendChild(form);
+    container.appendChild(card);
+
+    applyBootstrapTable(card);
+    styleActions(card);
+    buildBsPaginator(card);
+  }
+
+  /* ── Add Bootstrap classes to table ── */
+  function applyBootstrapTable(ctx) {
+    var tbl = qs('#result_list', ctx || document);
+    if (tbl) {
+      tbl.classList.add('table', 'table-hover', 'align-middle', 'mb-0');
+    }
+    var results = qs('.results', ctx || document);
+    if (results) results.classList.add('table-responsive');
+  }
+
+  /* ── Style actions bar elements ── */
+  function styleActions(ctx) {
+    var sel = qs('select[name="action"]', ctx || document);
+    if (sel) sel.className = 'form-select form-select-sm d-inline-block w-auto';
+    var btn = qs('button[name="index"]', ctx || document);
+    if (btn) btn.className = 'btn btn-sm btn-secondary fw-bold px-3';
+  }
+
+  /* ══════════════════════════════
+     BOOTSTRAP 5 PAGINATOR
+  ══════════════════════════════ */
+  function buildBsPaginator(ctx) {
+    var scope = ctx || document;
+    var pager = qs('.paginator', scope);
+    var old   = qs('#bs-paginator', scope);
+    if (old) old.remove();
+    if (!pager) return;
+
+    /* Collect page items — skip "Show all" and ellipsis-only spans */
+    var pageItems = [];
+    var currentPage = 1;
+    var allLinks = qsa('a, span', pager);
+
+    allLinks.forEach(function (el) {
+      var text = el.textContent.trim();
+      /* Skip "Show all" link */
+      if (el.tagName === 'A' && /show\s*all/i.test(text)) return;
+      /* Skip empty or dot-dot-dot spans that aren't this-page */
+      if (el.tagName === 'SPAN' && !el.classList.contains('this-page') && !el.classList.contains('end')) return;
+
+      if (el.tagName === 'SPAN' && el.classList.contains('this-page')) {
+        currentPage = parseInt(text, 10) || currentPage;
+        pageItems.push({ type: 'current', text: text });
+      } else if (el.tagName === 'A') {
+        pageItems.push({ type: 'link', text: text, href: el.getAttribute('href') });
+      }
+    });
+
+    if (!pageItems.length) return;
+
+    /* Derive prev/next hrefs from adjacent page numbers */
+    var prevHref = null, nextHref = null;
+    pageItems.forEach(function (item) {
+      if (item.type !== 'link') return;
+      var n = parseInt(item.text, 10);
+      if (!isNaN(n)) {
+        if (n === currentPage - 1) prevHref = item.href;
+        if (n === currentPage + 1) nextHref = item.href;
+      }
+    });
+
+    var nav = document.createElement('nav');
+    nav.id = 'bs-paginator';
+    nav.setAttribute('aria-label', 'Page navigation');
+    nav.className = 'py-3 px-3 d-flex justify-content-center align-items-center gap-1';
+    nav.style.cssText = 'border-top:1px solid #f1f5f9;background:#fafbfc;';
+
+    var ul = document.createElement('ul');
+    ul.className = 'pagination pagination-sm mb-0 gap-1';
+
+    function makeItem(content, href, isActive, isDisabled, isIcon) {
+      var li = document.createElement('li');
+      li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
+      var inner = href && !isDisabled ? document.createElement('a') : document.createElement('span');
+      inner.className = 'page-link' + (isIcon ? '' : ' fw-semibold');
+      if (href && !isDisabled) inner.href = href;
+      if (isActive) {
+        inner.style.cssText = 'background:#1a5276;border-color:#1a5276;color:#fff;min-width:36px;text-align:center;';
+      } else if (!isDisabled) {
+        inner.style.cssText = 'color:#1a5276;border-color:#dde9f5;min-width:36px;text-align:center;';
+      } else {
+        inner.style.cssText = 'color:#94a3b8;border-color:#e2e8f0;min-width:36px;text-align:center;cursor:default;';
+      }
+      inner.innerHTML = content;
+      li.appendChild(inner);
+      return li;
+    }
+
+    /* ← Previous */
+    ul.appendChild(makeItem('<i class="fas fa-chevron-left" style="font-size:.65rem;"></i>', prevHref, false, !prevHref, true));
+
+    /* Page numbers */
+    pageItems.forEach(function (item) {
+      if (item.type === 'current') {
+        ul.appendChild(makeItem(item.text, null, true, false, false));
+      } else if (item.type === 'link') {
+        ul.appendChild(makeItem(item.text, item.href, false, false, false));
+      }
+    });
+
+    /* → Next */
+    ul.appendChild(makeItem('<i class="fas fa-chevron-right" style="font-size:.65rem;"></i>', nextHref, false, !nextHref, true));
+
+    nav.appendChild(ul);
+    pager.after(nav);
+  }
+
+  /* ══════════════════════════════
+     DATA-LABEL for mobile cards
+  ══════════════════════════════ */
+  function labelCells() {
+    var headers = qsa('#result_list thead th');
+    var labels  = headers.map(function (th) { return (qs('a', th) || th).textContent.trim(); });
+    qsa('#result_list tbody tr').forEach(function (tr) {
+      qsa('td, th', tr).forEach(function (td, i) {
+        if (labels[i]) td.setAttribute('data-label', labels[i]);
+      });
+    });
+  }
+
+  /* ── Row checkbox highlight ── */
+  function rowHighlight() {
+    qsa('#result_list tbody input[type="checkbox"]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var tr = cb.closest('tr');
+        if (tr) tr.classList.toggle('cl-selected', cb.checked);
+      });
+    });
+  }
+
+  /* ══════════════════════════════
+     AJAX — pagination, sort, filter
+  ══════════════════════════════ */
+  function setupAjax() {
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest(
+        '#bs-paginator a, #result_list thead th a, #cl-filter-bar .clf-dd-item:not([data-no-nav]), .date-hierarchy-row a'
+      );
+      if (!link) return;
+      var url = link.getAttribute('href');
+      if (!url || url === '#') return;
+      e.preventDefault();
+
+      var loading = qs('#cl-loading');
+      if (loading) loading.style.display = 'flex';
+
+      fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          var doc = (new DOMParser()).parseFromString(html, 'text/html');
+
+          var nf = qs('#changelist-form', doc), of = qs('#changelist-form');
+          if (nf && of) of.replaceWith(nf);
+
+          var nfilt = qs('#changelist-filter', doc), ofilt = qs('#changelist-filter');
+          if (nfilt && ofilt) ofilt.replaceWith(nfilt);
+
+          var ndh = qs('.date-hierarchy', doc) || qs('div.xfull', doc);
+          var dhr = qs('.date-hierarchy-row');
+          if (ndh && dhr) dhr.innerHTML = ndh.innerHTML;
+
+          applyBootstrapTable();
+          styleActions();
+          buildBsPaginator();
+          buildFilterBar();
+          labelCells();
+          rowHighlight();
+          history.pushState(null, '', url);
+        })
+        .catch(function () { window.location.href = url; })
+        .finally(function () { if (loading) loading.style.display = 'none'; });
+    });
+  }
+
+  /* ── Search AJAX ── */
+  function setupSearchAjax() {
+    var form = qs('#changelist-search');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var url = window.location.pathname + '?' + new URLSearchParams(new FormData(form)).toString();
+      var loading = qs('#cl-loading');
+      if (loading) loading.style.display = 'flex';
+      fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          var doc = (new DOMParser()).parseFromString(html, 'text/html');
+          var nf = qs('#changelist-form', doc), of = qs('#changelist-form');
+          if (nf && of) of.replaceWith(nf);
+          var nfilt = qs('#changelist-filter', doc), ofilt = qs('#changelist-filter');
+          if (nfilt && ofilt) ofilt.replaceWith(nfilt);
+          applyBootstrapTable();
+          styleActions();
+          buildBsPaginator();
+          buildFilterBar();
+          labelCells();
+          rowHighlight();
+          history.pushState(null, '', url);
+        })
+        .catch(function () { form.submit(); })
+        .finally(function () { if (loading) loading.style.display = 'none'; });
+    });
+  }
+
+  /* ── Boot ── */
+  function init() {
+    buildBanner();
+    buildTopRow();
+    wrapCard();
+    buildFilterBar();
+    labelCells();
+    rowHighlight();
+    setupAjax();
+    setupSearchAjax();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+{% endblock %}

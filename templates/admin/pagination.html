@@ -1,0 +1,34 @@
+{% load admin_list i18n %}
+<p class="paginator">
+
+{% if pagination_required %}
+  {% comment %}Previous button{% endcomment %}
+  {% if cl.page_num > 1 %}
+    {% prev_page_url cl as prev_url %}
+    <a href="{{ prev_url }}" class="paginator-nav paginator-prev" title="Previous page">&#8249;</a>
+  {% else %}
+    <span class="paginator-nav paginator-prev disabled" title="No previous page">&#8249;</span>
+  {% endif %}
+
+  {% comment %}Page number buttons{% endcomment %}
+  {% for i in page_range %}
+    {% paginator_number cl i %}
+  {% endfor %}
+
+  {% comment %}Next button{% endcomment %}
+  {% if cl.page_num < cl.paginator.num_pages %}
+    {% next_page_url cl as next_url %}
+    <a href="{{ next_url }}" class="paginator-nav paginator-next" title="Next page">&#8250;</a>
+  {% else %}
+    <span class="paginator-nav paginator-next disabled" title="No next page">&#8250;</span>
+  {% endif %}
+{% endif %}
+
+<span class="paginator-count">
+  {{ cl.result_count }}&nbsp;{% if cl.result_count == 1 %}{{ cl.opts.verbose_name }}{% else %}{{ cl.opts.verbose_name_plural }}{% endif %}
+</span>
+
+{% if show_all_url %}<a href="{{ show_all_url }}" class="showall">{% translate 'Show all' %}</a>{% endif %}
+{% if cl.formset and cl.result_count %}<input type="submit" name="_save" class="default" value="{% translate 'Save' %}">{% endif %}
+
+</p>

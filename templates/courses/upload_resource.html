@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<style>
+  .ur-container { max-width: 820px; margin: 28px auto; padding: 0 16px 60px; }
+  .ur-header { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 16px; padding: 28px 32px; color: #fff; margin-bottom: 24px; }
+  .ur-header h1 { font-size: 1.45rem; font-weight: 800; margin: 0 0 8px; }
+  .ur-header .meta { font-size: .75rem; opacity: 0.88; }
+  .ur-card { background: #fff; border-radius: 14px; padding: 24px 28px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .ur-section-title { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #6c757d; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px; }
+  .ur-section-title i { color: #2980b9; }
+  .ur-field { margin-bottom: 18px; }
+  .ur-label { display: block; font-size: .8rem; font-weight: 600; color: #374151; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .4px; }
+  .ur-label .req { color: #e74c3c; }
+  .ur-field .form-control, .ur-field .form-select { border-radius: 8px; border: 1.5px solid #d1d5db; font-size: .9rem; transition: border-color .2s, box-shadow .2s; background-color: #fafafa; }
+  .ur-field .form-control:focus, .ur-field .form-select:focus { border-color: #2980b9; box-shadow: 0 0 0 3px rgba(41,128,185,.15); background-color: #fff; }
+  .ur-error { color: #dc3545; font-size: .78rem; margin-top: 4px; }
+  .ur-hint { color: #6c757d; font-size: .78rem; margin-top: 4px; }
+  .ur-footer { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .ur-footer .btn { flex: 1; min-width: 140px; border-radius: 10px; font-weight: 600; padding: .65rem 1rem; font-size: 15px; }
+  .ur-help { background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%); border-left: 4px solid #3498db; border-radius: 12px; }
+  @media (max-width: 768px) {
+    .ur-footer { flex-direction: column; }
+    .ur-footer .btn { width: 100%; }
+  }
+</style>
+
+<div class="ur-container">
+  <!-- Header -->
+  <div class="ur-header">
+    <h1><i class="fas fa-file-upload me-2"></i>{{ course.title }}</h1>
+    <div class="meta">Upload course materials to enhance student learning</div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="ur-card">
+    <div class="ur-section-title">
+      <i class="fas fa-book"></i> Resource Details
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Form using crispy forms for full functionality -->
+      <div style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(52, 152, 219, 0.02) 100%); padding: 20px; border-radius: 12px; border: 1px solid rgba(52, 152, 219, 0.15);">
+        {{ form|crispy }}
+      </div>
+
+      <!-- Buttons -->
+      <div class="ur-footer mt-4">
+        <button type="submit" class="btn fw-bold text-white" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border: none; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 6px 20px rgba(52, 152, 219, 0.4)'" onmouseout="this.style.boxShadow='none'">
+          <i class="fas fa-arrow-up"></i> Upload Resource
+        </button>
+        <a href="{% url 'courses:instructor_courses' %}" class="btn btn-outline-secondary fw-bold" style="padding: 12px 20px; font-size: 15px;">
+          <i class="fas fa-arrow-left"></i> Back to My Courses
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Help Text -->
+  <div class="alert ur-help mt-4" style="padding: 14px 20px;">
+    <small style="color: #2c3e50;">
+      <i class="fas fa-info-circle" style="color: #3498db;"></i>
+      <strong>Tip:</strong> Students will be able to download these materials from the course page.
+    </small>
+  </div>
+</div>
+{% endblock %}

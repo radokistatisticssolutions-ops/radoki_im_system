@@ -1,0 +1,400 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Claim Rewards - Radoki{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Reward card ── */
+    .reward-card {
+        border-radius: 12px;
+        border: 1px solid #E5E7EB;
+        background: #fff;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .reward-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0,0,0,.09);
+    }
+    .reward-card.reward-claimed  { opacity: .82; }
+    .reward-card.reward-expired  { opacity: .60; background: #FAFAFA; }
+
+    /* ── Section title ── */
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1F2937;
+        border-left: 4px solid #6366F1;
+        padding-left: 12px;
+        margin-bottom: 16px;
+    }
+
+    /* ── Reward value chip ── */
+    .reward-value-chip {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #6366F1;
+    }
+    .reward-value-chip.claimed { color: #10B981; }
+    .reward-value-chip.expired { color: #9CA3AF; }
+
+    /* ── Expiration line ── */
+    .expiry-safe    { color: #10B981; }
+    .expiry-expired { color: #EF4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+<div style="max-width: 900px; margin: 0 auto;">
+
+    <!-- Header -->
+    <div class="row mb-4 align-items-center g-3">
+        <div class="col-12 col-md-8">
+            <h2 class="mb-1">
+                <i class="fas fa-gift me-2" style="color:#6366F1;"></i>
+                Your Rewards
+            </h2>
+            <p class="text-muted mb-0">Claim your referral rewards and unlock benefits!</p>
+        </div>
+        <div class="col-12 col-md-4 text-md-end">
+            <a href="{% url 'referrals:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-sm-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-3 text-success mb-1">{{ total_available }}</div>
+                <small class="text-muted">Available</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-3 text-primary mb-1">{{ total_claimed }}</div>
+                <small class="text-muted">Ready to Use</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-3 text-info mb-1">{{ total_used }}</div>
+                <small class="text-muted">Used</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-3 text-secondary mb-1">{{ total_expired }}</div>
+                <small class="text-muted">Expired</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Available Rewards ── -->
+    <div class="mb-5">
+        <div class="section-title">
+            <i class="fas fa-star me-2" style="color:#6366F1;"></i>
+            Available Rewards
+            {% if total_available > 0 %}
+                <span class="badge bg-primary ms-2" style="font-size:.75rem;">{{ total_available }}</span>
+            {% endif %}
+        </div>
+
+        {% if available_rewards.object_list %}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <small class="text-muted">
+                    Showing {{ available_rewards.start_index }}&ndash;{{ available_rewards.end_index }}
+                    of {{ total_available }}
+                </small>
+            </div>
+            {% for reward in available_rewards %}
+            <div class="reward-card p-4 mb-3">
+                <div class="row align-items-center g-3">
+                    <div class="col-12 col-sm-7">
+                        <div class="fw-semibold fs-6 mb-1">{{ reward.get_display_description }}</div>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                            {{ reward.get_reward_type_display }}
+                        </span>
+                        <div class="small text-muted mt-2">
+                            From referral:
+                            <strong>{{ reward.referral.referred_user.get_full_name|default:reward.referral.referred_user.username }}</strong>
+                        </div>
+                        {% if reward.coupon %}
+                        <div class="small text-muted">
+                            Coupon Code: <code class="bg-light px-1 rounded">{{ reward.coupon.code }}</code>
+                        </div>
+                        {% endif %}
+                        <div class="small expiry-safe mt-1">
+                            <i class="fas fa-clock me-1"></i>
+                            Expires {{ reward.expires_at|date:"F d, Y" }}
+                            &mdash; <strong>{{ reward.expires_at|timeuntil }}</strong> remaining
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-2 text-sm-center">
+                        <div class="reward-value-chip">
+                            {% if reward.reward_type == "DISCOUNT_PERCENTAGE" %}
+                                {{ reward.reward_value|floatformat:0 }}%
+                            {% else %}
+                                TZS {{ reward.reward_value }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-3 text-sm-end">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-hand-holding-usd me-1"></i> Claim Reward
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if avail_paginator.num_pages > 1 %}
+            <nav aria-label="Available rewards pagination" class="mt-2">
+                <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                    <li class="page-item {% if not available_rewards.has_previous %}disabled{% endif %}">
+                        {% if available_rewards.has_previous %}
+                        <a class="page-link" href="?page={{ available_rewards.previous_page_number }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.number }}"><i class="fas fa-chevron-left"></i></a>
+                        {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+                    </li>
+                    {% for item in avail_page_window %}
+                        {% if not item %}<li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                        {% elif item == available_rewards.number %}<li class="page-item active"><span class="page-link">{{ item }}</span></li>
+                        {% else %}<li class="page-item"><a class="page-link" href="?page={{ item }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.number }}">{{ item }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not available_rewards.has_next %}disabled{% endif %}">
+                        {% if available_rewards.has_next %}
+                        <a class="page-link" href="?page={{ available_rewards.next_page_number }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.number }}"><i class="fas fa-chevron-right"></i></a>
+                        {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="card border-0 shadow-sm text-center py-5 text-muted">
+                <i class="fas fa-gift fa-2x mb-3 d-block mx-auto opacity-50"></i>
+                <p class="mb-1">No available rewards at the moment.</p>
+                <small>Keep referring students to earn more rewards!</small>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ── Claimed Rewards ── -->
+    {% if claimed_rewards.object_list %}
+    <div class="mb-5">
+        <div class="section-title" style="border-color:#10B981;">
+            <i class="fas fa-check-circle me-2" style="color:#10B981;"></i>
+            Claimed Rewards
+            <span class="badge bg-success ms-2" style="font-size:.75rem;">{{ total_claimed }}</span>
+        </div>
+
+        {% for reward in claimed_rewards %}
+        <div class="reward-card reward-claimed p-4 mb-3">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-sm-8">
+                    <div class="fw-semibold mb-1">{{ reward.get_display_description }}</div>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                        {{ reward.get_reward_type_display }} &mdash; Claimed
+                    </span>
+                    <div class="small text-muted mt-2">
+                        From referral:
+                        <strong>{{ reward.referral.referred_user.get_full_name|default:reward.referral.referred_user.username }}</strong>
+                    </div>
+                    {% if reward.coupon %}
+                    <div class="small text-muted">
+                        Coupon: <code class="bg-light px-1 rounded">{{ reward.coupon.code }}</code>
+                    </div>
+                    {% endif %}
+                    <div class="small expiry-safe mt-1">
+                        <i class="fas fa-check me-1"></i>
+                        Claimed on {{ reward.claimed_at|date:"F d, Y" }}
+                    </div>
+                </div>
+                <div class="col-12 col-sm-4 text-sm-end">
+                    <div class="reward-value-chip claimed">
+                        {% if reward.reward_type == "DISCOUNT_PERCENTAGE" %}
+                            {{ reward.reward_value|floatformat:0 }}%
+                        {% else %}
+                            TZS {{ reward.reward_value }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if claimed_paginator.num_pages > 1 %}
+        <nav aria-label="Claimed rewards pagination" class="mt-2">
+            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                <li class="page-item {% if not claimed_rewards.has_previous %}disabled{% endif %}">
+                    {% if claimed_rewards.has_previous %}
+                    <a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.previous_page_number }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.number }}"><i class="fas fa-chevron-left"></i></a>
+                    {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+                </li>
+                {% for item in claimed_page_window %}
+                    {% if not item %}<li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    {% elif item == claimed_rewards.number %}<li class="page-item active"><span class="page-link">{{ item }}</span></li>
+                    {% else %}<li class="page-item"><a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ item }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.number }}">{{ item }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not claimed_rewards.has_next %}disabled{% endif %}">
+                    {% if claimed_rewards.has_next %}
+                    <a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.next_page_number }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.number }}"><i class="fas fa-chevron-right"></i></a>
+                    {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ── Used Rewards ── -->
+    {% if used_rewards.object_list %}
+    <div class="mb-5">
+        <div class="section-title" style="border-color:#0EA5E9;">
+            <i class="fas fa-check-double me-2" style="color:#0EA5E9;"></i>
+            Used Rewards
+            <span class="badge bg-info ms-2" style="font-size:.75rem;">{{ total_used }}</span>
+        </div>
+
+        {% for reward in used_rewards %}
+        <div class="reward-card reward-claimed p-4 mb-3">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-sm-8">
+                    <div class="fw-semibold mb-1">{{ reward.get_display_description }}</div>
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">
+                        {{ reward.get_reward_type_display }} &mdash; Used
+                    </span>
+                    <div class="small text-muted mt-2">
+                        From referral:
+                        <strong>{{ reward.referral.referred_user.get_full_name|default:reward.referral.referred_user.username }}</strong>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-4 text-sm-end">
+                    <div class="reward-value-chip claimed">
+                        {% if reward.reward_type == "DISCOUNT_PERCENTAGE" %}
+                            {{ reward.reward_value|floatformat:0 }}%
+                        {% else %}
+                            TZS {{ reward.reward_value }}
+                        {% endif %}
+                    </div>
+                    <div class="small text-muted mt-1">Applied to enrollment</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if used_paginator.num_pages > 1 %}
+        <nav aria-label="Used rewards pagination" class="mt-2">
+            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                <li class="page-item {% if not used_rewards.has_previous %}disabled{% endif %}">
+                    {% if used_rewards.has_previous %}
+                    <a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.previous_page_number }}&e_page={{ expired_rewards.number }}"><i class="fas fa-chevron-left"></i></a>
+                    {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+                </li>
+                {% for item in used_page_window %}
+                    {% if not item %}<li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    {% elif item == used_rewards.number %}<li class="page-item active"><span class="page-link">{{ item }}</span></li>
+                    {% else %}<li class="page-item"><a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.number }}&u_page={{ item }}&e_page={{ expired_rewards.number }}">{{ item }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not used_rewards.has_next %}disabled{% endif %}">
+                    {% if used_rewards.has_next %}
+                    <a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.next_page_number }}&e_page={{ expired_rewards.number }}"><i class="fas fa-chevron-right"></i></a>
+                    {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ── Expired Rewards ── -->
+    {% if expired_rewards.object_list %}
+    <div class="mb-5">
+        <div class="section-title" style="border-color:#9CA3AF;">
+            <i class="fas fa-times-circle me-2 text-secondary"></i>
+            Expired Rewards
+            <span class="badge bg-secondary ms-2" style="font-size:.75rem;">{{ total_expired }}</span>
+        </div>
+
+        {% for reward in expired_rewards %}
+        <div class="reward-card reward-expired p-4 mb-3">
+            <div class="row align-items-center g-3">
+                <div class="col-12 col-sm-8">
+                    <div class="fw-semibold mb-1">{{ reward.get_display_description }}</div>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                        {{ reward.get_reward_type_display }} &mdash; Expired
+                    </span>
+                    <div class="small text-muted mt-2">
+                        From referral:
+                        <strong>{{ reward.referral.referred_user.get_full_name|default:reward.referral.referred_user.username }}</strong>
+                    </div>
+                    <div class="small expiry-expired mt-1">
+                        <i class="fas fa-times me-1"></i>
+                        Expired on {{ reward.expires_at|date:"F d, Y" }}
+                    </div>
+                </div>
+                <div class="col-12 col-sm-4 text-sm-end">
+                    <div class="reward-value-chip expired">
+                        {% if reward.reward_type == "DISCOUNT_PERCENTAGE" %}
+                            {{ reward.reward_value|floatformat:0 }}%
+                        {% else %}
+                            TZS {{ reward.reward_value }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if expired_paginator.num_pages > 1 %}
+        <nav aria-label="Expired rewards pagination" class="mt-2">
+            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center">
+                <li class="page-item {% if not expired_rewards.has_previous %}disabled{% endif %}">
+                    {% if expired_rewards.has_previous %}
+                    <a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+                    {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+                </li>
+                {% for item in expired_page_window %}
+                    {% if not item %}<li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    {% elif item == expired_rewards.number %}<li class="page-item active"><span class="page-link">{{ item }}</span></li>
+                    {% else %}<li class="page-item"><a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.number }}&e_page={{ item }}">{{ item }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not expired_rewards.has_next %}disabled{% endif %}">
+                    {% if expired_rewards.has_next %}
+                    <a class="page-link" href="?page={{ available_rewards.number }}&c_page={{ claimed_rewards.number }}&u_page={{ used_rewards.number }}&e_page={{ expired_rewards.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+                    {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Help Section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="fas fa-question-circle me-2 text-info"></i>About Your Rewards
+            </h6>
+            <ul class="mb-0 small text-muted" style="line-height:1.9;">
+                <li>Discount rewards can be applied during enrollment to reduce the course price.</li>
+                <li>Credit rewards are applied automatically to your next enrollment.</li>
+                <li>Rewards expire after <strong>{{ settings.reward_validity_days }} days</strong> — claim before they expire!</li>
+                <li>Once claimed, a reward can be used at the next enrollment checkout.</li>
+            </ul>
+        </div>
+    </div>
+
+</div><!-- /max-width wrapper -->
+</div><!-- /container-fluid -->
+{% endblock %}

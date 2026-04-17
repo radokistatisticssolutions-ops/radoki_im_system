@@ -1,0 +1,32 @@
+Payment Approval Confirmation
+================================
+
+Dear {{ student_name }},
+
+Great news! We're pleased to inform you that your payment has been successfully verified and approved.
+
+PAYMENT CONFIRMATION
+====================
+✓ Status: Approved
+✓ Course: {{ course_name }}
+✓ Date: Today
+
+WHAT'S NEXT?
+============
+1. Log in to your account to access the course materials
+2. Review the course curriculum and learning objectives
+3. Download resources and start your learning journey
+4. Check out any announcements from your instructor
+
+You can now access your course here:
+{{ course_url }}
+
+If you have any questions about your course or need further assistance, please don't hesitate to contact our support team.
+
+Happy Learning!
+The Radoki Learning Team
+
+---
+You received this email because you enrolled in a course on Radoki Learning Management System.
+If you need help, please contact us at support@radoki.com
+© 2026 Radoki Learning. All rights reserved.

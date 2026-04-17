@@ -1,0 +1,137 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.ql-layout { max-width:1000px; margin:32px auto; padding:0 16px 60px; }
+.ql-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
+.ql-header h1 { font-size:1.5rem; font-weight:800; color:#2c3e50; margin:0; }
+.ql-header .breadcrumb { font-size:.8rem; margin:0; }
+.quiz-card { background:#fff; border-radius:16px; padding:22px 26px; margin-bottom:16px; box-shadow:0 2px 12px rgba(0,0,0,.06); display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center; border-left:5px solid #2980b9; transition:box-shadow .2s; }
+.quiz-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.1); }
+.quiz-card.unpublished { border-left-color:#bdc3c7; }
+.quiz-card .title { font-size:1.05rem; font-weight:700; color:#2c3e50; margin-bottom:6px; }
+.quiz-card .meta { display:flex; gap:14px; flex-wrap:wrap; font-size:.8rem; color:#7f8c8d; }
+.quiz-card .meta span { display:flex; align-items:center; gap:5px; }
+.badge-pub { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
+.badge-pub.on { background:#d5f5e3; color:#1e8449; }
+.badge-pub.off { background:#f0f3f4; color:#7f8c8d; }
+.badge-gate { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; background:#fdebd0; color:#d35400; }
+.ql-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.ql-actions a, .ql-actions button { border-radius:8px; font-size:.8rem; padding:7px 14px; font-weight:600; cursor:pointer; border:none; text-decoration:none; }
+.btn-questions { background:#eaf4fd; color:#2980b9; }
+.btn-questions:hover { background:#d6eaf8; }
+.btn-results { background:#d5f5e3; color:#1e8449; }
+.btn-results:hover { background:#a9dfbf; }
+.btn-edit { background:#f0f3f4; color:#5d6d7e; }
+.btn-edit:hover { background:#d5dbdb; }
+.btn-delete { background:#fadbd8; color:#e74c3c; }
+.btn-delete:hover { background:#f1948a; color:#fff; }
+.empty-state { text-align:center; padding:60px 20px; background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+.empty-state i { font-size:3rem; color:#bdc3c7; margin-bottom:14px; }
+</style>
+
+<div class="ql-layout">
+  <div class="ql-header">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'courses:instructor_courses' %}">My Courses</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.pk %}">{{ course.title }}</a></li>
+          <li class="breadcrumb-item active">Quizzes</li>
+        </ol>
+      </nav>
+      <h1><i class="fas fa-tasks me-2" style="color:#2980b9;"></i>Quizzes — {{ course.title }}</h1>
+    </div>
+    <a href="{% url 'quizzes:create_quiz' course.pk %}"
+       class="btn" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:10px;padding:10px 22px;font-weight:700;">
+      <i class="fas fa-plus me-2"></i>New Quiz
+    </a>
+  </div>
+
+  {% if quizzes %}
+    {% for quiz in quizzes %}
+    <div class="quiz-card {% if not quiz.is_published %}unpublished{% endif %}">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+          <span class="title">{{ quiz.title }}</span>
+          <span class="badge-pub {% if quiz.is_published %}on{% else %}off{% endif %}">
+            {% if quiz.is_published %}<i class="fas fa-eye me-1"></i>Published{% else %}<i class="fas fa-eye-slash me-1"></i>Draft{% endif %}
+          </span>
+          {% if quiz.require_pass_for_completion %}
+          <span class="badge-gate"><i class="fas fa-lock me-1"></i>Completion gate</span>
+          {% endif %}
+        </div>
+        {% if quiz.description %}
+        <div style="font-size:.82rem; color:#7f8c8d; margin-bottom:8px;">{{ quiz.description|truncatechars:120 }}</div>
+        {% endif %}
+        <div class="meta">
+          <span><i class="fas fa-question-circle"></i>{{ quiz.question_count }} question{{ quiz.question_count|pluralize }}</span>
+          <span><i class="fas fa-star"></i>Pass mark: {{ quiz.pass_mark }}%</span>
+          {% if quiz.time_limit_minutes %}<span><i class="fas fa-clock"></i>{{ quiz.time_limit_minutes }} min</span>{% endif %}
+          {% if quiz.max_attempts %}<span><i class="fas fa-redo"></i>Max {{ quiz.max_attempts }} attempt{{ quiz.max_attempts|pluralize }}</span>{% else %}<span><i class="fas fa-redo"></i>Unlimited attempts</span>{% endif %}
+          <span><i class="fas fa-users"></i>{{ quiz.attempts.count }} attempt{{ quiz.attempts.count|pluralize }}</span>
+        </div>
+      </div>
+      <div class="ql-actions">
+        <a href="{% url 'quizzes:question_manager' quiz.pk %}" class="btn-questions">
+          <i class="fas fa-list-ul me-1"></i>Questions
+        </a>
+        <a href="{% url 'quizzes:quiz_attempts' quiz.pk %}" class="btn-results">
+          <i class="fas fa-chart-bar me-1"></i>Results
+        </a>
+        <a href="{% url 'quizzes:edit_quiz' quiz.pk %}" class="btn-edit">
+          <i class="fas fa-edit me-1"></i>Edit
+        </a>
+        <button onclick="confirmDelete({{ quiz.pk }}, '{{ quiz.title|escapejs }}')" class="btn-delete">
+          <i class="fas fa-trash me-1"></i>Delete
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="empty-state">
+    <div><i class="fas fa-tasks"></i></div>
+    <h5 style="color:#2c3e50; font-weight:700; margin-bottom:8px;">No quizzes yet</h5>
+    <p style="color:#7f8c8d; font-size:.88rem; margin-bottom:20px;">Create your first quiz to assess your students' knowledge.</p>
+    <a href="{% url 'quizzes:create_quiz' course.pk %}"
+       class="btn" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:10px;padding:10px 24px;font-weight:700;">
+      <i class="fas fa-plus me-2"></i>Create First Quiz
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Delete modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+      <div class="modal-header" style="background:#e74c3c; color:#fff; border:none;">
+        <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Delete Quiz</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:24px;">
+        <p style="color:#2c3e50;">Are you sure you want to delete <strong id="del-quiz-name"></strong>?</p>
+        <p class="text-muted" style="font-size:.85rem;">All questions and student attempts will be permanently deleted.</p>
+      </div>
+      <div class="modal-footer" style="border:none; padding:16px 24px;">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Cancel</button>
+        <form id="del-form" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger" style="border-radius:8px; font-weight:700;">
+            <i class="fas fa-trash me-1"></i>Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(quizId, quizName) {
+  document.getElementById('del-quiz-name').textContent = quizName;
+  document.getElementById('del-form').action = `/quizzes/${quizId}/delete/`;
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

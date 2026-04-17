@@ -1,0 +1,543 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────── */
+.pg-wrap   { max-width:1100px; margin:28px auto; padding:0 16px 80px; }
+.pg-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
+.pg-header h1 { font-size:1.55rem; font-weight:800; color:#2c3e50; margin:0; }
+@media (max-width:767.98px) {
+  .pg-wrap  { margin-top:16px; padding-top:8px; }
+  .pg-header h1 { font-size:1.25rem; }
+}
+@media (max-width:575.98px) {
+  .pg-wrap  { margin-top:8px; }
+  .pg-header { flex-direction:column; align-items:flex-start; }
+}
+
+/* ── Global stats strip ──────────────────────────────────────────────── */
+.stats-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:32px; }
+.stat-card   { background:#fff; border-radius:16px; padding:20px 18px; text-align:center;
+               box-shadow:0 2px 12px rgba(0,0,0,.06); position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
+.stat-card.blue::before  { background:#2980b9; }
+.stat-card.green::before { background:#27ae60; }
+.stat-card.purple::before{ background:#8e44ad; }
+.stat-card.orange::before{ background:#e67e22; }
+.stat-card.gold::before  { background:#f39c12; }
+.stat-val { font-size:2rem; font-weight:800; line-height:1; }
+.stat-lbl { font-size:.72rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:.05em; margin-top:5px; }
+.stat-sub { font-size:.75rem; color:#95a5a6; margin-top:2px; }
+
+/* ── Section titles ──────────────────────────────────────────────────── */
+.section-title { font-size:1rem; font-weight:700; color:#2c3e50; margin:0 0 14px;
+                 display:flex; align-items:center; gap:8px; }
+
+/* ── Charts row ──────────────────────────────────────────────────────── */
+.charts-row { display:grid; grid-template-columns:260px 1fr; gap:18px; margin-bottom:28px; }
+@media(max-width:700px){ .charts-row { grid-template-columns:1fr; } }
+.chart-box { background:#fff; border-radius:16px; padding:22px; box-shadow:0 2px 12px rgba(0,0,0,.06); position:relative; }
+.chart-box canvas { display:block; max-width:100%; height:auto; }
+
+/* ── Course progress cards ───────────────────────────────────────────── */
+.course-card { background:#fff; border-radius:16px; margin-bottom:16px;
+               box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; }
+.cc-header   { padding:16px 22px; background:#f8fbff; border-bottom:2px solid #eaf0f8;
+               display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.cc-title    { font-weight:700; color:#1a5276; font-size:.97rem; }
+.cc-meta     { font-size:.78rem; color:#7f8c8d; }
+.cc-body     { padding:18px 22px; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px; }
+
+/* progress bars */
+.pb-wrap { }
+.pb-label { display:flex; justify-content:space-between; font-size:.78rem; color:#5d6d7e; margin-bottom:5px; font-weight:600; }
+.pb-track { background:#eaf0f6; border-radius:999px; height:10px; overflow:hidden; }
+.pb-fill  { height:100%; border-radius:999px; transition:width .6s ease; }
+.pb-fill.blue   { background:linear-gradient(90deg,#2980b9,#3498db); }
+.pb-fill.green  { background:linear-gradient(90deg,#27ae60,#2ecc71); }
+.pb-fill.purple { background:linear-gradient(90deg,#8e44ad,#9b59b6); }
+
+/* badges */
+.badge-cert  { display:inline-flex; align-items:center; gap:6px; background:#fef9e7;
+               color:#d4ac0d; border:1px solid #f9e79f; border-radius:20px;
+               padding:4px 12px; font-size:.75rem; font-weight:700; }
+.badge-done  { display:inline-flex; align-items:center; gap:6px; background:#d5f5e3;
+               color:#1e8449; border:1px solid #a9dfbf; border-radius:20px;
+               padding:4px 12px; font-size:.75rem; font-weight:700; }
+.badge-pend  { display:inline-flex; align-items:center; gap:6px; background:#fdf2f8;
+               color:#a93226; border:1px solid #f1948a; border-radius:20px;
+               padding:4px 12px; font-size:.75rem; font-weight:700; }
+
+/* ── Deadline section ────────────────────────────────────────────────── */
+.deadline-list { list-style:none; margin:0; padding:0; }
+.deadline-item { display:flex; align-items:center; gap:14px; padding:13px 0;
+                 border-bottom:1px solid #f0f4f8; flex-wrap:wrap; }
+.deadline-item:last-child { border-bottom:none; }
+.dl-course { flex:1; font-weight:600; color:#2c3e50; font-size:.88rem; }
+.dl-date   { font-size:.78rem; white-space:nowrap; }
+.dl-badge  { font-size:.72rem; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.dl-badge.red    { background:#fadbd8; color:#c0392b; }
+.dl-badge.orange { background:#fdebd0; color:#d35400; }
+.dl-badge.blue   { background:#d6eaf8; color:#1a5276; }
+
+/* ── Empty states ────────────────────────────────────────────────────── */
+.empty-box { text-align:center; padding:50px 20px; background:#fff;
+             border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+</style>
+
+<div class="pg-wrap">
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <div class="pg-header">
+    <div>
+      <nav aria-label="breadcrumb" style="margin-bottom:5px;">
+        <ol class="breadcrumb" style="font-size:.78rem; margin:0;">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">Dashboard</a></li>
+          <li class="breadcrumb-item active">My Progress</li>
+        </ol>
+      </nav>
+      <h1><i class="fas fa-chart-line me-2" style="color:#2980b9;"></i>My Progress</h1>
+    </div>
+    <a href="{% url 'courses:course_list' %}" class="btn btn-outline-primary"
+       style="border-radius:10px; padding:9px 18px; font-size:.85rem; font-weight:600;">
+      <i class="fas fa-compass me-1"></i>Browse Courses
+    </a>
+  </div>
+
+  <!-- ── Global summary strip ────────────────────────────────────────── -->
+  <div class="stats-strip">
+    <div class="stat-card blue">
+      <div class="stat-val" style="color:#2980b9;">{{ total_lessons_done }}</div>
+      <div class="stat-lbl">Lessons Done</div>
+      <div class="stat-sub">of {{ total_lessons_all }} total</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-val" style="color:#27ae60;">{{ total_quizzes_passed }}</div>
+      <div class="stat-lbl">Quizzes Passed</div>
+      <div class="stat-sub">of {{ total_quizzes_all }} total</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-val" style="color:#8e44ad;">{{ total_submitted }}</div>
+      <div class="stat-lbl">Assignments Submitted</div>
+      <div class="stat-sub">of {{ total_assignments_all }} total</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-val" style="color:#d4ac0d;">{{ certificates_earned }}</div>
+      <div class="stat-lbl">Certificates Earned</div>
+      <div class="stat-sub">from {{ total_courses }} course{{ total_courses|pluralize }}</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-val" style="color:#e67e22;">{{ overall_lesson_pct }}%</div>
+      <div class="stat-lbl">Overall Completion</div>
+      <div class="stat-sub">lesson-based</div>
+    </div>
+  </div>
+
+  <!-- ── Charts row ──────────────────────────────────────────────────── -->
+  <div class="charts-row">
+
+    <!-- Doughnut: overall completion -->
+    <div class="chart-box" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <div class="section-title" style="justify-content:center; margin-bottom:16px;">
+        <i class="fas fa-circle-notch" style="color:#2980b9;"></i> Overall Completion
+      </div>
+      <div style="position:relative; width:100%; max-width:200px; aspect-ratio:1;">
+        <canvas id="doughnutChart"></canvas>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+                    text-align:center; pointer-events:none;">
+          <div style="font-size:1.6rem; font-weight:800; color:#2c3e50;">{{ overall_lesson_pct }}%</div>
+          <div style="font-size:.65rem; color:#7f8c8d; text-transform:uppercase;">Lessons</div>
+        </div>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">
+        <span style="font-size:.72rem; color:#2980b9;"><i class="fas fa-circle me-1"></i>Completed</span>
+        <span style="font-size:.72rem; color:#dce0e3;"><i class="fas fa-circle me-1"></i>Remaining</span>
+      </div>
+    </div>
+
+    <!-- Bar: recent quiz scores -->
+    <div class="chart-box">
+      <div class="section-title" style="margin-bottom:16px;">
+        <i class="fas fa-tasks" style="color:#8e44ad;"></i> Recent Quiz Scores
+      </div>
+      {% if chart_labels %}
+        <div style="position:relative; width:100%; height:200px;">
+          <canvas id="quizBarChart"></canvas>
+        </div>
+      {% else %}
+        <div style="display:flex; align-items:center; justify-content:center; height:140px; color:#bdc3c7; flex-direction:column; gap:8px;">
+          <i class="fas fa-clipboard-list" style="font-size:2rem;"></i>
+          <span style="font-size:.85rem;">No quiz attempts yet</span>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ── Per-course progress cards ───────────────────────────────────── -->
+  <div class="section-title" style="margin-bottom:14px;">
+    <i class="fas fa-book-open" style="color:#2980b9;"></i> Course Breakdown
+  </div>
+
+  {% if course_data %}
+    {% for item in course_data %}
+    <div class="course-card">
+      <div class="cc-header">
+        <div>
+          <div class="cc-title">
+            <i class="fas fa-graduation-cap me-2" style="color:#2980b9;"></i>{{ item.course.title }}
+          </div>
+          <div class="cc-meta">
+            Instructor: {{ item.course.instructor.get_full_name|default:item.course.instructor.username }}
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          {% if item.has_certificate %}
+            <span class="badge-cert"><i class="fas fa-certificate"></i>Certificate Earned</span>
+          {% endif %}
+          {% if item.course_complete %}
+            <span class="badge-done"><i class="fas fa-check-circle"></i>Completed</span>
+          {% else %}
+            <span class="badge-pend"><i class="fas fa-hourglass-half"></i>In Progress</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="cc-body">
+
+        <!-- Lessons -->
+        <div class="pb-wrap">
+          <div class="pb-label">
+            <span><i class="fas fa-play-circle me-1" style="color:#2980b9;"></i>Lessons</span>
+            <span>{{ item.done_lessons }} / {{ item.total_lessons }}</span>
+          </div>
+          <div class="pb-track">
+            <div class="pb-fill blue" style="width:{{ item.lesson_pct }}%;"></div>
+          </div>
+          <div style="font-size:.72rem; color:#95a5a6; margin-top:4px;">{{ item.lesson_pct }}% complete</div>
+        </div>
+
+        <!-- Quizzes -->
+        <div class="pb-wrap">
+          <div class="pb-label">
+            <span><i class="fas fa-clipboard-check me-1" style="color:#8e44ad;"></i>Quizzes Passed</span>
+            <span>{{ item.quizzes_passed }} / {{ item.quiz_count }}</span>
+          </div>
+          <div class="pb-track">
+            <div class="pb-fill purple" style="width:{{ item.quiz_pct }}%;"></div>
+          </div>
+          <div style="font-size:.72rem; color:#95a5a6; margin-top:4px;">
+            {% if item.quiz_count %}{{ item.quiz_pct }}% passed{% else %}No quizzes yet{% endif %}
+          </div>
+        </div>
+
+        <!-- Assignments -->
+        <div class="pb-wrap">
+          <div class="pb-label">
+            <span><i class="fas fa-file-alt me-1" style="color:#27ae60;"></i>Assignments</span>
+            <span>{{ item.submitted_count }} / {{ item.assignment_count }}</span>
+          </div>
+          <div class="pb-track">
+            <div class="pb-fill green" style="width:{{ item.assign_pct }}%;"></div>
+          </div>
+          <div style="font-size:.72rem; color:#95a5a6; margin-top:4px;">
+            {% if item.assignment_count %}{{ item.assign_pct }}% submitted{% if item.graded_count %} · {{ item.graded_count }} graded{% endif %}{% else %}No assignments yet{% endif %}
+          </div>
+        </div>
+
+        <!-- Certificate / action -->
+        <div style="display:flex; flex-direction:column; justify-content:center; gap:8px;">
+          {% if item.has_certificate %}
+            <a href="{% url 'courses:generate_certificate' item.enrollment.pk %}"
+               class="btn btn-sm"
+               style="background:linear-gradient(135deg,#d4ac0d,#f39c12);color:#fff;border-radius:10px;font-weight:700;font-size:.8rem;">
+              <i class="fas fa-download me-1"></i>Download Certificate
+            </a>
+          {% elif item.course_complete %}
+            <a href="{% url 'courses:generate_certificate' item.enrollment.pk %}"
+               class="btn btn-sm"
+               style="background:linear-gradient(135deg,#1e8449,#27ae60);color:#fff;border-radius:10px;font-weight:700;font-size:.8rem;">
+              <i class="fas fa-certificate me-1"></i>Get Certificate
+            </a>
+          {% endif %}
+          <a href="{% url 'courses:course_detail' item.course.pk %}"
+             class="btn btn-sm btn-outline-primary"
+             style="border-radius:10px; font-size:.8rem; font-weight:600;">
+            <i class="fas fa-arrow-right me-1"></i>Go to Course
+          </a>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Pagination for course breakdown -->
+    {% if page_obj.has_other_pages %}
+    <div style="margin-top:24px; display:flex; justify-content:center; align-items:center;">
+      <nav style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center; align-items:center;">
+        
+        {% if page_obj.has_previous %}
+          <a href="?page=1" 
+             class="btn btn-sm btn-outline-secondary" 
+             style="padding:6px 12px; font-size:0.8rem; border-radius:6px;">
+            <i class="fas fa-angle-double-left"></i> First
+          </a>
+          <a href="?page={{ page_obj.previous_page_number }}" 
+             class="btn btn-sm btn-outline-secondary" 
+             style="padding:6px 12px; font-size:0.8rem; border-radius:6px;">
+            <i class="fas fa-angle-left"></i> Previous
+          </a>
+        {% endif %}
+
+        <!-- Page numbers -->
+        <div style="display:flex; gap:2px; margin:0 8px;">
+          {% for num in page_obj.paginator.page_range %}
+            {% if forloop.counter <= 5 or num == page_obj.number or forloop.counter > page_obj.paginator.num_pages|add:"-4" %}
+              {% if num == page_obj.number %}
+                <button style="padding:6px 10px; background:#2980b9; color:#fff; border:1px solid #2980b9; border-radius:4px; font-weight:600; font-size:0.8rem; cursor:default;">
+                  {{ num }}
+                </button>
+              {% else %}
+                <a href="?page={{ num }}" 
+                   style="padding:6px 10px; background:transparent; color:#2980b9; border:1px solid #bdc3c7; border-radius:4px; font-size:0.8rem; text-decoration:none; transition:all 0.2s;">
+                  {{ num }}
+                </a>
+              {% endif %}
+            {% elif forloop.counter == 6 or forloop.counter == page_obj.paginator.num_pages|add:"-3" %}
+              <span style="padding:6px 4px; color:#95a5a6;">...</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" 
+             class="btn btn-sm btn-outline-secondary" 
+             style="padding:6px 12px; font-size:0.8rem; border-radius:6px;">
+            Next <i class="fas fa-angle-right"></i>
+          </a>
+          <a href="?page={{ page_obj.paginator.num_pages }}" 
+             class="btn btn-sm btn-outline-secondary" 
+             style="padding:6px 12px; font-size:0.8rem; border-radius:6px;">
+            Last <i class="fas fa-angle-double-right"></i>
+          </a>
+        {% endif %}
+
+      </nav>
+    </div>
+
+    <!-- Page info -->
+    <div style="text-align:center; margin-top:12px; font-size:0.8rem; color:#7f8c8d;">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} 
+      ({{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }})
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-box">
+      <i class="fas fa-book" style="font-size:3rem; color:#bdc3c7; display:block; margin-bottom:14px;"></i>
+      <h5 style="color:#2c3e50; font-weight:700; margin-bottom:8px;">No approved courses yet</h5>
+      <p style="color:#7f8c8d; font-size:.88rem; margin-bottom:20px;">
+        Enroll in a course and get your payment approved to start tracking progress.
+      </p>
+      <a href="{% url 'courses:course_list' %}" class="btn"
+         style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:10px;padding:10px 24px;font-weight:700;">
+        <i class="fas fa-compass me-2"></i>Browse Courses
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- ── Upcoming payment deadlines ──────────────────────────────────── -->
+  {% if pending_deadlines %}
+  <div style="margin-top:32px;">
+    <div class="section-title" style="margin-bottom:14px;">
+      <i class="fas fa-calendar-exclamation" style="color:#e67e22;"></i> Upcoming Payment Deadlines
+    </div>
+    <div class="chart-box" style="padding:14px 22px;">
+      <ul class="deadline-list">
+        {% for enrollment in pending_deadlines %}
+        <li class="deadline-item">
+          <i class="fas fa-book" style="color:#2980b9; font-size:1rem; flex-shrink:0;"></i>
+          <span class="dl-course">{{ enrollment.course.title }}</span>
+          <span class="dl-date" style="color:#5d6d7e;">
+            <i class="fas fa-calendar me-1"></i>{{ enrollment.course.payment_deadline|date:"d M Y" }}
+          </span>
+          {% with enrollment.course.days_until_deadline as days %}
+            {% if enrollment.course.is_deadline_passed %}
+              <span class="dl-badge red"><i class="fas fa-exclamation-triangle me-1"></i>Overdue</span>
+            {% elif enrollment.course.is_deadline_soon %}
+              <span class="dl-badge orange"><i class="fas fa-clock me-1"></i>{{ days }} day{{ days|pluralize }} left</span>
+            {% else %}
+              <span class="dl-badge blue"><i class="fas fa-hourglass me-1"></i>{{ days }} day{{ days|pluralize }} left</span>
+            {% endif %}
+          {% endwith %}
+          <a href="{% url 'payments:upload_receipt' enrollment.pk %}"
+             class="btn btn-sm"
+             style="background:#f39c12;color:#fff;border-radius:8px;padding:5px 12px;font-size:.75rem;font-weight:700;white-space:nowrap;">
+            <i class="fas fa-upload me-1"></i>Upload Receipt
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- ── Chart.js ─────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Global chart references to prevent duplicates
+let doughnutChartInstance = null;
+let barChartInstance = null;
+
+// Function to render charts after DOM is ready
+function renderProgressCharts() {
+  try {
+    // Destroy existing charts if they exist
+    if(doughnutChartInstance) {
+      doughnutChartInstance.destroy();
+      doughnutChartInstance = null;
+    }
+    if(barChartInstance) {
+      barChartInstance.destroy();
+      barChartInstance = null;
+    }
+  } catch(e) {
+    console.warn('Error destroying previous charts:', e);
+    doughnutChartInstance = null;
+    barChartInstance = null;
+  }
+  
+  // Render Doughnut chart
+  const doughnutCtx = document.getElementById('doughnutChart');
+  if(doughnutCtx) {
+    const pct = {{ overall_lesson_pct }};
+    const rem = 100 - pct;
+    
+    try {
+      doughnutChartInstance = new Chart(doughnutCtx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [pct, rem],
+            backgroundColor: ['#2980b9', '#dce0e3'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '72%',
+          plugins: { 
+            legend: { display: false }, 
+            tooltip: { enabled: false } 
+          },
+          animation: { duration: 900, easing: 'easeInOutQuart' }
+        }
+      });
+    } catch(e) {
+      console.error('Error rendering doughnut chart:', e);
+    }
+  }
+
+  // Render Bar chart
+  const barCtx = document.getElementById('quizBarChart');
+  if(barCtx) {
+    const labels = {{ chart_labels|safe }};
+    const scores = {{ chart_scores|safe }};
+    
+    if(labels && scores && labels.length > 0) {
+      // Make labels unique by adding index and limiting length
+      const uniqueLabels = labels.map((label, idx) => {
+        const truncated = label.substring(0, 15);
+        return `${idx + 1}. ${truncated}`;
+      });
+      
+      const colors = scores.map(s => s >= 50 ? 'rgba(39,174,96,.75)' : 'rgba(192,57,43,.65)');
+      
+      try {
+        barChartInstance = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: uniqueLabels,
+            datasets: [{
+              label: 'Score (%)',
+              data: scores,
+              backgroundColor: colors,
+              borderRadius: 6,
+              borderSkipped: false,
+            }]
+          },
+          options: {
+            indexAxis: 'x',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: (context) => {
+                    // Extract original label without the number prefix
+                    const label = context[0].label;
+                    const originalIdx = parseInt(label) - 1;
+                    return labels[originalIdx] || label;
+                  },
+                  label: ctx => `${ctx.parsed.y.toFixed(1)}%`
+                }
+              }
+            },
+            scales: {
+              y: {
+                min: 0, max: 100,
+                ticks: { callback: v => v + '%', font: { size: 11 } },
+                grid: { color: '#f0f4f8' }
+              },
+              x: {
+                ticks: { font: { size: 9 }, maxRotation: 45 },
+                grid: { display: false }
+              }
+            },
+            animation: { duration: 800 }
+          }
+        });
+      } catch(e) {
+        console.error('Error rendering bar chart:', e);
+      }
+    }
+  }
+}
+
+// Initialize charts when DOM is ready
+if(document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(renderProgressCharts, 100);
+  });
+} else {
+  setTimeout(renderProgressCharts, 100);
+}
+
+// Reinitialize charts on various navigation events
+window.addEventListener('pageshow', () => {
+  setTimeout(renderProgressCharts, 100);
+});
+
+window.addEventListener('visibilitychange', () => {
+  if(!document.hidden) {
+    setTimeout(renderProgressCharts, 100);
+  }
+});
+
+// Also handle when user navigates back to page
+window.addEventListener('focus', () => {
+  setTimeout(renderProgressCharts, 100);
+});
+
+// Listen for page restore/unfreeze
+document.addEventListener('resume', () => {
+  setTimeout(renderProgressCharts, 100);
+});
+</script>
+{% endblock %}

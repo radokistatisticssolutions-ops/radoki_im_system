@@ -1,0 +1,298 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.notif-item {
+  display:flex; align-items:flex-start; gap:14px;
+  padding:16px 20px; border-bottom:1px solid #edf2f7;
+  transition:background .15s;
+  text-decoration:none; color:inherit;
+  position:relative;
+}
+.notif-item:hover { background:#f8fbff; }
+.notif-item.unread { background:#eff8ff; }
+.notif-item.unread::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:4px; border-radius:0 4px 4px 0;
+  background:linear-gradient(180deg,#1a5276,#2980b9);
+}
+.notif-icon-wrap {
+  flex-shrink:0; width:44px; height:44px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem;
+}
+.notif-title { font-weight:600; color:#2c3e50; font-size:.9rem; }
+.notif-msg   { color:#636e72; font-size:.82rem; margin-top:2px; }
+.notif-time  { color:#b2bec3; font-size:.75rem; margin-top:4px; white-space:nowrap; }
+.notif-actions { display:flex; gap:6px; margin-left:auto; flex-shrink:0; align-self:flex-start; opacity:0; transition:opacity .15s; }
+.notif-item:hover .notif-actions { opacity:1; }
+.btn-notif-action {
+  border:none; background:none; padding:4px 8px; border-radius:6px;
+  font-size:.78rem; cursor:pointer; transition:background .15s;
+}
+.btn-notif-action.read { color:#2980b9; }
+.btn-notif-action.read:hover { background:#d6eaf8; }
+.btn-notif-action.del  { color:#e74c3c; }
+.btn-notif-action.del:hover  { background:#fadbd8; }
+@media (max-width: 767.98px) {
+  .notif-actions { opacity: 1; }
+  .notif-item { flex-wrap: wrap; }
+  .notif-title { font-size: .85rem; }
+}
+@media (max-width: 575.98px) {
+  .container-fluid { padding-left: 10px; padding-right: 10px; }
+}
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-7">
+      <h1 class="h3 mb-0" style="color:#2c3e50;">
+        <i class="fas fa-bell me-2" style="color:#2980b9;"></i>Notifications
+      </h1>
+      <p class="text-muted mt-1">
+        {% if unread_total %}
+          You have <strong>{{ unread_total }}</strong> unread notification{{ unread_total|pluralize }}.
+        {% else %}
+          All caught up!
+        {% endif %}
+      </p>
+    </div>
+    <div class="col-md-5 text-end">
+      <div class="d-flex gap-2 justify-content-end align-items-center">
+        {% if unread_total %}
+        <button id="mark-all-btn" class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-weight:600;"
+                onclick="markAllRead()">
+          <i class="fas fa-check-double me-1"></i> Mark All as Read
+        </button>
+        {% endif %}
+        <div class="form-check form-switch" style="margin-left: 10px;">
+          <input class="form-check-input" type="checkbox" id="reminderToggle" checked style="cursor: pointer;">
+          <label class="form-check-label" for="reminderToggle" style="cursor: pointer; font-size: 0.9rem; color: #636e72;">
+            <i class="fas fa-volume-up"></i> Sound Alerts
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label mb-1 small fw-semibold text-muted">Category</label>
+          <select name="type" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All Categories</option>
+            {% for val, label in TYPES %}
+              <option value="{{ val }}" {% if filter_type == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1 small fw-semibold text-muted">Status</label>
+          <select name="read" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All</option>
+            <option value="unread" {% if filter_read == 'unread' %}selected{% endif %}>Unread only</option>
+            <option value="read"   {% if filter_read == 'read'   %}selected{% endif %}>Read only</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-sm btn-primary w-100" style="border-radius:8px;">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+          <a href="{% url 'notifications:list' %}" class="btn btn-sm btn-outline-secondary w-100" style="border-radius:8px;">
+            <i class="fas fa-times"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notifications List -->
+  <div class="card border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
+    {% if page_obj.object_list %}
+
+      <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom"
+           style="background:#fff;">
+        <span class="text-muted" style="font-size:.85rem;">
+          Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </span>
+      </div>
+
+      {% for notif in page_obj %}
+      <div class="notif-item {% if not notif.is_read %}unread{% endif %}" id="notif-{{ notif.id }}">
+
+        <!-- Icon -->
+        <div class="notif-icon-wrap" style="background:{{ notif.bg }}; color:{{ notif.colour }};">
+          <i class="fas {{ notif.icon }}"></i>
+        </div>
+
+        <!-- Body -->
+        <div style="flex:1; min-width:0;">
+          <div class="notif-title">{{ notif.title }}</div>
+          {% if notif.message %}
+          <div class="notif-msg">{{ notif.message }}</div>
+          {% endif %}
+          <div class="notif-time">
+            <i class="fas fa-clock me-1"></i>{{ notif.created_at|date:"d M Y, H:i" }}
+            {% if not notif.is_read %}
+            &nbsp;<span class="badge" style="background:#2980b9;color:#fff;font-size:.7rem;padding:2px 6px;border-radius:10px;">New</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="notif-actions">
+          {% if notif.link %}
+          <a href="{{ notif.link }}" class="btn-notif-action read" title="Open"
+             onclick="markRead({{ notif.id }})">
+            <i class="fas fa-external-link-alt"></i>
+          </a>
+          {% endif %}
+          {% if not notif.is_read %}
+          <button class="btn-notif-action read" title="Mark as read"
+                  onclick="markRead({{ notif.id }})">
+            <i class="fas fa-check"></i>
+          </button>
+          {% endif %}
+          <button class="btn-notif-action del" title="Delete"
+                  onclick="deleteNotif({{ notif.id }})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+
+      </div>
+      {% endfor %}
+
+      <!-- Pagination -->
+      {% if paginator.num_pages > 1 %}
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 py-3 px-4 border-top" style="background:#fff;">
+        <small class="text-muted">
+          Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+          of {{ filtered_count }} notification{{ filtered_count|pluralize }}
+        </small>
+        <nav aria-label="Notifications pagination">
+          <ul class="pagination pagination-sm mb-0 flex-wrap">
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+              {% if page_obj.has_previous %}
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}&type={{ filter_type }}&read={{ filter_read }}"><i class="fas fa-chevron-left"></i></a>
+              {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+            </li>
+            {% for item in page_window %}
+              {% if not item %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+              {% elif item == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ item }}</span></li>
+              {% else %}
+              <li class="page-item"><a class="page-link" href="?page={{ item }}&type={{ filter_type }}&read={{ filter_read }}">{{ item }}</a></li>
+              {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+              {% if page_obj.has_next %}
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}&type={{ filter_type }}&read={{ filter_read }}"><i class="fas fa-chevron-right"></i></a>
+              {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+            </li>
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-bell-slash fa-3x mb-3" style="color:#aed6f1;"></i>
+      <p class="text-muted mb-0 fw-semibold">No notifications found.</p>
+      <p class="text-muted" style="font-size:.85rem;">
+        {% if filter_type or filter_read %}You can <a href="{% url 'notifications:list' %}">clear the filters</a>.{% else %}You're all caught up!{% endif %}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+const CSRF = "{{ csrf_token }}";
+
+async function markRead(id) {
+  const el = document.getElementById('notif-' + id);
+  await fetch(`/notifications/mark-read/${id}/`, {
+    method: 'POST', headers: { 'X-CSRFToken': CSRF }
+  });
+  if (el) {
+    el.classList.remove('unread');
+    el.style.transition = 'opacity .4s';
+  }
+  refreshBadge();
+}
+
+async function deleteNotif(id) {
+  const el = document.getElementById('notif-' + id);
+  await fetch(`/notifications/delete/${id}/`, {
+    method: 'POST', headers: { 'X-CSRFToken': CSRF }
+  });
+  if (el) {
+    el.style.transition = 'opacity .3s, max-height .3s';
+    el.style.opacity = '0';
+    el.style.overflow = 'hidden';
+    setTimeout(() => { el.style.maxHeight = '0'; el.style.padding = '0'; }, 300);
+    setTimeout(() => el.remove(), 600);
+  }
+}
+
+async function markAllRead() {
+  await fetch('/notifications/mark-all-read/', {
+    method: 'POST', headers: { 'X-CSRFToken': CSRF }
+  });
+  document.querySelectorAll('.notif-item.unread').forEach(el => {
+    el.classList.remove('unread');
+  });
+  document.querySelectorAll('.badge[style*="2980b9"]').forEach(b => b.remove());
+  const btn = document.getElementById('mark-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'All read'; }
+  refreshBadge();
+}
+
+async function refreshBadge() {
+  try {
+    const res  = await fetch('/notifications/api/count/');
+    const data = await res.json();
+    const badge = document.getElementById('notif-badge');
+    if (badge) {
+      badge.textContent = data.unread || '';
+      badge.style.display = data.unread ? 'flex' : 'none';
+    }
+  } catch {}
+}
+
+// Handle reminder toggle — persists preference in localStorage so it survives
+// page reloads and is read by notification-reminders.js on every page.
+document.addEventListener('DOMContentLoaded', function() {
+  const reminderToggle = document.getElementById('reminderToggle');
+  if (!reminderToggle) return;
+
+  // Restore the user's saved preference (default is enabled).
+  if (localStorage.getItem('soundAlertsEnabled') === 'false') {
+    reminderToggle.checked = false;
+  }
+
+  reminderToggle.addEventListener('change', function() {
+    const enabled = this.checked;
+    localStorage.setItem('soundAlertsEnabled', String(enabled));
+    // window.notificationReminder is guaranteed to exist at this point because
+    // notification-reminders.js (loaded with defer) sets it synchronously before
+    // DOMContentLoaded fires.
+    if (window.notificationReminder) {
+      if (enabled) {
+        window.notificationReminder.resume();
+      } else {
+        window.notificationReminder.stop();
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

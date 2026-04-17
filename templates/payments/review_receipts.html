@@ -1,0 +1,522 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  body.authenticated { background: #f0f4f8 !important; }
+
+  /* Banner */
+  .receipt-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(41, 128, 185, 0.2);
+  }
+  .receipt-banner h1 {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .receipt-banner p {
+    color: rgba(255,255,255,.78);
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+  }
+
+  /* Stat cards */
+  .stat-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 900px)  { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px)  { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    border: 1px solid #e8edf2;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .stat-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .stat-icon-blue   { background: #dbeafe; color: #1d4ed8; }
+  .stat-icon-green  { background: #d1fae5; color: #065f46; }
+  .stat-icon-yellow { background: #fef3c7; color: #92400e; }
+  .stat-icon-red    { background: #fee2e2; color: #991b1b; }
+  .stat-icon-purple { background: #ede9fe; color: #4c1d95; }
+  .stat-label { font-size: 0.75rem; color: #7f8c8d; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .stat-value { font-size: 1.5rem; font-weight: 800; color: #1a1a2e; line-height: 1.1; }
+
+  /* Filter card */
+  .filter-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    border: 1px solid #e8edf2;
+  }
+  .filter-title {
+    font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+    color: #7f8c8d; letter-spacing: .08em; margin-bottom: 12px;
+  }
+  .filter-row {
+    display: grid;
+    grid-template-columns: 1fr 180px 120px 120px;
+    gap: 10px;
+    align-items: end;
+  }
+  @media (max-width: 900px) { .filter-row { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .filter-row { grid-template-columns: 1fr; } }
+  .filter-row .form-control,
+  .filter-row .form-select {
+    border-radius: 8px;
+    border: 1px solid #d6eaf8;
+    font-size: 0.88rem;
+  }
+  .filter-row .form-control:focus,
+  .filter-row .form-select:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 0 3px rgba(41,128,185,.1);
+  }
+  .btn-filter {
+    background: #2980b9; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 14px; font-weight: 600; font-size: 0.88rem;
+    cursor: pointer; transition: background .2s; white-space: nowrap;
+  }
+  .btn-filter:hover { background: #1a5276; }
+  .btn-clear {
+    background: #ecf0f1; color: #7f8c8d;
+    border: none; border-radius: 8px;
+    padding: 8px 14px; font-weight: 600; font-size: 0.88rem;
+    cursor: pointer; transition: background .2s; white-space: nowrap;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .btn-clear:hover { background: #d5dbdb; color: #5d6d7e; }
+
+  /* Table card */
+  .receipts-table-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    border: 1px solid #e8edf2;
+    margin-bottom: 20px;
+  }
+  .table-info-bar {
+    background: #f7fafc;
+    border-bottom: 1px solid #e8edf2;
+    padding: 10px 16px;
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .table { margin: 0; border-collapse: collapse; }
+  .table thead th {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 13px 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    white-space: nowrap;
+    border: none;
+  }
+  .table tbody tr { border-bottom: 1px solid #f0f4f8; transition: background .12s; }
+  .table tbody tr:last-child { border-bottom: none; }
+  .table tbody tr:hover { background: #f8fbff; }
+  .table td { padding: 13px 14px; vertical-align: middle; font-size: 0.875rem; }
+
+  /* Student cell */
+  .student-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #1d4ed8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .student-name { font-weight: 600; color: #1e293b; font-size: 0.875rem; }
+  .student-sub  { font-size: 0.78rem; color: #94a3b8; }
+
+  /* Status badges */
+  .status-badge {
+    display: inline-block;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .status-approved { background: #d1fae5; color: #065f46; }
+  .status-pending  { background: #fef3c7; color: #92400e; }
+  .status-rejected { background: #fee2e2; color: #991b1b; }
+
+  /* Action buttons */
+  .action-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 11px; border-radius: 6px;
+    font-size: 0.76rem; font-weight: 600;
+    text-decoration: none; border: none; cursor: pointer;
+    transition: all .18s; white-space: nowrap;
+  }
+  .action-approve { background: #d1fae5; color: #065f46; }
+  .action-approve:hover { background: #a7f3d0; color: #065f46; }
+  .action-reject  { background: #fee2e2; color: #991b1b; }
+  .action-reject:hover  { background: #fecaca; color: #991b1b; }
+  .action-view    { background: #dbeafe; color: #1d4ed8; }
+  .action-view:hover    { background: #bfdbfe; color: #1d4ed8; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state i { font-size: 3rem; color: #d6eaf8; margin-bottom: 12px; display: block; }
+  .empty-state p { color: #7f8c8d; margin: 6px 0; }
+
+  /* Mobile card transform */
+  @media (max-width: 767.98px) {
+    .table, .table tbody, .table tr, .table td { display: block; width: 100%; }
+    .table thead { display: none; }
+    .table tbody tr {
+      border: 1px solid #e8edf2;
+      border-radius: 10px;
+      margin: 10px 12px;
+      width: calc(100% - 24px);
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      padding: 4px 0;
+    }
+    .table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 14px;
+      border-bottom: 1px solid #f4f6f8;
+      font-size: 0.84rem;
+      gap: 8px;
+    }
+    .table td:last-child { border-bottom: none; }
+    .table td::before {
+      content: attr(data-label);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+    .rcp-cell { min-width: 0; flex: 1; text-align: right; }
+    .d-none.d-md-table-cell { display: flex !important; }
+  }
+</style>
+
+<div class="container-fluid py-4">
+
+  <!-- Banner -->
+  <div class="receipt-banner">
+    <h1><i class="fas fa-receipt"></i> Review Payment Receipts</h1>
+    <p>Manage and approve student payment receipts for your courses</p>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-blue"><i class="fas fa-file-invoice"></i></div>
+      <div>
+        <div class="stat-label">Total</div>
+        <div class="stat-value">{{ total_count }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-green"><i class="fas fa-check-circle"></i></div>
+      <div>
+        <div class="stat-label">Approved</div>
+        <div class="stat-value">{{ approved_count }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-yellow"><i class="fas fa-hourglass-half"></i></div>
+      <div>
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">{{ pending_count }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-red"><i class="fas fa-times-circle"></i></div>
+      <div>
+        <div class="stat-label">Rejected</div>
+        <div class="stat-value">{{ rejected_count }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-purple"><i class="fas fa-chart-pie"></i></div>
+      <div>
+        <div class="stat-label">Approval Rate</div>
+        <div class="stat-value">{{ approval_percentage }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-card">
+    <div class="filter-title"><i class="fas fa-filter me-1"></i> Search & Filter</div>
+    <form method="get" class="filter-row">
+      <input type="text" name="search" class="form-control"
+             placeholder="Search by student name or username…"
+             value="{{ search_query }}">
+      <select name="status" class="form-select">
+        <option value="">All Statuses</option>
+        <option value="pending"  {% if status == 'pending'  %}selected{% endif %}>Pending</option>
+        <option value="approved" {% if status == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
+      </select>
+      <button type="submit" class="btn-filter"><i class="fas fa-search me-1"></i> Search</button>
+      <a href="{% url 'payments:review_receipts' %}" class="btn-clear"><i class="fas fa-times me-1"></i> Clear</a>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="receipts-table-card">
+    {% if page_obj.object_list %}
+    <div class="table-info-bar">
+      <span>
+        Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+        of {{ filtered_count }} receipt{{ filtered_count|pluralize }}
+      </span>
+      {% if search_query or status %}
+      <span class="badge" style="background:#e8edf2; color:#475569; font-weight:600;">
+        Filtered from {{ total_count }} total
+      </span>
+      {% endif %}
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Course</th>
+            <th class="d-none d-md-table-cell">Date Uploaded</th>
+            <th>Receipt</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in page_obj %}
+          <tr>
+            <!-- Student -->
+            <td data-label="Student">
+              <div class="rcp-cell">
+                <div class="d-flex align-items-center gap-2 justify-content-end">
+                  {% if payment.enrollment.student.profile_picture %}
+                    <img src="{{ payment.enrollment.student.profile_picture.url }}"
+                         alt="" class="student-avatar"
+                         style="object-fit:cover; border-radius:50%;">
+                  {% else %}
+                    <div class="student-avatar"><i class="fas fa-user"></i></div>
+                  {% endif %}
+                  <div>
+                    <div class="student-name">{{ payment.enrollment.student.get_full_name|default:payment.enrollment.student.username }}</div>
+                    <div class="student-sub">@{{ payment.enrollment.student.username }}</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Course -->
+            <td data-label="Course">
+              <div class="rcp-cell">
+                <div class="fw-600" style="color:#1e293b; font-weight:600;">{{ payment.enrollment.course.title }}</div>
+                <div class="student-sub"><i class="fas fa-chalkboard-teacher me-1"></i>{{ payment.enrollment.course.instructor.get_full_name|default:payment.enrollment.course.instructor.username }}</div>
+              </div>
+            </td>
+
+            <!-- Date -->
+            <td data-label="Uploaded" class="d-none d-md-table-cell">
+              <div class="rcp-cell">
+                <div style="color:#1e293b; font-weight:500;">{{ payment.uploaded_at|date:"M d, Y" }}</div>
+                <div class="student-sub">{{ payment.uploaded_at|time:"g:i A" }}</div>
+              </div>
+            </td>
+
+            <!-- Receipt -->
+            <td data-label="Receipt">
+              <div class="rcp-cell">
+                <a href="{{ payment.receipt.url }}" target="_blank" class="action-btn action-view">
+                  <i class="fas fa-eye"></i> View
+                </a>
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td data-label="Status">
+              <div class="rcp-cell">
+                {% if payment.approved %}
+                  <span class="status-badge status-approved"><i class="fas fa-check me-1"></i>Approved</span>
+                {% elif payment.rejected %}
+                  <span class="status-badge status-rejected"><i class="fas fa-times me-1"></i>Rejected</span>
+                  {% if payment.rejection_reason %}
+                    <div class="student-sub mt-1" title="{{ payment.rejection_reason }}" style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                      {{ payment.rejection_reason|truncatechars:40 }}
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <span class="status-badge status-pending"><i class="fas fa-hourglass-half me-1"></i>Pending</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td data-label="Actions">
+              <div class="rcp-cell">
+                {% if payment.approved %}
+                  <span class="student-sub">Approved {{ payment.uploaded_at|date:"M d, Y" }}</span>
+                {% else %}
+                  <div class="d-flex gap-2 justify-content-end flex-wrap">
+                    <a href="{% url 'payments:approve_receipt' payment.id %}" class="action-btn action-approve">
+                      <i class="fas fa-check"></i> Approve
+                    </a>
+                    {% if not payment.rejected %}
+                    <button type="button" class="action-btn action-reject"
+                            data-bs-toggle="modal" data-bs-target="#rejectModal{{ payment.id }}">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+
+          <!-- Reject Modal (only for pending — not already approved or rejected) -->
+          {% if not payment.approved and not payment.rejected %}
+          <div class="modal fade" id="rejectModal{{ payment.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content border-0 rounded-3 shadow">
+                <div class="modal-header border-0" style="background:#fee2e2;">
+                  <h5 class="modal-title fw-700" style="color:#991b1b;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Rejection
+                  </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <p class="mb-2">Are you sure you want to reject this receipt?</p>
+                  <p class="text-muted small mb-3">
+                    <strong>Student:</strong> {{ payment.enrollment.student.get_full_name|default:payment.enrollment.student.username }}<br>
+                    <strong>Course:</strong> {{ payment.enrollment.course.title }}
+                  </p>
+                  <form method="post" action="{% url 'payments:reject_receipt' payment.id %}" id="rejectForm{{ payment.id }}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                      <label for="rejectionReason{{ payment.id }}" class="form-label fw-semibold small">
+                        Rejection Reason <span class="text-danger">*</span>
+                      </label>
+                      <textarea class="form-control form-control-sm"
+                                id="rejectionReason{{ payment.id }}"
+                                name="rejection_reason"
+                                rows="3"
+                                placeholder="e.g., Receipt is blurry, wrong amount, missing details…"
+                                required
+                                style="border-color:#fca5a5; border-radius:8px;"></textarea>
+                      <div class="form-text">This feedback will be sent to the student.</div>
+                    </div>
+                  </form>
+                </div>
+                <div class="modal-footer border-0">
+                  <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" form="rejectForm{{ payment.id }}" class="btn btn-sm btn-danger fw-semibold">
+                    <i class="fas fa-times me-1"></i>Yes, Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <p style="font-size:1.05rem; font-weight:600; color:#2c3e50;">No receipts found</p>
+      <p>
+        {% if search_query or status %}
+          No receipts match your filters. Try adjusting your search.
+        {% else %}
+          Students haven't uploaded any payment receipts yet.
+        {% endif %}
+      </p>
+      {% if search_query or status %}
+      <a href="{% url 'payments:review_receipts' %}" class="btn btn-primary btn-sm mt-3"
+         style="border-radius:8px; font-weight:600;">
+        <i class="fas fa-redo me-1"></i> Clear Filters
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Pagination -->
+  {% if paginator.num_pages > 1 %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2 px-1">
+    <small class="text-muted">
+      Page {{ page_obj.number }} of {{ paginator.num_pages }}
+    </small>
+    <nav aria-label="Receipts pagination">
+      <ul class="pagination pagination-sm mb-0 flex-wrap">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+          {% if page_obj.has_previous %}
+          <a class="page-link"
+             href="?search={{ search_query|urlencode }}&status={{ status }}&page={{ page_obj.previous_page_number }}"
+             aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+          {% else %}
+          <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+          {% endif %}
+        </li>
+        {% for item in page_window %}
+          {% if not item %}
+          <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% elif item == page_obj.number %}
+          <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+          {% else %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?search={{ search_query|urlencode }}&status={{ status }}&page={{ item }}">{{ item }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+          {% if page_obj.has_next %}
+          <a class="page-link"
+             href="?search={{ search_query|urlencode }}&status={{ status }}&page={{ page_obj.next_page_number }}"
+             aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+          {% else %}
+          <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

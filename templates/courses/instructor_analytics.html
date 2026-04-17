@@ -1,0 +1,403 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────── */
+.ia-wrap    { max-width:1200px; margin:28px auto; padding:0 16px 80px; }
+.ia-header  { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
+.ia-header h1 { font-size:1.55rem; font-weight:800; color:#2c3e50; margin:0; }
+
+/* ── Stat strip ──────────────────────────────────────────────────────── */
+.ia-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px; margin-bottom:30px; }
+.ia-stat  { background:#fff; border-radius:16px; padding:20px 16px; text-align:center;
+            box-shadow:0 2px 12px rgba(0,0,0,.06); position:relative; overflow:hidden; }
+.ia-stat::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
+.ia-stat.blue::before   { background:#2980b9; }
+.ia-stat.green::before  { background:#27ae60; }
+.ia-stat.gold::before   { background:#f39c12; }
+.ia-stat.purple::before { background:#8e44ad; }
+.ia-stat.red::before    { background:#e74c3c; }
+.ia-stat.orange::before { background:#e67e22; }
+.ia-val { font-size:2rem; font-weight:800; line-height:1; }
+.ia-lbl { font-size:.7rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:.05em; margin-top:5px; }
+.ia-sub { font-size:.75rem; color:#95a5a6; margin-top:2px; }
+
+/* ── Section titles ──────────────────────────────────────────────────── */
+.sec-title { font-size:.95rem; font-weight:800; color:#2c3e50; margin:0 0 14px;
+             display:flex; align-items:center; gap:8px; }
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.ia-card { background:#fff; border-radius:16px; padding:22px; margin-bottom:22px;
+           box-shadow:0 2px 12px rgba(0,0,0,.06); }
+
+/* ── Two-col charts row ──────────────────────────────────────────────── */
+.charts-2col { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:22px; }
+@media(max-width:720px){ .charts-2col { grid-template-columns:1fr; } }
+
+/* ── Student table ───────────────────────────────────────────────────── */
+.stu-table { width:100%; border-collapse:collapse; font-size:.84rem; }
+.stu-table th { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em;
+                color:#95a5a6; padding:10px 14px; background:#fafcff;
+                border-bottom:2px solid #eaf0f8; white-space:nowrap; }
+.stu-table td { padding:10px 14px; border-bottom:1px solid #f0f4f8; vertical-align:middle; }
+.stu-table tr:last-child td { border-bottom:none; }
+.stu-table tr:hover td { background:#f8fbff; }
+
+.tag { display:inline-flex; align-items:center; gap:4px; border-radius:20px;
+       padding:2px 9px; font-size:.7rem; font-weight:700; white-space:nowrap; }
+.tag-active    { background:#d5f5e3; color:#1e8449; }
+.tag-struggle  { background:#fdebd0; color:#d35400; }
+.tag-risk      { background:#fadbd8; color:#c0392b; }
+.tag-ok        { background:#eaf0f6; color:#7f8c8d; }
+
+/* mini progress bar */
+.mini-pb { background:#eaf0f6; border-radius:999px; height:8px; min-width:80px; overflow:hidden; }
+.mini-fill { height:100%; border-radius:999px; }
+.mini-fill.blue { background:#2980b9; }
+.mini-fill.green { background:#27ae60; }
+.mini-fill.red  { background:#e74c3c; }
+
+/* ── Quiz stats ──────────────────────────────────────────────────────── */
+.quiz-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+            padding:12px 0; border-bottom:1px solid #f0f4f8; }
+.quiz-row:last-child { border-bottom:none; }
+.quiz-name { flex:1; font-weight:600; color:#2c3e50; font-size:.88rem; }
+
+/* ── Resource rows ───────────────────────────────────────────────────── */
+.res-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f0f4f8; flex-wrap:wrap; }
+.res-row:last-child { border-bottom:none; }
+.res-name { flex:1; font-size:.88rem; font-weight:600; color:#2c3e50; }
+.dl-count { font-size:.82rem; color:#7f8c8d; }
+</style>
+
+<div class="ia-wrap">
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <div class="ia-header">
+    <div>
+      <nav aria-label="breadcrumb" style="margin-bottom:5px;">
+        <ol class="breadcrumb" style="font-size:.78rem; margin:0;">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'courses:instructor_courses' %}">My Courses</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.pk %}">{{ course.title|truncatechars:25 }}</a></li>
+          <li class="breadcrumb-item active">Analytics</li>
+        </ol>
+      </nav>
+      <h1><i class="fas fa-chart-line me-2" style="color:#2980b9;"></i>Course Analytics</h1>
+      <div style="font-size:.82rem; color:#7f8c8d; margin-top:3px;">{{ course.title }}</div>
+    </div>
+    <button type="button" class="btn btn-outline-primary" style="border-radius:10px; font-size:.82rem; font-weight:600; padding:9px 18px;" onclick="history.back()">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </button>
+  </div>
+
+  <!-- ── Summary strip ───────────────────────────────────────────────── -->
+  <div class="ia-strip">
+    <div class="ia-stat blue">
+      <div class="ia-val" style="color:#2980b9;">{{ total_approved }}</div>
+      <div class="ia-lbl">Enrolled Students</div>
+      <div class="ia-sub">approved</div>
+    </div>
+    <div class="ia-stat green">
+      <div class="ia-val" style="color:#27ae60;">{{ completion_rate }}%</div>
+      <div class="ia-lbl">Completion Rate</div>
+      <div class="ia-sub">{{ total_completed }} completed</div>
+    </div>
+    <div class="ia-stat gold">
+      <div class="ia-val" style="color:#d4ac0d;">{{ total_revenue|floatformat:0 }}</div>
+      <div class="ia-lbl">Revenue (TZS)</div>
+      <div class="ia-sub">approved × price</div>
+    </div>
+    <div class="ia-stat purple">
+      <div class="ia-val" style="color:#8e44ad;">{{ active_count }}</div>
+      <div class="ia-lbl">Active (7 days)</div>
+      <div class="ia-sub">of {{ total_approved }}</div>
+    </div>
+    <div class="ia-stat orange">
+      <div class="ia-val" style="color:#e67e22;">{{ struggling_count }}</div>
+      <div class="ia-lbl">Struggling</div>
+      <div class="ia-sub">&lt;30% done</div>
+    </div>
+    <div class="ia-stat red">
+      <div class="ia-val" style="color:#e74c3c;">{{ at_risk_count }}</div>
+      <div class="ia-lbl">At Risk</div>
+      <div class="ia-sub">never accessed</div>
+    </div>
+  </div>
+
+  <!-- ── Charts row 1: Enrollment trend + Revenue ────────────────────── -->
+  <div class="charts-2col">
+    <div class="ia-card" style="padding:20px;">
+      <div class="sec-title"><i class="fas fa-users" style="color:#2980b9;"></i>Enrollment Trend (12 months)</div>
+      {% if trend_labels %}
+        <canvas id="trendChart" height="180"></canvas>
+      {% else %}
+        <div style="height:180px; display:flex; align-items:center; justify-content:center; color:#bdc3c7; flex-direction:column; gap:8px;">
+          <i class="fas fa-chart-line" style="font-size:2rem;"></i>
+          <span style="font-size:.82rem;">No enrollment data yet</span>
+        </div>
+      {% endif %}
+    </div>
+    <div class="ia-card" style="padding:20px;">
+      <div class="sec-title"><i class="fas fa-money-bill-wave" style="color:#27ae60;"></i>Revenue Trend (12 months)</div>
+      {% if revenue_labels %}
+        <canvas id="revenueChart" height="180"></canvas>
+      {% else %}
+        <div style="height:180px; display:flex; align-items:center; justify-content:center; color:#bdc3c7; flex-direction:column; gap:8px;">
+          <i class="fas fa-coins" style="font-size:2rem;"></i>
+          <span style="font-size:.82rem;">No revenue data yet</span>
+        </div>
+      {% endif %}
+      {% if payment_methods %}
+      <div style="margin-top:12px; border-top:1px solid #f0f4f8; padding-top:10px;">
+        <div style="font-size:.72rem; color:#7f8c8d; margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em;">Payment Methods</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          {% for pm in payment_methods %}
+          <span style="background:#eaf0f6; color:#2c3e50; border-radius:20px; padding:3px 10px; font-size:.75rem; font-weight:600;">{{ pm.get_method_type_display }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Charts row 2: Completion doughnut + Quiz pass rates ─────────── -->
+  <div class="charts-2col">
+    <div class="ia-card" style="padding:20px; display:flex; flex-direction:column; align-items:center;">
+      <div class="sec-title" style="align-self:flex-start;"><i class="fas fa-check-circle" style="color:#27ae60;"></i>Completion Overview</div>
+      <div style="position:relative; width:160px; height:160px; margin:10px auto;">
+        <canvas id="completionDoughnut" width="160" height="160"></canvas>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
+          <div style="font-size:1.5rem; font-weight:800; color:#2c3e50;">{{ completion_rate }}%</div>
+          <div style="font-size:.62rem; color:#7f8c8d;">Completed</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:18px; margin-top:12px; flex-wrap:wrap; justify-content:center;">
+        <span style="font-size:.75rem;"><i class="fas fa-circle me-1" style="color:#27ae60;"></i>{{ total_completed }} Completed</span>
+        <span style="font-size:.75rem;"><i class="fas fa-circle me-1" style="color:#dce0e3;"></i>{{ total_approved|add:"-"|add:total_completed }} In Progress</span>
+      </div>
+    </div>
+
+    <div class="ia-card" style="padding:20px;">
+      <div class="sec-title"><i class="fas fa-clipboard-check" style="color:#8e44ad;"></i>Quiz Pass Rates</div>
+      {% if quiz_stats %}
+        {% for item in quiz_stats %}
+        <div class="quiz-row">
+          <span class="quiz-name">{{ item.quiz.title|truncatechars:30 }}</span>
+          <div style="min-width:100px;">
+            <div style="font-size:.72rem; color:#7f8c8d; margin-bottom:3px;">{{ item.passed_attempts }}/{{ item.total_attempts }} passed · avg {{ item.avg_score }}%</div>
+            <div class="mini-pb">
+              <div class="mini-fill {% if item.pass_rate >= 60 %}green{% elif item.pass_rate >= 40 %}blue{% else %}red{% endif %}"
+                   style="width:{{ item.pass_rate }}%;"></div>
+            </div>
+          </div>
+          <span style="font-size:.82rem; font-weight:700; min-width:38px; text-align:right;
+                       color:{% if item.pass_rate >= 60 %}#27ae60{% elif item.pass_rate >= 40 %}#2980b9{% else %}#e74c3c{% endif %};">
+            {{ item.pass_rate }}%
+          </span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center; padding:30px; color:#bdc3c7; font-size:.85rem;">
+          <i class="fas fa-clipboard-list" style="font-size:2rem; display:block; margin-bottom:8px;"></i>
+          No quizzes yet
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Resource downloads ───────────────────────────────────────────── -->
+  {% if resource_stats %}
+  <div class="ia-card">
+    <div class="sec-title"><i class="fas fa-download" style="color:#e67e22;"></i>Resource Downloads</div>
+    {% for item in resource_stats %}
+    <div class="res-row">
+      <i class="fas fa-file" style="color:#2980b9; font-size:.9rem;"></i>
+      <span class="res-name">{{ item.resource.title }}</span>
+      <div class="mini-pb" style="min-width:120px;">
+        {% with max_dl=resource_stats.0.download_count %}
+        {% if max_dl %}
+        <div class="mini-fill blue" style="width:{% widthratio item.download_count max_dl 100 %}%;"></div>
+        {% endif %}
+        {% endwith %}
+      </div>
+      <span class="dl-count"><i class="fas fa-download me-1"></i>{{ item.download_count }} download{{ item.download_count|pluralize }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Student breakdown table ──────────────────────────────────────── -->
+  <div class="ia-card">
+    <div class="sec-title"><i class="fas fa-users" style="color:#2980b9;"></i>Student Progress</div>
+    {% if student_data %}
+    <div style="overflow-x:auto;">
+      <table class="stu-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Progress</th>
+            <th>Quizzes</th>
+            <th>Assignments</th>
+            <th>Last Active</th>
+            <th>Time Spent</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in student_data %}
+          <tr>
+            <td>
+              <div style="font-weight:700; color:#2c3e50;">{{ s.student.get_full_name|default:s.student.username }}</div>
+              <div style="font-size:.72rem; color:#95a5a6;">{{ s.student.email }}</div>
+            </td>
+            <td style="min-width:140px;">
+              <div style="font-size:.75rem; color:#5d6d7e; margin-bottom:4px;">{{ s.done_lessons }}/{{ s.total_lessons }} lessons · {{ s.pct }}%</div>
+              <div class="mini-pb">
+                <div class="mini-fill {% if s.pct >= 70 %}green{% elif s.pct >= 30 %}blue{% else %}red{% endif %}"
+                     style="width:{{ s.pct }}%;"></div>
+              </div>
+            </td>
+            <td>
+              {% if s.quiz_total %}
+                <span style="font-size:.82rem; font-weight:700; color:{% if s.quiz_passed == s.quiz_total %}#27ae60{% else %}#e67e22{% endif %};">
+                  {{ s.quiz_passed }}/{{ s.quiz_total }}
+                </span>
+              {% else %}
+                <span style="color:#bdc3c7; font-size:.8rem;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span style="font-size:.82rem; color:#2c3e50;">{{ s.assign_submitted }}</span>
+            </td>
+            <td>
+              <span style="font-size:.78rem; color:#7f8c8d;">
+                {% if s.last_activity %}{{ s.last_activity|timesince }} ago{% else %}Never{% endif %}
+              </span>
+            </td>
+            <td>
+              <span style="font-size:.78rem; color:#7f8c8d;">{{ s.time_display }}</span>
+            </td>
+            <td>
+              {% if s.is_active %}
+                <span class="tag tag-active"><i class="fas fa-circle" style="font-size:.45rem;"></i>Active</span>
+              {% elif s.is_at_risk %}
+                <span class="tag tag-risk"><i class="fas fa-exclamation-triangle"></i>At Risk</span>
+              {% elif s.is_struggling %}
+                <span class="tag tag-struggle"><i class="fas fa-clock"></i>Struggling</span>
+              {% else %}
+                <span class="tag tag-ok">Inactive</span>
+              {% endif %}
+              {% if s.enrollment.completed %}
+                <span class="tag" style="background:#d5f5e3; color:#1e8449; margin-left:3px;"><i class="fas fa-check"></i>Done</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div style="text-align:center; padding:40px; color:#bdc3c7;">
+        <i class="fas fa-users" style="font-size:2.5rem; display:block; margin-bottom:10px;"></i>
+        No enrolled students yet.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+Chart.defaults.font.size   = 11;
+
+// ── Enrollment trend ─────────────────────────────────────────────────────────
+(function(){
+  var ctx = document.getElementById('trendChart');
+  if(!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ trend_labels|safe }},
+      datasets: [
+        {
+          label: 'Total Enrolled',
+          data: {{ trend_totals|safe }},
+          borderColor: '#2980b9',
+          backgroundColor: 'rgba(41,128,185,.1)',
+          tension: .3, fill: true, pointRadius: 4, pointBackgroundColor:'#2980b9'
+        },
+        {
+          label: 'Approved',
+          data: {{ trend_approved|safe }},
+          borderColor: '#27ae60',
+          backgroundColor: 'rgba(39,174,96,.08)',
+          tension: .3, fill: true, pointRadius: 4, pointBackgroundColor:'#27ae60',
+          borderDash: [4,3]
+        }
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12 } } },
+      scales:{
+        y:{ beginAtZero:true, ticks:{ precision:0 }, grid:{ color:'#f0f4f8' } },
+        x:{ grid:{ display:false }, ticks:{ maxRotation:35 } }
+      }
+    }
+  });
+})();
+
+// ── Revenue chart ─────────────────────────────────────────────────────────────
+(function(){
+  var ctx = document.getElementById('revenueChart');
+  if(!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ revenue_labels|safe }},
+      datasets: [{
+        label: 'Revenue (TZS)',
+        data: {{ revenue_values|safe }},
+        backgroundColor: 'rgba(39,174,96,.7)',
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c => 'TZS ' + c.parsed.y.toLocaleString() } } },
+      scales:{
+        y:{ beginAtZero:true, grid:{ color:'#f0f4f8' }, ticks:{ callback: v => 'TZS '+v.toLocaleString() } },
+        x:{ grid:{ display:false }, ticks:{ maxRotation:35 } }
+      }
+    }
+  });
+})();
+
+// ── Completion doughnut ───────────────────────────────────────────────────────
+(function(){
+  var ctx = document.getElementById('completionDoughnut');
+  if(!ctx) return;
+  var pct = {{ completion_rate }};
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets:[{
+        data:[pct, 100-pct],
+        backgroundColor:['#27ae60','#dce0e3'],
+        borderWidth:0,
+        hoverOffset:4
+      }]
+    },
+    options:{
+      cutout:'72%',
+      plugins:{ legend:{ display:false }, tooltip:{ enabled:false } },
+      animation:{ duration:900 }
+    }
+  });
+})();
+</script>
+{% endblock %}

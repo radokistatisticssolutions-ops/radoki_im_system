@@ -1,0 +1,265 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Referral Program Feedback - Radoki{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feedback-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .feedback-card {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .form-check {
+        padding-left: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .form-check input {
+        margin-left: -2rem;
+    }
+    
+    .form-control {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px 12px;
+        font-size: 1em;
+        font-family: inherit;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .form-control textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+    
+    .rating-options {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .rating-option {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .rating-option:hover {
+        border-color: #667eea;
+        background: #f8f9fa;
+    }
+    
+    .rating-option input {
+        margin-right: 8px;
+        cursor: pointer;
+    }
+    
+    .rating-option input:checked + label {
+        color: #667eea;
+        font-weight: 500;
+    }
+    
+    .rating-option input:checked ~ * {
+        color: #667eea;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 4px;
+        font-size: 1em;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s;
+        width: 100%;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-back {
+        background: #f0f0f0;
+        color: #333;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 15px;
+        width: 100%;
+    }
+    
+    .btn-back:hover {
+        background: #e0e0e0;
+    }
+    
+    .feedback-info {
+        background: #e7f3ff;
+        border-left: 4px solid #2196F3;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .feedback-info h6 {
+        color: #1976D2;
+        margin-bottom: 5px;
+    }
+    
+    .feedback-info p {
+        color: #0d47a1;
+        margin: 0;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="feedback-container">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1>Share Your Feedback</h1>
+            <p class="text-muted">Help us improve the Radoki referral program</p>
+        </div>
+
+        <!-- Info Box -->
+        <div class="feedback-info">
+            <h6>💡 Your feedback matters!</h6>
+            <p>We're constantly working to make our referral program better. Your thoughts and suggestions help us improve the experience for everyone.</p>
+        </div>
+
+        <!-- Feedback Form -->
+        <div class="feedback-card">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Rating Field -->
+                <div class="form-group">
+                    <label class="form-label">{{ form.rating.label }}</label>
+                    
+                    <div class="rating-options">
+                        {% for value, label in form.rating.field.choices %}
+                        <label class="rating-option">
+                            <input type="radio" name="rating" value="{{ value }}" 
+                                   {% if form.rating.value == value %}checked{% endif %} required>
+                            <span>{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if form.rating.errors %}
+                    <div class="text-danger mt-2">
+                        {% for error in form.rating.errors %}
+                        <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Feedback Field -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.feedback.id_for_label }}">
+                        {{ form.feedback.label }}
+                    </label>
+                    {{ form.feedback }}
+                    
+                    {% if form.feedback.errors %}
+                    <div class="text-danger mt-2">
+                        {% for error in form.feedback.errors %}
+                        <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <small class="d-block mt-2 text-muted">
+                        Maximum {{ form.feedback.field.max_length }} characters
+                    </small>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit">Send Feedback</button>
+                <a href="{% url 'referrals:dashboard' %}" class="btn-back">Back to Dashboard</a>
+            </form>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mt-5">
+            <h5>Frequently Asked Questions</h5>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#faq1" aria-expanded="false">
+                            What happens to my feedback?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Your feedback is valuable to our team. We review all feedback regularly and use it to make improvements to the referral program.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#faq2" aria-expanded="false">
+                            Is my feedback anonymous?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            We associate feedback with your account so we can reach out if we need clarification, but your identity remains private in our reviews.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#faq3" aria-expanded="false">
+                            Can I submit feedback multiple times?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Yes! You can submit feedback as many times as you'd like. We encourage ongoing feedback as your experience with the program evolves.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

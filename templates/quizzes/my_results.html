@@ -1,0 +1,179 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.mr-layout { max-width:900px; margin:28px auto; padding:0 16px 60px; }
+.mr-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+@media (max-width:767.98px) {
+  .mr-layout { margin-top:16px; padding-top:8px; }
+  .mr-header h1 { font-size:1.25rem; }
+}
+@media (max-width:575.98px) {
+  .mr-layout { margin-top:8px; }
+  .mr-header { flex-direction:column; align-items:flex-start; }
+}
+.mr-header h1 { font-size:1.5rem; font-weight:800; color:#2c3e50; margin:0; }
+.stats-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-box { background:#fff; border-radius:14px; padding:18px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+.stat-box .val { font-size:1.8rem; font-weight:800; }
+.stat-box .lbl { font-size:.72rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+.course-block { background:#fff; border-radius:16px; margin-bottom:18px; box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; }
+.course-block-header { padding:16px 22px; background:#f8fbff; border-bottom:2px solid #e8f4fd; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.course-block-header .course-name { font-weight:700; color:#1a5276; font-size:.97rem; }
+.course-block-header .course-meta { font-size:.78rem; color:#7f8c8d; display:flex; gap:12px; flex-wrap:wrap; }
+.attempt-row { display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid #f0f4f8; flex-wrap:wrap; }
+.attempt-row:last-child { border-bottom:none; }
+.quiz-name { font-weight:600; color:#2c3e50; font-size:.9rem; flex:1; min-width:120px; }
+.score-pill { display:inline-block; padding:3px 12px; border-radius:20px; font-weight:700; font-size:.82rem; white-space:nowrap; }
+.score-pill.pass { background:#d5f5e3; color:#1e8449; }
+.score-pill.fail { background:#fadbd8; color:#c0392b; }
+.date-txt { font-size:.78rem; color:#95a5a6; white-space:nowrap; }
+.view-btn { background:#eaf4fd; color:#2980b9; border:none; border-radius:8px; padding:6px 14px; font-size:.78rem; font-weight:700; text-decoration:none; cursor:pointer; white-space:nowrap; }
+.view-btn:hover { background:#d6eaf8; color:#1a5276; }
+.empty-state { text-align:center; padding:60px 20px; background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+</style>
+
+<div class="mr-layout">
+  <div class="mr-header">
+    <div>
+      <nav aria-label="breadcrumb" style="margin-bottom:6px;">
+        <ol class="breadcrumb" style="font-size:.78rem; margin:0;">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">Dashboard</a></li>
+          <li class="breadcrumb-item active">My Quiz Results</li>
+        </ol>
+      </nav>
+      <h1><i class="fas fa-trophy me-2" style="color:#f39c12;"></i>My Quiz Results</h1>
+    </div>
+    <a href="{% url 'courses:course_list' %}" class="btn btn-outline-primary"
+       style="border-radius:10px; padding:9px 18px; font-size:.85rem; font-weight:600;">
+      <i class="fas fa-book me-1"></i>Browse Courses
+    </a>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="stats-strip">
+    <div class="stat-box">
+      <div class="val" style="color:#2980b9;">{{ total_attempts }}</div>
+      <div class="lbl">Quizzes Taken</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#27ae60;">{{ total_passed }}</div>
+      <div class="lbl">Passed</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#e74c3c;">{{ total_not_passed }}</div>
+      <div class="lbl">Not Passed</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#e67e22;">{{ course_groups|length }}</div>
+      <div class="lbl">Courses</div>
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <form method="get" class="mb-4 d-flex align-items-center gap-2 flex-wrap">
+    <div class="input-group" style="max-width:380px;">
+      <span class="input-group-text bg-white border-end-0" style="border-radius:10px 0 0 10px;">
+        <i class="fas fa-search text-secondary" style="font-size:.82rem;"></i>
+      </span>
+      <input type="text" name="search" value="{{ search_query }}"
+             class="form-control border-start-0" style="border-left:none;"
+             placeholder="Search by quiz or course name…">
+      <button type="submit" class="btn btn-primary"
+              style="border-radius:0 10px 10px 0; font-size:.85rem; font-weight:600; padding:0 16px;">
+        <i class="fas fa-search me-1"></i>Search
+      </button>
+    </div>
+    {% if search_query %}
+    <a href="?" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+      <i class="fas fa-times me-1"></i>Clear
+    </a>
+    {% endif %}
+  </form>
+
+  {% if course_groups %}
+    {% for group in course_groups %}
+    <div class="course-block">
+      <div class="course-block-header">
+        <div>
+          <div class="course-name">
+            <i class="fas fa-book me-2" style="color:#2980b9;"></i>
+            {{ group.course.title }}
+          </div>
+          <div class="course-meta">
+            <span><i class="fas fa-tasks me-1"></i>{{ group.total_count }} attempt{{ group.total_count|pluralize }}</span>
+            <span><i class="fas fa-check-circle me-1" style="color:#27ae60;"></i>{{ group.passed_count }} passed</span>
+          </div>
+        </div>
+        <a href="{% url 'courses:course_detail' group.course.pk %}" class="view-btn">
+          <i class="fas fa-arrow-right me-1"></i>Go to Course
+        </a>
+      </div>
+
+      {% for attempt in group.attempts %}
+      <div class="attempt-row">
+        <div class="quiz-name">
+          <i class="fas fa-clipboard-check me-2" style="color:#8e44ad; opacity:.7;"></i>
+          {{ attempt.quiz.title }}
+        </div>
+        <span class="score-pill {% if attempt.passed %}pass{% else %}fail{% endif %}">
+          {% if attempt.passed %}<i class="fas fa-check me-1"></i>{% else %}<i class="fas fa-times me-1"></i>{% endif %}
+          {{ attempt.score|floatformat:1 }}%
+        </span>
+        <span class="date-txt">{{ attempt.completed_at|date:"d M Y, H:i" }}</span>
+        <a href="{% url 'quizzes:quiz_result' attempt.pk %}" class="view-btn">
+          <i class="fas fa-eye me-1"></i>Review
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+
+    {% if paginator.num_pages > 1 %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 px-1">
+      <small class="text-muted">
+        Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+        of {{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }}
+      </small>
+      <nav aria-label="Results pagination">
+        <ul class="pagination pagination-sm mb-0 flex-wrap">
+          <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+            <a class="page-link" href="?search={{ search_query|urlencode }}&page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+            {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+          </li>
+          {% for item in page_window %}
+            {% if not item %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            {% elif item == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ item }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="?search={{ search_query|urlencode }}&page={{ item }}">{{ item }}</a></li>
+            {% endif %}
+          {% endfor %}
+          <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+            <a class="page-link" href="?search={{ search_query|urlencode }}&page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+            {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+          </li>
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-clipboard-list" style="font-size:3rem; color:#bdc3c7; display:block; margin-bottom:14px;"></i>
+    <h5 style="color:#2c3e50; font-weight:700; margin-bottom:8px;">No quiz attempts yet</h5>
+    <p style="color:#7f8c8d; font-size:.88rem; margin-bottom:20px;">
+      Enroll in a course and take a quiz to see your results here.
+    </p>
+    <a href="{% url 'courses:course_list' %}" class="btn"
+       style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:10px;padding:10px 24px;font-weight:700;">
+      <i class="fas fa-book me-2"></i>Browse Courses
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

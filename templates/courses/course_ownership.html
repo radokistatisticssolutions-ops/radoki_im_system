@@ -1,0 +1,214 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+  @media (max-width: 768px) {
+    .card-header.p-4,
+    .card-body.p-4,
+    .card-body.p-5 {
+      padding: 0.5rem !important;
+    }
+    
+    .mb-5, .mb-4, .mb-3, .mb-2 {
+      margin-bottom: 0.3rem !important;
+    }
+    
+    .p-4 {
+      padding: 0.5rem !important;
+    }
+    
+    .p-5 {
+      padding: 0.5rem !important;
+    }
+  }
+</style>
+
+<div class="container-fluid py-5" style="background-color: #f0f2f5; min-height: 100vh; display: flex; align-items: center;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-md-8">
+        <!-- Course Ownership Alert Card -->
+        <div class="card border-0 shadow-lg rounded-4">
+          <!-- Card Header -->
+          <div class="card-header border-0 rounded-top-4 p-4" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <h2 class="text-white text-center mb-0">
+              <i class="fas fa-lock"></i> Course Ownership Notice
+            </h2>
+            <p class="text-center text-white mt-2 mb-0" style="opacity: 0.9;">This course is owned by another instructor</p>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body p-5">
+            <!-- Course Title -->
+            <div class="mb-4 p-4 rounded-3" style="background-color: #ebf5fb; border-left: 4px solid #3498db;">
+              <h5 style="color: #2c3e50; margin-bottom: 0.5rem;">Course</h5>
+              <h3 style="color: #3498db; margin: 0;">{{ course.title }}</h3>
+            </div>
+
+            <!-- Ownership Warning Message -->
+            <div class="alert alert-info rounded-3 mb-4" style="border: 2px solid #3498db; background-color: #ebf5fb; color: #1a5f7a;">
+              <div class="d-flex">
+                <div style="font-size: 2rem; color: #3498db; margin-right: 1rem;">
+                  <i class="fas fa-info-circle"></i>
+                </div>
+                <div>
+                  <h5 style="color: #2980b9; margin-bottom: 0.5rem;">
+                    <strong>Course Ownership</strong>
+                  </h5>
+                  {% if action == 'upload_resource' %}
+                    <p style="color: #1a5f7a; margin: 0;">
+                      You cannot upload resources to this course because it is owned by <strong>{{ course_owner.first_name }} {{ course_owner.last_name }}</strong>. 
+                      Only the course owner can add resources. If you need to add resources, please contact the course owner directly.
+                    </p>
+                  {% else %}
+                    <p style="color: #1a5f7a; margin: 0;">
+                      This course is owned by <strong>{{ course_owner.first_name }} {{ course_owner.last_name }}</strong>. 
+                      If you have concerns or need to request changes, please contact the course owner directly.
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Course Owner Contact Information -->
+            <div class="row g-3 mb-4">
+              <div class="col-12">
+                <h5 style="color: #2c3e50; margin-bottom: 1rem;">
+                  <i class="fas fa-user-tie" style="color: #3498db;"></i> Course Owner Details
+                </h5>
+
+                <!-- Owner Name Card -->
+                <div class="card border-0 shadow-sm rounded-3 mb-3" style="border-left: 4px solid #3498db;">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center">
+                      <div style="font-size: 2rem; color: #3498db; margin-right: 1rem;">
+                        <i class="fas fa-id-badge"></i>
+                      </div>
+                      <div>
+                        <small class="text-muted d-block">Full Name</small>
+                        <h6 class="mb-0" style="color: #2c3e50;">
+                          {{ course_owner.first_name }} {{ course_owner.last_name }}
+                        </h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Owner Email Card -->
+                {% if course_owner.email %}
+                  <div class="card border-0 shadow-sm rounded-3 mb-3" style="border-left: 4px solid #3498db;">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center">
+                        <div style="font-size: 2rem; color: #3498db; margin-right: 1rem;">
+                          <i class="fas fa-envelope"></i>
+                        </div>
+                        <div>
+                          <small class="text-muted d-block">Email Address</small>
+                          <h6 class="mb-0">
+                            <a href="mailto:{{ course_owner.email }}" style="color: #3498db; text-decoration: none;">
+                              {{ course_owner.email }}
+                            </a>
+                          </h6>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+
+                <!-- Owner Phone Card -->
+                {% if course_owner.phone_number %}
+                  <div class="card border-0 shadow-sm rounded-3 mb-3" style="border-left: 4px solid #3498db;">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center">
+                        <div style="font-size: 2rem; color: #3498db; margin-right: 1rem;">
+                          <i class="fas fa-phone"></i>
+                        </div>
+                        <div>
+                          <small class="text-muted d-block">Phone Number</small>
+                          <h6 class="mb-0">
+                            <a href="tel:{{ course_owner.phone_number }}" style="color: #3498db; text-decoration: none;">
+                              {{ course_owner.phone_number }}
+                            </a>
+                          </h6>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+
+                <!-- Owner Gender Card -->
+                {% if course_owner.sex %}
+                  <div class="card border-0 shadow-sm rounded-3 mb-3" style="border-left: 4px solid #3498db;">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center">
+                        <div style="font-size: 2rem; color: #3498db; margin-right: 1rem;">
+                          <i class="fas fa-person"></i>
+                        </div>
+                        <div>
+                          <small class="text-muted d-block">Gender</small>
+                          <h6 class="mb-0" style="color: #2c3e50;">
+                            {{ course_owner.get_sex_display }}
+                          </h6>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+
+                <!-- Owner Professional Qualification Card -->
+                {% if course_owner.professional_qualification %}
+                  <div class="card border-0 shadow-sm rounded-3 mb-3" style="border-left: 4px solid #3498db;">
+                    <div class="card-body">
+                      <div class="d-flex align-items-center">
+                        <div style="font-size: 2rem; color: #3498db; margin-right: 1rem;">
+                          <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div>
+                          <small class="text-muted d-block">Professional Qualification</small>
+                          <h6 class="mb-0" style="color: #2c3e50;">
+                            {{ course_owner.professional_qualification }}
+                          </h6>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Guidance Message -->
+            <div class="alert rounded-3 mb-4" style="border: none; background-color: #d6eaf8; color: #1a5f7a;">
+              <i class="fas fa-lightbulb"></i>
+              {% if action == 'upload_resource' %}
+                <strong>Next Steps:</strong> If you need to upload resources to this course, please contact the course owner using the information below. They will be able to upload the resources for you or grant you the necessary permissions.
+              {% else %}
+                <strong>Next Steps:</strong> If you wish to make changes to this course or have questions about it, please contact the course owner using the information below. They will be happy to assist you or make the necessary modifications.
+              {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2">
+              <a href="{% url 'courses:course_detail' course.id %}" class="btn btn-lg fw-bold" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none; border-radius: 10px;">
+                <i class="fas fa-arrow-left"></i> View Course
+              </a>
+              <a href="{% url 'courses:instructor_courses' %}" class="btn btn-outline-primary btn-lg fw-bold" style="border-radius: 10px; border-color: #3498db; color: #3498db;">
+                <i class="fas fa-undo"></i> Back to My Courses
+              </a>
+            </div>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer border-0 rounded-bottom-4 p-4 text-center" style="background-color: #ebf5fb;">
+            <small class="text-muted">
+              <i class="fas fa-info-circle"></i> Only the course owner can edit this course directly
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+      <h1 class="h3 mb-0" style="color:#2c3e50;"><i class="fas fa-clipboard-list"></i> My Assignments</h1>
+      <p class="text-muted mt-1">Manage, edit, and delete your assignments</p>
+    </div>
+    <div class="col-md-6 text-end d-flex gap-2 justify-content-end flex-wrap">
+      <span class="badge bg-primary p-2" style="font-size:.9rem; align-self:center;">
+        Total: <strong>{{ total }}</strong>
+      </span>
+      <a href="{% url 'assignments:instructor_dashboard' %}" class="btn btn-sm btn-outline-primary"
+         style="border-radius:8px; font-weight:600;">
+        <i class="fas fa-tasks me-1"></i> Submissions
+      </a>
+      <a href="{% url 'assignments:create_assignment' %}" class="btn btn-sm"
+         style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;">
+        <i class="fas fa-plus me-1"></i> Create Assignment
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label mb-1 small fw-semibold text-muted">Filter by Course</label>
+          <select name="course" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All My Courses</option>
+            {% for c in instructor_courses %}
+              <option value="{{ c.id }}" {% if course_filter == c.id|stringformat:'s' %}selected{% endif %}>{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-sm btn-primary w-100" style="border-radius:8px;">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+          <a href="{% url 'assignments:instructor_assignments' %}" class="btn btn-sm btn-outline-secondary w-100" style="border-radius:8px;">
+            <i class="fas fa-times"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card border-0 shadow-sm" style="border-radius:12px;">
+    <div class="card-body p-0">
+      {% if page_obj.object_list %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-radius:12px; overflow:hidden;">
+          <thead style="background:linear-gradient(135deg,#1a5276 0%,#2980b9 100%); color:#fff;">
+            <tr>
+              <th class="py-3 px-3">#</th>
+              <th class="py-3 px-3">Title</th>
+              <th class="py-3 px-3">Course</th>
+              <th class="py-3 px-3">Due Date</th>
+              <th class="py-3 px-3 text-center">Submissions</th>
+              <th class="py-3 px-3 text-center">Status</th>
+              <th class="py-3 px-3">Created</th>
+              <th class="py-3 px-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in page_obj %}
+            <tr>
+              <td class="px-3 py-3 text-muted" style="font-size:.85rem;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+              <td class="px-3 py-3">
+                <span class="fw-semibold" style="color:#2c3e50; font-size:.9rem;">{{ a.title }}</span>
+                {% if a.description %}
+                <div class="text-muted" style="font-size:.78rem;">{{ a.description|truncatechars:60 }}</div>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3">
+                <span class="badge" style="background:#d6eaf8; color:#1a5276; border-radius:8px; font-size:.78rem;">
+                  {{ a.course.title }}
+                </span>
+              </td>
+              <td class="px-3 py-3 text-muted" style="font-size:.83rem; white-space:nowrap;">
+                {% if a.due_date %}
+                  <i class="fas fa-calendar-alt me-1" style="color:#e67e22;"></i>
+                  {{ a.due_date|date:"d M Y, H:i" }}
+                {% else %}
+                  <span class="text-muted">No deadline</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3 text-center">
+                <a href="{% url 'assignments:instructor_dashboard' %}?course={{ a.course.id }}"
+                   class="badge text-decoration-none"
+                   style="background:#eaf2ff; color:#1a5276; border-radius:20px; font-size:.85rem; padding:5px 12px; font-weight:700;">
+                  {{ a.submission_count }}
+                </a>
+              </td>
+              <td class="px-3 py-3 text-center">
+                {% if a.is_active %}
+                  <span class="badge" style="background:#d1e7dd; color:#0a3622; border-radius:20px; padding:5px 12px;">Active</span>
+                {% else %}
+                  <span class="badge" style="background:#f8d7da; color:#842029; border-radius:20px; padding:5px 12px;">Inactive</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3 text-muted" style="font-size:.82rem; white-space:nowrap;">{{ a.created_at|date:"d M Y" }}</td>
+              <td class="px-3 py-3 text-center">
+                <div class="d-flex gap-1 justify-content-center">
+                  <a href="{% url 'assignments:edit_assignment' a.id %}"
+                     class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-size:.78rem;"
+                     title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <!-- Delete confirm -->
+                  <button class="btn btn-sm btn-outline-danger" style="border-radius:8px; font-size:.78rem;"
+                          title="Delete"
+                          onclick="confirmDelete({{ a.id }}, '{{ a.title|escapejs }}')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+      <div class="row mt-3 mb-3">
+        <div class="col-12">
+          <nav>
+            <ul class="pagination justify-content-center mb-0">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1&course={{ course_filter }}" style="border-radius:10px 0 0 10px;">
+                    <i class="fas fa-chevron-left"></i> First
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}&course={{ course_filter }}">
+                    <i class="fas fa-arrow-left"></i> Previous
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link" style="border-radius:10px 0 0 10px;"><i class="fas fa-chevron-left"></i> First</span></li>
+                <li class="page-item disabled"><span class="page-link"><i class="fas fa-arrow-left"></i> Previous</span></li>
+              {% endif %}
+
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}&course={{ course_filter }}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}&course={{ course_filter }}">Next <i class="fas fa-arrow-right"></i></a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&course={{ course_filter }}" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next <i class="fas fa-arrow-right"></i></span></li>
+                <li class="page-item disabled"><span class="page-link" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-clipboard fa-3x mb-3" style="color:#aed6f1;"></i>
+        <p class="text-muted mb-2">No assignments found{% if course_filter %} for the selected course{% endif %}.</p>
+        <a href="{% url 'assignments:create_assignment' %}" class="btn btn-sm btn-primary" style="border-radius:8px;">
+          <i class="fas fa-plus me-1"></i> Create Your First Assignment
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content" style="border-radius:14px; border:none;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Delete Assignment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-2 pb-1">
+        <p class="text-muted">Are you sure you want to delete <strong id="delete-title"></strong>?</p>
+        <p class="text-danger" style="font-size:.85rem;">
+          <i class="fas fa-exclamation-circle me-1"></i>
+          This will permanently delete the assignment and <strong>all student submissions</strong> associated with it.
+        </p>
+      </div>
+      <div class="modal-footer border-0 gap-2">
+        <button type="button" class="btn btn-outline-secondary" style="border-radius:8px;" data-bs-dismiss="modal">Cancel</button>
+        <form id="delete-form" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger" style="border-radius:8px; font-weight:600;">
+            <i class="fas fa-trash me-1"></i> Yes, Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(id, title) {
+  document.getElementById('delete-title').textContent = '"' + title + '"';
+  document.getElementById('delete-form').action = '/assignments/delete/' + id + '/';
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

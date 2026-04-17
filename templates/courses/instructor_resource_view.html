@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+  @media (max-width: 768px) {
+    .table {
+      font-size: 0.8rem;
+    }
+    
+    .btn-sm {
+      padding: 0.2rem 0.4rem;
+      font-size: 0.7rem;
+    }
+    
+    .badge {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.4rem;
+    }
+  }
+</style>
+
+<div class="container mt-5">
+    <h2>Resources for {{ course.title }}</h2>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Uploaded By</th>
+                <th>Date Uploaded</th>
+                <th>Download Allowed</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resource in resources %}
+            <tr>
+                <td>{{ resource.title }}</td>
+                <td>{{ resource.course.instructor.get_full_name }}</td>
+                <td>{{ resource.uploaded_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                    <span class="badge {% if resource.download_allowed %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if resource.download_allowed %}
+                            <i class="fas fa-check-circle"></i> Allowed
+                        {% else %}
+                            <i class="fas fa-ban"></i> Not Allowed
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'courses:preview_resource' resource.id %}" target="_blank" class="btn btn-primary btn-sm">Preview</a>
+                    <a href="{% url 'courses:download_resource' resource.id %}" class="btn btn-success btn-sm">Download</a>
+                    <a href="{% url 'courses:toggle_resource_download' resource.id %}" class="btn btn-warning btn-sm">
+                        {% if resource.download_allowed %}
+                            <i class="fas fa-lock"></i> Disable Download
+                        {% else %}
+                            <i class="fas fa-unlock"></i> Enable Download
+                        {% endif %}
+                    </a>
+                    <form method="post" action="{% url 'courses:delete_resource' resource.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No resources available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

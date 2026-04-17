@@ -1,0 +1,230 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.qr-layout { max-width:820px; margin:28px auto; padding:0 16px 60px; }
+.result-banner { border-radius:18px; padding:36px 32px; text-align:center; margin-bottom:24px; }
+.result-banner.passed { background:linear-gradient(135deg,#1a5276,#27ae60); }
+.result-banner.failed { background:linear-gradient(135deg,#6c3483,#e74c3c); }
+.result-banner.pending { background:linear-gradient(135deg,#784212,#e67e22); }
+.result-banner .icon { font-size:2.8rem; color:rgba(255,255,255,.75); margin-bottom:10px; }
+.result-banner h1 { font-size:2rem; font-weight:800; color:#fff; margin-bottom:8px; }
+.score-circle { width:120px; height:120px; border-radius:50%; border:5px solid rgba(255,255,255,.35); margin:14px auto; display:flex; align-items:center; justify-content:center; flex-direction:column; background:rgba(255,255,255,.12); }
+.score-circle .num { font-size:2rem; font-weight:800; color:#fff; line-height:1; }
+.score-circle .lbl { font-size:.7rem; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.05em; }
+.result-banner .meta { color:rgba(255,255,255,.85); font-size:.84rem; display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-top:10px; }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:14px; margin-bottom:28px; }
+.stat-box { background:#fff; border-radius:14px; padding:18px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+.stat-box .val { font-size:1.6rem; font-weight:800; }
+.stat-box .val.blue { color:#2980b9; }
+.stat-box .val.green { color:#27ae60; }
+.stat-box .val.red { color:#e74c3c; }
+.stat-box .val.orange { color:#e67e22; }
+.stat-box .lbl { font-size:.72rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+.section-title { font-size:1rem; font-weight:700; color:#2c3e50; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.answer-card { background:#fff; border-radius:14px; padding:22px 26px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+.answer-card.correct { border-left:5px solid #27ae60; }
+.answer-card.wrong { border-left:5px solid #e74c3c; }
+.answer-card.pending { border-left:5px solid #e67e22; }
+.answer-card .q-meta { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.answer-card.correct .q-meta { color:#27ae60; }
+.answer-card.wrong .q-meta { color:#e74c3c; }
+.answer-card.pending .q-meta { color:#e67e22; }
+.answer-card .q-text { font-size:.95rem; font-weight:600; color:#2c3e50; margin-bottom:14px; }
+.opt-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; font-size:.88rem; margin-bottom:6px; }
+.opt-row.is-correct { background:#d5f5e3; color:#1e8449; font-weight:600; }
+.opt-row.student-wrong { background:#fadbd8; color:#c0392b; }
+.opt-row.neutral { color:#7f8c8d; }
+.opt-row .tag { font-size:.72rem; font-weight:700; margin-left:auto; white-space:nowrap; }
+.explanation-box { background:#fef9e7; border-radius:10px; padding:12px 16px; margin-top:12px; font-size:.84rem; color:#7d6608; border-left:3px solid #f1c40f; }
+.sa-answer-box { background:#f8f9fa; border-radius:10px; padding:14px 16px; font-size:.88rem; color:#2c3e50; }
+.sa-answer-box .sa-label { font-size:.72rem; color:#7f8c8d; font-weight:700; margin-bottom:4px; text-transform:uppercase; }
+.grade-form { display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.grade-form input[type=number] { width:90px; border:2px solid #e2e8f0; border-radius:8px; padding:6px 10px; font-size:.85rem; outline:none; }
+.grade-form input[type=number]:focus { border-color:#2980b9; }
+</style>
+
+<div class="qr-layout">
+
+  <!-- Banner -->
+  {% if pending_count and not correct_count and not wrong_count %}
+  <div class="result-banner pending">
+  {% elif attempt.passed %}
+  <div class="result-banner passed">
+  {% else %}
+  <div class="result-banner failed">
+  {% endif %}
+    <div class="icon">
+      <i class="fas fa-{% if attempt.passed %}trophy{% elif pending_count %}hourglass-half{% else %}times-circle{% endif %}"></i>
+    </div>
+    <h1>
+      {% if attempt.passed %}Quiz Passed!
+      {% elif pending_count and attempt.score < quiz.pass_mark %}Pending Review
+      {% else %}Not Passed{% endif %}
+    </h1>
+    <div class="score-circle">
+      <div class="num">{{ attempt.score|floatformat:0 }}%</div>
+      <div class="lbl">Score</div>
+    </div>
+    <div class="meta">
+      <span><i class="fas fa-star me-1"></i>Pass mark: {{ quiz.pass_mark }}%</span>
+      <span><i class="fas fa-calendar-alt me-1"></i>{{ attempt.completed_at|date:"d M Y, H:i" }}</span>
+      {% if pending_count %}
+      <span><i class="fas fa-clock me-1"></i>{{ pending_count }} answer{{ pending_count|pluralize }} pending review</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="val blue">{{ attempt.score|floatformat:1 }}%</div>
+      <div class="lbl">Your Score</div>
+    </div>
+    <div class="stat-box">
+      <div class="val blue">{{ quiz.pass_mark }}%</div>
+      <div class="lbl">Pass Mark</div>
+    </div>
+    <div class="stat-box">
+      <div class="val green">{{ correct_count }}</div>
+      <div class="lbl">Correct</div>
+    </div>
+    <div class="stat-box">
+      <div class="val red">{{ wrong_count }}</div>
+      <div class="lbl">Incorrect</div>
+    </div>
+    {% if pending_count %}
+    <div class="stat-box">
+      <div class="val orange">{{ pending_count }}</div>
+      <div class="lbl">Pending</div>
+    </div>
+    {% endif %}
+    <div class="stat-box">
+      <div class="val blue">{{ marks_obtained|floatformat:0 }}/{{ total_marks }}</div>
+      <div class="lbl">Marks</div>
+    </div>
+  </div>
+
+  <!-- Per-question review -->
+  <div class="section-title">
+    <i class="fas fa-list-alt" style="color:#2980b9;"></i> Question Review
+  </div>
+
+  {% for answer in answers %}
+  <div class="answer-card {% if answer.is_correct == None %}pending{% elif answer.is_correct %}correct{% else %}wrong{% endif %}">
+    <div class="q-meta">
+      <span>Question {{ forloop.counter }}</span>
+      {% if answer.is_correct == None %}
+        <span><i class="fas fa-hourglass-half me-1"></i>Awaiting instructor review</span>
+        <span>0 / {{ answer.question.marks }} mark{{ answer.question.marks|pluralize }}</span>
+      {% elif answer.is_correct %}
+        <span><i class="fas fa-check me-1"></i>Correct</span>
+        <span>+{{ answer.marks_awarded|floatformat:0 }} / {{ answer.question.marks }} mark{{ answer.question.marks|pluralize }}</span>
+      {% else %}
+        <span><i class="fas fa-times me-1"></i>Incorrect</span>
+        <span>0 / {{ answer.question.marks }} mark{{ answer.question.marks|pluralize }}</span>
+      {% endif %}
+    </div>
+
+    <div class="q-text">{{ answer.question.text }}</div>
+
+    {% if answer.question.question_type == 'multiple_choice' or answer.question.question_type == 'true_false' %}
+      {% for opt in answer.question.options.all %}
+      <div class="opt-row
+        {% if opt.is_correct %}is-correct
+        {% elif opt == answer.selected_option and not opt.is_correct %}student-wrong
+        {% else %}neutral{% endif %}">
+        {% if opt.is_correct %}
+          <i class="fas fa-check-circle" style="color:#27ae60; flex-shrink:0;"></i>
+        {% elif opt == answer.selected_option %}
+          <i class="fas fa-times-circle" style="color:#e74c3c; flex-shrink:0;"></i>
+        {% else %}
+          <i class="far fa-circle" style="color:#bdc3c7; flex-shrink:0;"></i>
+        {% endif %}
+        <span>{{ opt.text }}</span>
+        {% if opt.is_correct %}
+          <span class="tag" style="color:#27ae60;">Correct answer</span>
+        {% elif opt == answer.selected_option and not opt.is_correct %}
+          <span class="tag" style="color:#e74c3c;">Your answer</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+    {% elif answer.question.question_type == 'short_answer' %}
+      <div class="sa-answer-box">
+        <div class="sa-label">Your Answer</div>
+        {{ answer.text_answer|default:"(No answer given)" }}
+      </div>
+      {% if answer.marks_awarded > 0 %}
+      <div class="mt-2" style="font-size:.82rem; font-weight:700; color:#27ae60;">
+        <i class="fas fa-check-circle me-1"></i>{{ answer.marks_awarded|floatformat:0 }} / {{ answer.question.marks }} marks awarded
+      </div>
+      {% endif %}
+
+      <!-- Instructor grading form -->
+      {% if request.user.is_instructor %}
+      <form class="grade-form" onsubmit="gradeAnswer(event, {{ answer.pk }}, this)">
+        {% csrf_token %}
+        <label style="font-size:.8rem; font-weight:700; color:#2c3e50;">Award marks:</label>
+        <input type="number" name="marks_awarded" min="0" max="{{ answer.question.marks }}"
+               step="0.5" value="{{ answer.marks_awarded|floatformat:1 }}"
+               placeholder="0–{{ answer.question.marks }}">
+        <button type="submit" class="btn btn-sm"
+                style="background:#2980b9;color:#fff;border-radius:8px;padding:6px 14px;font-weight:700;font-size:.8rem;">
+          <i class="fas fa-save me-1"></i>Save Grade
+        </button>
+        <span class="grade-msg" style="font-size:.78rem; color:#27ae60; display:none;">Saved!</span>
+      </form>
+      {% endif %}
+    {% endif %}
+
+    {% if answer.question.explanation %}
+    <div class="explanation-box">
+      <i class="fas fa-lightbulb me-1"></i><strong>Explanation:</strong> {{ answer.question.explanation }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <!-- Actions -->
+  <div class="d-flex gap-3 mt-4 flex-wrap">
+    <button type="button" class="btn btn-outline-primary" style="border-radius:10px; padding:10px 22px;" onclick="history.back()">
+      <i class="fas fa-arrow-left me-2"></i>Back
+    </button>
+    {% if not attempt.passed and can_retry %}
+    <a href="{% url 'quizzes:take_quiz' quiz.pk %}" class="btn"
+       style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:10px;padding:10px 22px;font-weight:700;">
+      <i class="fas fa-redo me-2"></i>Try Again
+    </a>
+    {% endif %}
+    {% if request.user.is_instructor %}
+    <a href="{% url 'quizzes:quiz_attempts' quiz.pk %}" class="btn btn-outline-secondary"
+       style="border-radius:10px; padding:10px 22px;">
+      <i class="fas fa-chart-bar me-2"></i>All Results
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+const CSRF = "{{ csrf_token }}";
+
+async function gradeAnswer(e, answerId, form) {
+  e.preventDefault();
+  const marksAwarded = form.querySelector('input[name=marks_awarded]').value;
+  const msg = form.querySelector('.grade-msg');
+  try {
+    const fd = new FormData();
+    fd.append('marks_awarded', marksAwarded);
+    fd.append('csrfmiddlewaretoken', CSRF);
+    const res  = await fetch(`/quizzes/answers/${answerId}/grade/`, { method:'POST', body:fd });
+    const data = await res.json();
+    if (data.ok) {
+      msg.style.display = 'inline';
+      setTimeout(() => msg.style.display = 'none', 2000);
+    }
+  } catch (err) { alert('Error saving grade.'); }
+}
+</script>
+{% endblock %}

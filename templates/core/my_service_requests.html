@@ -1,0 +1,267 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Responsive table → card on mobile ─────────────────── */
+@media (max-width: 767.98px) {
+  .mysvc-table thead          { display: none; }
+  .mysvc-table,
+  .mysvc-table tbody,
+  .mysvc-table tr,
+  .mysvc-table td             { display: block; width: 100%; box-sizing: border-box; }
+  .mysvc-table tr {
+    border-radius: 10px; margin-bottom: 14px; overflow: hidden;
+    background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border: 1px solid #e9ecef;
+  }
+  .mysvc-table tr.row-new         { border-left: 4px solid #0dcaf0; }
+  .mysvc-table tr.row-contacted   { border-left: 4px solid #ffc107; }
+  .mysvc-table tr.row-in_progress { border-left: 4px solid #0d6efd; }
+  .mysvc-table tr.row-completed   { border-left: 4px solid #198754; }
+  .mysvc-table tr.row-closed      { border-left: 4px solid #6c757d; }
+  .mysvc-table td {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 14px; border: none; border-bottom: 1px solid #f4f6f8;
+    font-size: .875rem; min-height: 38px; gap: 8px;
+  }
+  .mysvc-table td:last-child  { border-bottom: none; }
+  .mysvc-table td[data-label]::before {
+    content: attr(data-label); font-weight: 700; color: #6c757d;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .5px;
+    min-width: 90px; flex-shrink: 0;
+  }
+  .mysvc-cell { min-width: 0; flex: 1; text-align: right; word-break: break-word; }
+  .mysvc-num-col { display: none !important; }
+}
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-4" style="max-width: 1000px; margin: 0 auto;">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color: #1a1a2e;">
+        <i class="fas fa-clipboard-list me-2" style="color: #2980b9;"></i>My Service Requests
+      </h1>
+      <p class="text-muted small mb-0">Track all service requests you have submitted</p>
+    </div>
+    <a href="{% url 'core:services' %}" class="btn btn-primary btn-sm fw-semibold align-self-start">
+      <i class="fas fa-plus me-1"></i>New Request
+    </a>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header border-0 rounded-top-3 py-3"
+         style="background-color: #f8fafc; border-bottom: 2px solid #334155;">
+
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="mb-0" style="color: #1e293b;">
+          <i class="fas fa-list me-2"></i>Requests
+        </h5>
+        <span class="badge bg-secondary" aria-live="polite">
+          {{ filtered_count }} of {{ total_count }} request{{ total_count|pluralize }}
+        </span>
+      </div>
+
+      <!-- Search & Filter -->
+      <form method="get" action="" role="search" aria-label="Search and filter my service requests">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-5 col-md-4">
+            <label for="q" class="form-label small fw-semibold mb-1">Search</label>
+            <input type="text" id="q" name="q"
+                   class="form-control form-control-sm"
+                   value="{{ q }}" placeholder="Service type or description..."
+                   autocomplete="off" aria-label="Search my requests">
+          </div>
+          <div class="col-12 col-sm-4 col-md-3">
+            <label for="status-filter" class="form-label small fw-semibold mb-1">Status</label>
+            <select id="status-filter" name="status" class="form-select form-select-sm"
+                    aria-label="Filter by status"
+                    onchange="this.form.submit();">
+              <option value="">All statuses</option>
+              {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-sm" aria-label="Apply filters">
+              <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            {% if q or status %}
+            <a href="{% url 'core:my_service_requests' %}"
+               class="btn btn-outline-secondary btn-sm" aria-label="Clear filters">
+              <i class="fas fa-times me-1"></i>Clear
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card-body p-0">
+      {% if page_obj.object_list %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 mysvc-table"
+               aria-label="My service requests">
+          <thead style="background-color: #1e293b; color: white;">
+            <tr>
+              <th scope="col" class="mysvc-num-col" style="width: 46px;">#</th>
+              <th scope="col">Service</th>
+              <th scope="col" class="d-none d-md-table-cell">Description</th>
+              <th scope="col" class="d-none d-md-table-cell" style="width: 100px;">Budget</th>
+              <th scope="col" class="d-none d-md-table-cell" style="width: 110px;">Timeline</th>
+              <th scope="col" style="text-align: center; width: 140px;">Status</th>
+              <th scope="col" style="width: 100px;">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in page_obj %}
+            <tr class="row-{{ req.status }}">
+
+              <td class="mysvc-num-col align-middle text-muted">
+                {{ page_obj.start_index|add:forloop.counter0 }}
+              </td>
+
+              <td data-label="Service" class="align-middle">
+                <div class="mysvc-cell">
+                  <span class="badge"
+                        style="background-color: #eaf4fd; color: #1a5276; border: 1px solid #aed6f1;
+                               font-size: .78rem; font-weight: 500; white-space: normal; text-align: right;">
+                    {{ req.get_service_display }}
+                  </span>
+                  {% if req.description %}
+                  <div class="d-md-none text-muted mt-1" style="font-size: .75rem;">
+                    {{ req.description|truncatechars:60 }}
+                  </div>
+                  {% endif %}
+                </div>
+              </td>
+
+              <td data-label="Description" class="d-none d-md-table-cell align-middle text-muted"
+                  style="font-size: .82rem; max-width: 260px;">
+                <span title="{{ req.description }}">{{ req.description|truncatechars:80 }}</span>
+              </td>
+
+              <td data-label="Budget" class="d-none d-md-table-cell align-middle text-muted"
+                  style="font-size: .82rem;">{{ req.budget|default:"&mdash;" }}</td>
+
+              <td data-label="Timeline" class="d-none d-md-table-cell align-middle text-muted"
+                  style="font-size: .82rem;">{{ req.timeline|default:"&mdash;" }}</td>
+
+              <td data-label="Status" class="align-middle">
+                <div class="mysvc-cell">
+                  {% if req.status == 'new' %}
+                    <span class="badge"
+                          style="background-color:#cff4fc; color:#055160; border-radius:20px; padding:5px 12px; font-size:.78rem;">
+                      <i class="fas fa-circle-dot me-1"></i>New
+                    </span>
+                  {% elif req.status == 'contacted' %}
+                    <span class="badge"
+                          style="background-color:#fff3cd; color:#664d03; border-radius:20px; padding:5px 12px; font-size:.78rem;">
+                      <i class="fas fa-phone me-1"></i>Contacted
+                    </span>
+                  {% elif req.status == 'in_progress' %}
+                    <span class="badge"
+                          style="background-color:#cfe2ff; color:#084298; border-radius:20px; padding:5px 12px; font-size:.78rem;">
+                      <i class="fas fa-spinner me-1"></i>In Progress
+                    </span>
+                  {% elif req.status == 'completed' %}
+                    <span class="badge"
+                          style="background-color:#d1e7dd; color:#0a3622; border-radius:20px; padding:5px 12px; font-size:.78rem;">
+                      <i class="fas fa-check-circle me-1"></i>Completed
+                    </span>
+                  {% elif req.status == 'closed' %}
+                    <span class="badge"
+                          style="background-color:#e2e3e5; color:#41464b; border-radius:20px; padding:5px 12px; font-size:.78rem;">
+                      <i class="fas fa-times-circle me-1"></i>Closed
+                    </span>
+                  {% endif %}
+                </div>
+              </td>
+
+              <td data-label="Date" class="align-middle text-muted"
+                  style="font-size: .82rem; white-space: nowrap;">
+                {{ req.created_at|date:"d M Y" }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <div class="text-center py-5" style="color: #7f8c8d;">
+        {% if q or status %}
+          <i class="fas fa-search"
+             style="font-size: 2.5rem; display: block; margin-bottom: 12px; color: #bdc3c7;"></i>
+          <strong>No requests found</strong>
+          <p class="small mt-1 mb-3">Try a different search term or adjust the filter.</p>
+          <a href="{% url 'core:my_service_requests' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-times me-1"></i>Clear Filters
+          </a>
+        {% else %}
+          <i class="fas fa-inbox"
+             style="font-size: 3rem; display: block; margin-bottom: 14px; color: #bdc3c7;"></i>
+          <strong class="fs-5">No service requests yet</strong>
+          <p class="small mt-2 mb-3">Submit a request and track its progress here.</p>
+          <a href="{% url 'core:services' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-briefcase me-1"></i>Browse Services
+          </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if paginator.num_pages > 1 %}
+    <div class="card-footer bg-white py-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <small class="text-muted" aria-live="polite">
+          Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+          of {{ filtered_count }} request{{ filtered_count|pluralize }}
+        </small>
+        <nav aria-label="My requests pagination">
+          <ul class="pagination pagination-sm mb-0 flex-wrap">
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+              {% if page_obj.has_previous %}
+              <a class="page-link"
+                 href="?q={{ q }}&status={{ status }}&page={{ page_obj.previous_page_number }}"
+                 aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+              {% endif %}
+            </li>
+            {% for item in page_window %}
+              {% if not item %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+              {% elif item == page_obj.number %}
+              <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+              {% else %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?q={{ q }}&status={{ status }}&page={{ item }}">{{ item }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+              {% if page_obj.has_next %}
+              <a class="page-link"
+                 href="?q={{ q }}&status={{ status }}&page={{ page_obj.next_page_number }}"
+                 aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+              {% endif %}
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

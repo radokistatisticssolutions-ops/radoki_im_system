@@ -1,0 +1,376 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+/* ── Mobile: transform table rows into labeled cards ── */
+@media (max-width: 767.98px) {
+  .att-table thead          { display: none; }
+  .att-table,
+  .att-table tbody,
+  .att-table tr,
+  .att-table td             { display: block; width: 100%; box-sizing: border-box; }
+
+  .att-table tr {
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border: 1px solid #e9ecef;
+  }
+  /* Coloured left border shows attendance status at a glance */
+  .att-table tr.row-present  { border-left: 4px solid #198754; }
+  .att-table tr.row-absent   { border-left: 4px solid #dc3545; }
+  .att-table tr.row-unrec    { border-left: 4px solid #6c757d; }
+
+  .att-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    border: none;
+    border-bottom: 1px solid #f4f6f8;
+    font-size: .875rem;
+    min-height: 38px;
+  }
+  .att-table td:last-child   { border-bottom: none; }
+
+  /* Auto-generated label from data-label attribute */
+  .att-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #6c757d;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    min-width: 80px;
+    flex-shrink: 0;
+    margin-right: 10px;
+  }
+  /* Hide row-number column in card view */
+  .att-num-col               { display: none !important; }
+  /* Day-of-week sub-text not needed in card view */
+  .att-date-sub              { display: none !important; }
+}
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-4" style="max-width: 1100px; margin: 0 auto;">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">Dashboard</a></li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'courses:course_detail' course.pk %}">{{ course.title|truncatechars:32 }}</a>
+      </li>
+      <li class="breadcrumb-item active">My Attendance</li>
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color: #1a1a2e;">
+        <i class="fas fa-calendar-check me-2" style="color: #2980b9;"></i>My Attendance
+      </h1>
+      <p class="text-muted small mb-0">{{ course.title }}</p>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" onclick="history.back()">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </button>
+  </div>
+
+  {% if total %}
+
+  <!-- ── Stat Cards ── -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-sm-4 col-lg">
+      <div class="card border-0 shadow-sm text-center h-100">
+        <div class="card-body py-3">
+          <div class="fw-bold fs-3
+            {% if pct >= 75 %}text-success{% elif pct >= 50 %}text-warning{% else %}text-danger{% endif %}">
+            {{ pct }}%
+          </div>
+          <div class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.4px;">Rate</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-4 col-lg">
+      <div class="card border-0 shadow-sm text-center h-100">
+        <div class="card-body py-3">
+          <div class="fw-bold fs-3 text-success">{{ present_count }}</div>
+          <div class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.4px;">Present</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-4 col-lg">
+      <div class="card border-0 shadow-sm text-center h-100">
+        <div class="card-body py-3">
+          <div class="fw-bold fs-3 text-danger">{{ absent_count }}</div>
+          <div class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.4px;">Absent</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-6 col-lg">
+      <div class="card border-0 shadow-sm text-center h-100">
+        <div class="card-body py-3">
+          <div class="fw-bold fs-3 text-secondary">{{ unrecorded_count }}</div>
+          <div class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.4px;">Unrecorded</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg">
+      <div class="card border-0 shadow-sm text-center h-100">
+        <div class="card-body py-3">
+          <div class="fw-bold fs-3" style="color: #2980b9;">{{ total }}</div>
+          <div class="text-muted small text-uppercase fw-semibold" style="letter-spacing:.4px;">Sessions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Progress Bar ── -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-2">
+        <span class="fw-semibold small">
+          <i class="fas fa-chart-line me-2" style="color: #2980b9;"></i>Overall Progress
+        </span>
+        <span class="fw-bold small
+          {% if pct >= 75 %}text-success{% elif pct >= 50 %}text-warning{% else %}text-danger{% endif %}">
+          {{ present_count }} / {{ total }} sessions
+        </span>
+      </div>
+      <div class="progress" style="height: 10px;"
+           role="progressbar"
+           aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"
+           aria-label="Attendance progress {{ pct }}%">
+        <div class="progress-bar
+          {% if pct >= 75 %}bg-success{% elif pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+             style="width: {{ pct }}%;"></div>
+      </div>
+      {% if pct < 75 %}
+      <div class="alert alert-warning py-2 px-3 mt-3 mb-0 small" role="alert">
+        <i class="fas fa-exclamation-triangle me-1"></i>
+        Most certifications require &ge; 75% attendance. You currently have {{ pct }}%.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Attendance Table Card ── -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+
+    <!-- Card header: title + search/filter -->
+    <div class="card-header border-0 rounded-top-3 py-3"
+         style="background-color: #ecf0f1; border-bottom: 2px solid #2980b9;">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="mb-0" style="color: #1a5276;">
+          <i class="fas fa-list-alt me-2"></i>Session Records
+        </h5>
+        <span class="badge bg-secondary" aria-live="polite">
+          {{ filtered_count }} session{{ filtered_count|pluralize }}
+        </span>
+      </div>
+
+      <form method="get" action="" role="search" aria-label="Search and filter sessions">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-5 col-md-4">
+            <label for="att-search" class="form-label small fw-semibold mb-1">Search by title</label>
+            <input type="text" id="att-search" name="q"
+                   class="form-control form-control-sm"
+                   value="{{ q }}" placeholder="Type session title..."
+                   autocomplete="off" aria-label="Search sessions by title">
+          </div>
+          <div class="col-12 col-sm-4 col-md-3">
+            <label for="att-status" class="form-label small fw-semibold mb-1">Status</label>
+            <select id="att-status" name="status"
+                    class="form-select form-select-sm"
+                    aria-label="Filter by attendance status"
+                    onchange="this.form.submit();">
+              <option value="">All statuses</option>
+              <option value="present" {% if status == 'present' %}selected{% endif %}>&#10003; Present</option>
+              <option value="absent"  {% if status == 'absent'  %}selected{% endif %}>&#10007; Absent</option>
+              <option value="unrecorded" {% if status == 'unrecorded' %}selected{% endif %}>&#9203; Unrecorded</option>
+            </select>
+          </div>
+          <div class="col-auto d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-sm" aria-label="Apply filters">
+              <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            {% if q or status %}
+            <a href="{% url 'attendance:my_attendance' course.pk %}"
+               class="btn btn-outline-secondary btn-sm" role="button" aria-label="Clear filters">
+              <i class="fas fa-times me-1"></i>Clear
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table / Card list -->
+    <div class="card-body p-0">
+      {% if rows %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 att-table"
+               aria-label="Attendance records for {{ course.title }}">
+          <thead style="background-color: #2c3e50; color: white;">
+            <tr>
+              <th scope="col" class="att-num-col" style="width: 46px;">#</th>
+              <th scope="col">Session</th>
+              <th scope="col" style="width: 110px;">Date</th>
+              <th scope="col" style="width: 100px;">Time</th>
+              <th scope="col">Venue</th>
+              <th scope="col" style="width: 130px; text-align: center;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr class="{% if row.has_record %}{% if row.is_present %}row-present{% else %}row-absent{% endif %}{% else %}row-unrec{% endif %}">
+
+              <td class="att-num-col align-middle text-muted" style="width: 46px;">
+                {{ row.row_num }}
+              </td>
+
+              <td data-label="Session" class="align-middle">
+                <span class="fw-semibold">{{ row.session.title }}</span>
+              </td>
+
+              <td data-label="Date" class="align-middle" style="font-size: 13px; white-space: nowrap;">
+                {{ row.session.date|date:"M d, Y" }}
+                <div class="text-muted att-date-sub" style="font-size: 11px;">
+                  {{ row.session.date|date:"l" }}
+                </div>
+              </td>
+
+              <td data-label="Time" class="align-middle" style="font-size: 13px; white-space: nowrap;">
+                {% if row.session.start_time %}
+                  {{ row.session.start_time|time:"H:i" }}
+                  {% if row.session.end_time %}
+                    &ndash; {{ row.session.end_time|time:"H:i" }}
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted">&mdash;</span>
+                {% endif %}
+              </td>
+
+              <td data-label="Venue" class="align-middle" style="font-size: 13px;">
+                {% if row.session.venue %}
+                  {{ row.session.venue }}
+                {% else %}
+                  <span class="text-muted">&mdash;</span>
+                {% endif %}
+              </td>
+
+              <td data-label="Status" class="align-middle" style="text-align: center;">
+                {% if row.has_record %}
+                  {% if row.is_present %}
+                    <span class="badge bg-success" role="status" aria-label="Present">
+                      <i class="fas fa-check-circle me-1"></i>Present
+                    </span>
+                  {% else %}
+                    <span class="badge bg-danger" role="status" aria-label="Absent">
+                      <i class="fas fa-times-circle me-1"></i>Absent
+                    </span>
+                  {% endif %}
+                {% else %}
+                  <span class="badge bg-secondary" role="status" aria-label="Not recorded">
+                    <i class="fas fa-clock me-1"></i>Not Recorded
+                  </span>
+                {% endif %}
+              </td>
+
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <!-- No results -->
+      <div class="text-center py-5" style="color: #7f8c8d;">
+        <i class="fas fa-search"
+           style="font-size: 2.5rem; display: block; margin-bottom: 12px; color: #bdc3c7;"></i>
+        <strong>No sessions found</strong>
+        <p class="small mt-1 mb-3">Try a different search term or adjust your filters.</p>
+        <a href="{% url 'attendance:my_attendance' course.pk %}" class="btn btn-primary btn-sm">
+          <i class="fas fa-times me-1"></i>Clear Filters
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if paginator.num_pages > 1 %}
+    <div class="card-footer bg-white py-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <small class="text-muted" aria-live="polite">
+          Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+          of {{ filtered_count }} session{{ filtered_count|pluralize }}
+        </small>
+        <nav aria-label="Attendance pagination">
+          <ul class="pagination pagination-sm mb-0 flex-wrap">
+
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+              {% if page_obj.has_previous %}
+              <a class="page-link"
+                 href="?q={{ q }}&status={{ status }}&page={{ page_obj.previous_page_number }}"
+                 aria-label="Previous page"><i class="fas fa-chevron-left"></i></a>
+              {% else %}
+              <span class="page-link" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>
+              {% endif %}
+            </li>
+
+            {% for item in page_window %}
+              {% if not item %}
+              <li class="page-item disabled" aria-hidden="true">
+                <span class="page-link">&hellip;</span>
+              </li>
+              {% elif item == page_obj.number %}
+              <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ item }}</span>
+              </li>
+              {% else %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?q={{ q }}&status={{ status }}&page={{ item }}"
+                   aria-label="Page {{ item }}">{{ item }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+              {% if page_obj.has_next %}
+              <a class="page-link"
+                 href="?q={{ q }}&status={{ status }}&page={{ page_obj.next_page_number }}"
+                 aria-label="Next page"><i class="fas fa-chevron-right"></i></a>
+              {% else %}
+              <span class="page-link" aria-hidden="true"><i class="fas fa-chevron-right"></i></span>
+              {% endif %}
+            </li>
+
+          </ul>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- /card -->
+
+  {% else %}
+  <!-- No sessions scheduled -->
+  <div class="card border-0 shadow-sm">
+    <div class="text-center py-5" role="status" style="color: #7f8c8d;">
+      <i class="fas fa-calendar"
+         style="font-size: 3rem; display: block; margin-bottom: 14px; color: #bdc3c7;"></i>
+      <strong class="fs-5">No sessions scheduled</strong>
+      <p class="small mt-2 mb-0">
+        Your instructor hasn&rsquo;t scheduled any sessions for this course yet.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

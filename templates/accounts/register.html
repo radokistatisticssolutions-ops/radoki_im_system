@@ -1,0 +1,233 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+  @media (max-width: 768px) {
+    .card-header.p-4,
+    .card-body.p-4,
+    .card-body.p-5 {
+      padding: 0.5rem !important;
+    }
+    
+    .mb-5, .mb-4, .mb-3, .mb-2 {
+      margin-bottom: 0.3rem !important;
+    }
+    
+    .p-4, .p-5 {
+      padding: 0.5rem !important;
+    }
+    
+    .p-3 {
+      padding: 0.3rem !important;
+    }
+  }
+</style>
+
+<div class="container-fluid py-4" style="background-color: #f0f2f5; min-height: 100vh;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-6 col-md-8">
+        <!-- Registration Card -->
+        <div class="card shadow-lg border-0 rounded-4">
+          <!-- Card Header -->
+  <div class="card-header border-0 rounded-top-4 p-4" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <h2 class="text-white text-center mb-0">
+              <i class="fas fa-user-plus"></i> Create Account
+            </h2>
+            <p class="text-center text-white mt-2 mb-0" style="opacity: 0.9;">Join RADOKI IMS Today</p>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body p-4">
+            <form method="post" novalidate>
+              {% csrf_token %}
+
+              <!-- Error Messages -->
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border: none; border-radius: 10px;">
+                  <strong><i class="fas fa-exclamation-circle"></i> Error!</strong>
+                  {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+              {% endif %}
+
+              <!-- Account Type Selection -->
+              <div class="mb-4 p-3 rounded-3" style="background-color: #f8f9fa; border: 2px solid #ecf0f1;">
+                <label class="form-label fw-bold mb-3" style="color: #2c3e50;">
+                  <i class="fas fa-shield-alt"></i> Account Type
+                </label>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="radio" name="role" value="student" id="student" checked>
+                  <label class="form-check-label" for="student" style="color: #34495e;">
+                    <i class="fas fa-graduation-cap"></i> Student - Learn from courses
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="role" value="instructor" id="instructor">
+                  <label class="form-check-label" for="instructor" style="color: #34495e;">
+                    <i class="fas fa-chalkboard-user"></i> Instructor - Create & teach courses
+                  </label>
+                </div>
+              </div>
+
+              <hr style="color: #ecf0f1;">
+
+              <!-- Personal Information Section -->
+              <h5 class="mb-3" style="color: #2c3e50;">
+                <i class="fas fa-id-card" style="color: #3498db;"></i> Personal Information
+              </h5>
+
+              <!-- Name Fields in Two Columns -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="{{ form.first_name.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                    {{ form.first_name.label }}
+                  </label>
+                  {{ form.first_name }}
+                  {% if form.first_name.errors %}<small class="text-danger">{{ form.first_name.errors }}</small>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ form.last_name.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                    {{ form.last_name.label }}
+                  </label>
+                  {{ form.last_name }}
+                  {% if form.last_name.errors %}<small class="text-danger">{{ form.last_name.errors }}</small>{% endif %}
+                </div>
+              </div>
+
+              <!-- Username & Email -->
+              <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                  {{ form.username.label }}
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}<small class="text-danger">{{ form.username.errors }}</small>{% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                  {{ form.email.label }}
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}<small class="text-danger">{{ form.email.errors }}</small>{% endif %}
+              </div>
+
+              <!-- Age & Gender in Two Columns -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="{{ form.age.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                    {{ form.age.label }}
+                  </label>
+                  {{ form.age }}
+                  {% if form.age.errors %}<small class="text-danger">{{ form.age.errors }}</small>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ form.sex.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                    {{ form.sex.label }}
+                  </label>
+                  {{ form.sex }}
+                  {% if form.sex.errors %}<small class="text-danger">{{ form.sex.errors }}</small>{% endif %}
+                </div>
+              </div>
+
+              <!-- Contact Information -->
+              <h5 class="mb-3 mt-4" style="color: #2c3e50;">
+                <i class="fas fa-phone" style="color: #f39c12;"></i> Contact Information
+              </h5>
+
+              <div class="mb-3">
+                <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                  {{ form.phone_number.label }}
+                </label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}<small class="text-danger">{{ form.phone_number.errors }}</small>{% endif %}
+              </div>
+
+              <!-- Region & Country in Two Columns -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="{{ form.region.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                    {{ form.region.label }}
+                  </label>
+                  {{ form.region }}
+                  {% if form.region.errors %}<small class="text-danger">{{ form.region.errors }}</small>{% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ form.country.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                    {{ form.country.label }}
+                  </label>
+                  {{ form.country }}
+                  {% if form.country.errors %}<small class="text-danger">{{ form.country.errors }}</small>{% endif %}
+                </div>
+              </div>
+
+              <!-- Professional Information -->
+              <h5 class="mb-3 mt-4" style="color: #2c3e50;">
+                <i class="fas fa-briefcase" style="color: #8e44ad;"></i> Professional Information
+              </h5>
+
+              <div class="mb-3">
+                <label for="{{ form.professional_qualification.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                  {{ form.professional_qualification.label }}
+                </label>
+                {{ form.professional_qualification }}
+                {% if form.professional_qualification.errors %}<small class="text-danger">{{ form.professional_qualification.errors }}</small>{% endif %}
+              </div>
+
+              <!-- Password Section -->
+              <h5 class="mb-3 mt-4" style="color: #2c3e50;">
+                <i class="fas fa-lock" style="color: #e74c3c;"></i> Security
+              </h5>
+
+              <div class="mb-3">
+                <label for="{{ form.password1.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                  {{ form.password1.label }}
+                </label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}<small class="text-danger">{{ form.password1.errors }}</small>{% endif %}
+                <small class="form-text text-muted d-block mt-1">
+                  <i class="fas fa-info-circle"></i> Password must be at least 8 characters
+                </small>
+              </div>
+
+              <div class="mb-4">
+                <label for="{{ form.password2.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                  {{ form.password2.label }}
+                </label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}<small class="text-danger">{{ form.password2.errors }}</small>{% endif %}
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold mb-3" style="border-radius: 10px;">
+                <i class="fas fa-check-circle"></i> Create Account
+              </button>
+
+              <!-- Login Link -->
+              <div class="text-center">
+                <p class="text-muted">
+                  Already have an account? 
+                  <a href="{% url 'accounts:login' %}" class="fw-bold" style="color: #3498db; text-decoration: none;">
+                    Login here
+                  </a>
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="alert alert-info rounded-3 mt-4 mb-0" style="border: none; background-color: #d6eaf8; color: #1a5f7a;">
+          <i class="fas fa-shield-check"></i> <strong>Your data is secure:</strong> 
+          We keep all your personal information private and secure.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

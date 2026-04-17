@@ -1,0 +1,228 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+@media (max-width: 767.98px) {
+  .att-table thead         { display: none; }
+  .att-table,
+  .att-table tbody,
+  .att-table tr,
+  .att-table td            { display: block; width: 100%; box-sizing: border-box; }
+  .att-table tr {
+    border-radius: 10px; margin-bottom: 12px; overflow: hidden;
+    background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border: 1px solid #e9ecef; border-left: 4px solid #2980b9;
+  }
+  .att-table td {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 14px; border: none; border-bottom: 1px solid #f4f6f8;
+    font-size: .875rem; min-height: 38px;
+  }
+  .att-table td:last-child  { border-bottom: none; }
+  .att-table td[data-label]::before {
+    content: attr(data-label); font-weight: 700; color: #6c757d;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .5px;
+    min-width: 80px; flex-shrink: 0; margin-right: 10px;
+  }
+  .att-num-col { display: none !important; }
+  .att-table td.actions-cell { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-4" style="max-width: 1000px; margin: 0 auto;">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color: #1a1a2e;">
+        <i class="fas fa-clipboard-user me-2" style="color: #2980b9;"></i>Attendance
+      </h1>
+      <p class="text-muted small mb-0">Select a course to manage sessions and mark attendance.</p>
+    </div>
+  </div>
+
+  <!-- Courses Table Card -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header border-0 rounded-top-3 py-3"
+         style="background-color: #ecf0f1; border-bottom: 2px solid #2980b9;">
+
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="mb-0" style="color: #1a5276;">
+          <i class="fas fa-book me-2"></i>My Courses
+        </h5>
+        <span class="badge bg-secondary" aria-live="polite">
+          {{ filtered_count }} course{{ filtered_count|pluralize }}
+        </span>
+      </div>
+
+      <!-- Search & Filter -->
+      <form method="get" action="" role="search" aria-label="Search and filter courses">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-4 col-md-4">
+            <label for="q" class="form-label small fw-semibold mb-1">Search by course</label>
+            <input type="text" id="q" name="q"
+                   class="form-control form-control-sm"
+                   value="{{ q }}" placeholder="Type course name..."
+                   autocomplete="off" aria-label="Search by course name">
+          </div>
+          <div class="col-12 col-sm-3 col-md-3">
+            <label for="mode" class="form-label small fw-semibold mb-1">Mode</label>
+            <select id="mode" name="mode" class="form-select form-select-sm"
+                    aria-label="Filter by delivery mode"
+                    onchange="this.form.submit();">
+              <option value="">All modes</option>
+              {% for m in all_modes %}
+              <option value="{{ m }}" {% if mode == m %}selected{% endif %}>{{ m|title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-sm-3 col-md-3">
+            <label for="has_sessions" class="form-label small fw-semibold mb-1">Sessions</label>
+            <select id="has_sessions" name="has_sessions" class="form-select form-select-sm"
+                    aria-label="Filter by sessions existence"
+                    onchange="this.form.submit();">
+              <option value="">All courses</option>
+              <option value="yes" {% if has_sessions == 'yes' %}selected{% endif %}>Has sessions</option>
+              <option value="no"  {% if has_sessions == 'no'  %}selected{% endif %}>No sessions yet</option>
+            </select>
+          </div>
+          <div class="col-auto d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-sm" aria-label="Apply filters">
+              <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            {% if q or mode or has_sessions %}
+            <a href="{% url 'attendance:instructor_home' %}"
+               class="btn btn-outline-secondary btn-sm" aria-label="Clear filters">
+              <i class="fas fa-times me-1"></i>Clear
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card-body p-0">
+      {% if course_data %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 att-table"
+               aria-label="Course attendance overview">
+          <thead style="background-color: #2c3e50; color: white;">
+            <tr>
+              <th scope="col" class="att-num-col" style="width: 46px;">#</th>
+              <th scope="col">Course</th>
+              <th scope="col" class="d-none d-sm-table-cell" style="width: 110px;">Mode</th>
+              <th scope="col" style="text-align: center; width: 90px;">Sessions</th>
+              <th scope="col" style="text-align: center; width: 200px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in course_data %}
+            <tr>
+              <td class="att-num-col align-middle text-muted">{{ forloop.counter }}</td>
+
+              <td data-label="Course" class="align-middle">
+                <span class="fw-semibold">{{ item.course.title }}</span>
+                <div class="d-sm-none text-muted mt-1" style="font-size: 12px;">
+                  {{ item.course.get_mode_display }}
+                </div>
+              </td>
+
+              <td data-label="Mode" class="d-none d-sm-table-cell align-middle"
+                  style="font-size: 13px;">
+                {{ item.course.get_mode_display }}
+              </td>
+
+              <td data-label="Sessions" class="align-middle" style="text-align: center;">
+                <span class="badge bg-secondary">{{ item.session_count }}</span>
+              </td>
+
+              <td data-label="Actions" class="align-middle actions-cell" style="text-align: center;">
+                <div class="d-flex gap-1 justify-content-center flex-wrap">
+                  <a href="{% url 'attendance:session_list' item.course.pk %}"
+                     class="btn btn-sm btn-primary" title="View Sessions">
+                    <i class="fas fa-list me-1"></i>Sessions
+                  </a>
+                  <a href="{% url 'attendance:create_session' item.course.pk %}"
+                     class="btn btn-sm btn-outline-primary" title="Add Session">
+                    <i class="fas fa-plus me-1"></i>Add
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <div class="text-center py-5" style="color: #7f8c8d;">
+        {% if q or mode or has_sessions %}
+          <i class="fas fa-search"
+             style="font-size: 2.5rem; display: block; margin-bottom: 12px; color: #bdc3c7;"></i>
+          <strong>No courses found</strong>
+          <p class="small mt-1 mb-3">Try a different search term or adjust the filters.</p>
+          <a href="{% url 'attendance:instructor_home' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-times me-1"></i>Clear Filters
+          </a>
+        {% else %}
+          <i class="fas fa-book"
+             style="font-size: 3rem; display: block; margin-bottom: 14px; color: #bdc3c7;"></i>
+          <strong class="fs-5">No courses yet</strong>
+          <p class="small mt-2 mb-3">Create a course first, then come back to manage attendance.</p>
+          <a href="{% url 'courses:create_course' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Create Course
+          </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if paginator.num_pages > 1 %}
+    <div class="card-footer bg-white py-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <small class="text-muted" aria-live="polite">
+          Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+          of {{ filtered_count }} course{{ filtered_count|pluralize }}
+        </small>
+        <nav aria-label="Courses pagination">
+          <ul class="pagination pagination-sm mb-0 flex-wrap">
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+              {% if page_obj.has_previous %}
+              <a class="page-link"
+                 href="?q={{ q }}&mode={{ mode }}&has_sessions={{ has_sessions }}&page={{ page_obj.previous_page_number }}"
+                 aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+              {% endif %}
+            </li>
+            {% for item in page_window %}
+              {% if not item %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+              {% elif item == page_obj.number %}
+              <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+              {% else %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?q={{ q }}&mode={{ mode }}&has_sessions={{ has_sessions }}&page={{ item }}">{{ item }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+              {% if page_obj.has_next %}
+              <a class="page-link"
+                 href="?q={{ q }}&mode={{ mode }}&has_sessions={{ has_sessions }}&page={{ page_obj.next_page_number }}"
+                 aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+              {% endif %}
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

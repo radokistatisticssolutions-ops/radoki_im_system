@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 8px 20px rgba(239,68,68,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+            color: white;
+            padding: 50px 30px 45px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -40px;
+            width: 220px; height: 220px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: 0.92;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .warning-icon {
+            font-size: 54px;
+            margin-bottom: 18px;
+            display: block;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25));
+        }
+        .content {
+            padding: 45px 40px;
+            background: #ffffff;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 22px;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+        .content > p {
+            font-size: 15px;
+            color: #4a4a6a;
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+        .alert-box {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(248,113,113,0.06) 100%);
+            border-left: 4px solid #ef4444;
+            padding: 20px 22px;
+            margin: 22px 0;
+            border-radius: 12px;
+        }
+        .alert-box h3 {
+            margin-top: 0;
+            color: #dc2626;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .alert-box p { color: #4a4a6a; margin: 8px 0 0; font-size: 14px; }
+        .course-details {
+            background: linear-gradient(135deg, #f7f5ff 0%, #fff5f5 100%);
+            padding: 20px 22px;
+            border-radius: 12px;
+            margin: 22px 0;
+            border: 1px solid rgba(239,68,68,0.2);
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(239,68,68,0.12);
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { font-weight: 700; color: #1a1a2e; font-size: 14px; }
+        .detail-value { color: #5a5a7a; font-size: 14px; }
+        .reason-box {
+            background: linear-gradient(135deg, rgba(239,68,68,0.07) 0%, rgba(252,165,165,0.04) 100%);
+            border-left: 4px solid #f87171;
+            padding: 20px 22px;
+            margin: 22px 0;
+            border-radius: 12px;
+        }
+        .reason-box h4 {
+            margin-top: 0;
+            color: #dc2626;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .reason-box p { color: #4a4a6a; font-size: 14px; margin: 8px 0 0; line-height: 1.7; }
+        .action-items {
+            background: linear-gradient(135deg, rgba(99,82,255,0.07) 0%, rgba(168,85,247,0.04) 100%);
+            border-left: 4px solid #6352ff;
+            padding: 20px 22px;
+            margin: 22px 0;
+            border-radius: 12px;
+        }
+        .action-items h4 {
+            margin-top: 0;
+            color: #6352ff;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .action-items ul { margin: 10px 0; padding-left: 20px; }
+        .action-items li { margin: 8px 0; color: #4a4a6a; font-size: 14px; line-height: 1.7; }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 60%, #f87171 100%);
+            color: white !important;
+            padding: 17px 50px;
+            text-decoration: none;
+            border-radius: 50px;
+            margin: 20px 0;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 28px rgba(239,68,68,0.45), 0 2px 8px rgba(248,113,113,0.3);
+        }
+        .footer {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 35px 25px;
+            text-align: center;
+            font-size: 13px;
+            color: #9999bb;
+            width: 100%;
+        }
+        .footer p { margin: 8px 0; line-height: 1.6; }
+        .footer-brand {
+            font-weight: 700;
+            font-size: 15px;
+            color: #e0e0f5;
+            margin-bottom: 4px;
+        }
+        .footer-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(153,153,187,0.35) 50%, transparent 100%);
+            margin: 16px auto;
+            width: 80%;
+        }
+        .footer-note {
+            font-size: 11px;
+            color: #6666aa;
+            margin-top: 10px;
+        }
+        .support-link { color: #f87171; text-decoration: none; font-weight: 600; }
+        @media only screen and (max-width: 600px) {
+            .email-container { margin: 10px !important; border-radius: 14px !important; }
+            .header { padding: 35px 20px 30px !important; }
+            .header h1 { font-size: 22px !important; }
+            .content { padding: 28px 20px !important; }
+            .cta-button { padding: 14px 28px !important; font-size: 14px !important; }
+            .footer { padding: 25px 18px !important; }
+            .detail-row { flex-direction: column; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="warning-icon">⚠️</div>
+            <h1>Payment Status Update</h1>
+            <p>Action Required</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">Dear {{ student_name }},</p>
+
+            <p>Thank you for submitting your payment receipt. We've reviewed it and unfortunately, we're unable to approve it at this time.</p>
+
+            <!-- Alert Box -->
+            <div class="alert-box">
+                <h3>✗ Payment Status: Rejected</h3>
+                <p>Your payment for the following course could not be verified.</p>
+            </div>
+
+            <!-- Course Details -->
+            <div class="course-details">
+                <div class="detail-row">
+                    <span class="detail-label">📚 Course Name:</span>
+                    <span class="detail-value">{{ course_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">✗ Status:</span>
+                    <span class="detail-value">Rejected</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">📅 Reviewed:</span>
+                    <span class="detail-value">Today</span>
+                </div>
+            </div>
+
+            <!-- Rejection Reason -->
+            <div class="reason-box">
+                <h4>Reason for Rejection</h4>
+                <p>{{ rejection_reason }}</p>
+            </div>
+
+            <!-- Action Items -->
+            <div class="action-items">
+                <h4>What You Can Do</h4>
+                <ul>
+                    <li><strong>Review the receipt:</strong> Check that all payment details are clearly visible and correct</li>
+                    <li><strong>Verify your payment:</strong> Confirm with your payment provider that the transaction was successful</li>
+                    <li><strong>Upload again:</strong> If you have a clearer receipt or made another payment, please upload it</li>
+                    <li><strong>Contact support:</strong> If you believe this is an error, reach out to our support team for assistance</li>
+                </ul>
+            </div>
+
+            <!-- CTA Button -->
+            <div style="text-align: center;">
+                <a href="{{ course_url }}" class="cta-button">Upload New Receipt</a>
+            </div>
+
+            <p>We're here to help! If you have any questions about the rejection or need assistance with the process, please don't hesitate to reach out to our support team. We want to ensure you get access to your course as quickly as possible.</p>
+
+            <p>
+                <strong>Best Regards,</strong><br>
+                The Radoki Learning Team
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-brand">Radoki Learning — We're here to help you succeed!</p>
+            <div class="footer-divider"></div>
+            <p>You received this email because you enrolled in a course on<br>Radoki Learning Management System.</p>
+            <p>Need help? <a href="mailto:support@radoki.com" class="support-link">Contact our support team</a></p>
+            <div class="footer-divider"></div>
+            <p>&copy; 2026 Radoki Learning. All rights reserved.</p>
+            <p class="footer-note">This is an automated email. Please do not reply to this message.</p>
+        </div>
+    </div>
+</body>
+</html>

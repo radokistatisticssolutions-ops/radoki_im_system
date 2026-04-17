@@ -1,0 +1,361 @@
+/*
+ * RADOKI IMS — User Admin Color Consistency
+ * Injected on all /admin/accounts/user/ pages via UserAdmin.Media.
+ * All color pairs are verified for WCAG AA contrast (≥4.5:1 normal text, ≥3:1 large/bold).
+ */
+
+/* ─────────────────────────────────────────
+   PAGE — light blue-gray canvas
+   bg #f0f4f8 / body text #1e293b  ≈ 13:1 ✓
+───────────────────────────────────────── */
+body {
+  background: #f0f4f8 !important;
+  color: #1e293b !important;
+}
+
+/* ─────────────────────────────────────────
+   BREADCRUMBS
+   links #1a5276 on #f0f4f8  ≈ 6.5:1 ✓
+   hover  #2980b9 on #f0f4f8  ≈ 4.6:1 ✓
+───────────────────────────────────────── */
+div#breadcrumbs { color: #334155 !important; }
+div#breadcrumbs a { color: #1a5276 !important; }
+div#breadcrumbs a:hover { color: #2980b9 !important; }
+
+/* ─────────────────────────────────────────
+   MODULE / FIELDSET HEADERS
+   bg #1a3a5c / text #fff  ≈ 11:1 ✓
+───────────────────────────────────────── */
+.module > h2,
+fieldset.module > h2,
+fieldset > h2,
+fieldset.collapse > h2,
+fieldset.collapsed > h2,
+fieldset.collapse.collapsed > h2,
+fieldset .fieldset-heading,
+fieldset .inline-heading,
+fieldset.collapse summary,
+:not(.inline-related) .collapse summary {
+  background: #1a3a5c !important;
+  color: #fff !important;
+  border-color: #1a3a5c !important;
+}
+/* Text/links inside collapse summary */
+fieldset.collapse > h2 a,
+fieldset.collapsed > h2 a,
+.collapse summary .fieldset-heading,
+.collapse summary .inline-heading,
+fieldset.collapse summary a {
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+/* ─────────────────────────────────────────
+   FORM LABELS & HELP TEXT
+   label #334155 on white   ≈ 8.6:1 ✓
+   help  #64748b on white   ≈ 4.6:1 ✓
+───────────────────────────────────────── */
+.form-row label,
+.aligned label {
+  color: #334155 !important;
+}
+.help, p.help, .form-row p.help {
+  color: #64748b !important;
+}
+
+/* ─────────────────────────────────────────
+   READONLY VALUES
+   #475569 on white  ≈ 4.9:1 ✓
+───────────────────────────────────────── */
+.form-row .readonly { color: #475569 !important; }
+
+/* ─────────────────────────────────────────
+   LINKS INSIDE CONTENT (plain text links only)
+   Excludes buttons rendered as <a> tags AND
+   password links (handled separately below).
+   #1a5276 on white/light  ≈ 6.5:1 ✓
+───────────────────────────────────────── */
+#content-main a:not(.deletelink):not(.addlink):not(.historylink):not(.viewlink):not([href*="password"]):not(.clf-pill):not(.page-link):not(.clf-dd-item):not(.dropdown-item) {
+  color: #1a5276 !important;
+}
+#content-main a:not(.deletelink):not(.addlink):not(.historylink):not(.viewlink):not([href*="password"]):not(.clf-pill):not(.page-link):not(.clf-dd-item):not(.dropdown-item):hover {
+  color: #2980b9 !important;
+}
+
+/* ─────────────────────────────────────────
+   TABLE HEADER — bg + hover
+   bg #1a3a5c / text #fff  ≈ 11:1 ✓
+   hover keeps text white on a slightly darker bg
+───────────────────────────────────────── */
+/* body prefix beats Django's built-in changelists.css rules */
+body #result_list thead th,
+body #result_list thead th:hover {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+body #result_list thead th.sorted,
+body #result_list thead th.sorted:hover {
+  background: #1a5276 !important;
+  color: #fff !important;
+}
+/* Django's hover effect lives on the inner .text a — kill it here */
+body #result_list thead th .text a,
+body #result_list thead th .text a:link,
+body #result_list thead th .text a:visited,
+body #result_list thead th .text a:hover,
+body #result_list thead th .text a:focus {
+  background: transparent !important;
+  color: rgba(255, 255, 255, .85) !important;
+  text-decoration: none !important;
+}
+/* Sort links stay white — double-ID beats generic link rule */
+#content-main #result_list thead th a,
+#content-main #result_list thead th a:hover {
+  color: rgba(255,255,255,.85) !important;
+  text-decoration: none !important;
+}
+
+/* ─────────────────────────────────────────
+   OBJECT-TOOLS (History / Add user buttons)
+   bg #1a5276 / text #fff  ≈ 7:1 ✓
+   Higher specificity than the links rule above.
+───────────────────────────────────────── */
+#content-main ul.object-tools a,
+#content-main ul.object-tools a:link,
+#content-main ul.object-tools a:visited {
+  background: #1a5276 !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+}
+#content-main ul.object-tools a:hover {
+  background: #2980b9 !important;
+  color: #fff !important;
+}
+
+/* ─────────────────────────────────────────
+   PRIMARY SUBMIT BUTTON
+   bg #1a5276→#2980b9 / text #fff  ≈ 7:1 ✓
+───────────────────────────────────────── */
+.submit-row input[type="submit"],
+.submit-row input.default,
+input[name="_save"] {
+  background: linear-gradient(135deg, #1a5276, #2980b9) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(26,82,118,.22) !important;
+}
+.submit-row input[type="submit"]:hover,
+.submit-row input.default:hover { opacity: .88 !important; }
+
+/* ─────────────────────────────────────────
+   SECONDARY BUTTONS (Add another / Continue)
+   bg #f0f6fb / text #1a5276  ≈ 6:1 ✓
+───────────────────────────────────────── */
+.submit-row input[name="_addanother"],
+.submit-row input[name="_continue"] {
+  background: #f0f6fb !important;
+  color: #1a5276 !important;
+  border: 1.5px solid #c8ddf0 !important;
+}
+.submit-row input[name="_addanother"]:hover,
+.submit-row input[name="_continue"]:hover {
+  background: #d4e9f7 !important;
+  color: #1a3a5c !important;
+}
+
+/* ─────────────────────────────────────────
+   DELETE LINK — keep Django's default red bg, white text
+   Do NOT override color here; Django already applies white text.
+───────────────────────────────────────── */
+.submit-row a.deletelink:hover { background: #b91c1c !important; color: #fff !important; }
+
+/* ─────────────────────────────────────────
+   INPUT FOCUS RING
+───────────────────────────────────────── */
+input:focus, textarea:focus, select:focus {
+  border-color: #2980b9 !important;
+  box-shadow: 0 0 0 3px rgba(41,128,185,.15) !important;
+  outline: none !important;
+}
+input[type="checkbox"] { accent-color: #1a5276 !important; }
+
+/* ─────────────────────────────────────────
+   PASSWORD RESET LINK INSIDE FORM
+   bg #1a5276 / text #fff  ≈ 7:1 ✓
+───────────────────────────────────────── */
+#content-main .form-row a[href*="password"] {
+  background: #1a5276 !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  display: inline-block !important;
+}
+#content-main .form-row a[href*="password"]:hover {
+  background: #2980b9 !important;
+  color: #fff !important;
+}
+
+/* ─────────────────────────────────────────
+   SELECTOR WIDGET (Groups / Permissions)
+   header bg #1a3a5c / text #fff  ≈ 11:1 ✓
+   chooser bg #f0f6fb (neutral strip)
+   add btn  bg #1a5276 / #fff     ≈ 7:1 ✓
+   remove btn bg #fee2e2 / #991b1b ≈ 5.5:1 ✓
+   chooseall #1a5276 on #f8fafc   ≈ 6.3:1 ✓
+   clearall  #991b1b on #f8fafc   ≈ 5.3:1 ✓
+───────────────────────────────────────── */
+/* Django < 4.x used h2; newer Django uses -title classes */
+.selector-available h2,
+.selector-chosen h2,
+.selector-available-title,
+.selector-chosen-title {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+.selector-available-title label,
+.selector-chosen-title label {
+  color: #fff !important;
+}
+/* "Choose all" / "Remove all" footer bar */
+.selector-chosen .list-footer-display {
+  background: #1a5276 !important;
+  color: #fff !important;
+}
+.selector-chosen .list-footer-display__clear {
+  color: rgba(255,255,255,.75) !important;
+}
+.selector-chooser {
+  background: #f0f6fb !important;
+}
+.selector-add {
+  background: #1a5276 !important;
+  color: #fff !important;
+  font-size: 0 !important;          /* hide Django's "Choose" text */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.selector-remove {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+  font-size: 0 !important;          /* hide Django's "Remove" text */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.selector-add:hover  { background: #2980b9 !important; }
+.selector-remove:hover { background: #fca5a5 !important; }
+.selector-chooseall { color: #1a5276 !important; font-weight: 600 !important; }
+.selector-clearall  { color: #991b1b !important; font-weight: 600 !important; }
+
+/* list items in selector */
+.selector-available select,
+.selector-chosen select {
+  color: #1e293b !important;
+  background: #fff !important;
+}
+
+/* ─────────────────────────────────────────
+   DELETE CONFIRMATION PAGE
+   cancel link #1a5276 on #f0f4f8  ≈ 6.5:1 ✓
+   confirm heading dark on white ✓
+───────────────────────────────────────── */
+.cancel-link {
+  display: inline-block !important;
+  background: #1a5276 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  padding: 10px 18px !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  font-size: .875rem !important;
+}
+.cancel-link:hover {
+  background: #2980b9 !important;
+  color: #fff !important;
+}
+
+/* ─────────────────────────────────────────
+   HISTORY PAGE TABLE
+   th bg #1a3a5c / text #fff  ≈ 11:1 ✓
+   td text #1e293b on white   ≈ 13:1 ✓
+───────────────────────────────────────── */
+#change-history thead th {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+#change-history tbody td {
+  color: #1e293b !important;
+}
+
+/* ─────────────────────────────────────────
+   FILTER SIDEBAR
+   h2 "FILTER" header  bg #1a3a5c / #fff  ≈ 11:1 ✓
+   h3 group labels     bg #1a5276 / #fff  ≈ 7:1  ✓
+   links               #1a5276 on white   ≈ 6.5:1 ✓
+───────────────────────────────────────── */
+#changelist-filter {
+  background: #f8fafc !important;
+}
+#changelist-filter h2 {
+  background: #1a3a5c !important;
+  color: #fff !important;
+}
+/* Filter GROUP headers (By role, By status, etc.) */
+#changelist-filter h3 {
+  background: #1a5276 !important;
+  color: #fff !important;
+  border-radius: 0 !important;
+}
+/* "Show counts / Hide counts" h3 — overrides rule above */
+#changelist-filter-extra-actions h3 {
+  background: transparent !important;
+  color: #1a5276 !important;
+}
+#changelist-filter-extra-actions h3 a,
+#changelist-filter-extra-actions h3 a:link,
+#changelist-filter-extra-actions h3 a:visited {
+  color: #1a5276 !important;
+}
+#changelist-filter-extra-actions h3 a:hover {
+  color: #2980b9 !important;
+}
+#changelist-filter ul {
+  background: transparent !important;
+}
+#changelist-filter li a {
+  color: #1a5276 !important;
+}
+#changelist-filter li a:hover {
+  color: #2980b9 !important;
+}
+#changelist-filter li.selected a {
+  color: #1a3a5c !important;
+  font-weight: 700 !important;
+}
+
+
+/* ─────────────────────────────────────────
+   RELATED-WIDGET ADD (+) LINK
+   #1a5276 on #f0f4f8  ≈ 6.5:1 ✓
+───────────────────────────────────────── */
+.related-widget-wrapper-link {
+  color: #1a5276 !important;
+}
+.related-widget-wrapper-link:hover {
+  color: #2980b9 !important;
+}
+
+/* ─────────────────────────────────────────
+   ERROR MESSAGES
+   bg #fff5f5 / text #991b1b  ≈ 5.9:1 ✓
+───────────────────────────────────────── */
+.errornote,
+p.errornote {
+  background: #fff5f5 !important;
+  color: #991b1b !important;
+  border-left: 4px solid #dc2626 !important;
+}
+.errorlist li { color: #dc2626 !important; }

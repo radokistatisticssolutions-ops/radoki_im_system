@@ -1,0 +1,63 @@
+{% extends "admin/change_form.html" %}
+{% block footer %}
+{{ block.super }}
+<script>
+(function () {
+  function sp(el, prop, val) {
+    el.style.setProperty(prop, val, 'important');
+  }
+
+  function fixArrows() {
+    /* Fix overflow on every ancestor so nothing clips the buttons */
+    document.querySelectorAll('.selector, .selector-chooser, .selector-chooser li').forEach(function (el) {
+      sp(el, 'overflow', 'visible');
+    });
+
+    document.querySelectorAll('.selector-chooser li').forEach(function (li) {
+      sp(li, 'list-style', 'none');
+      sp(li, 'margin', '0');
+      sp(li, 'display', 'flex');
+      sp(li, 'align-items', 'center');
+      sp(li, 'justify-content', 'center');
+    });
+
+    document.querySelectorAll('.selector-add, .selector-remove').forEach(function (btn) {
+      var isAdd = btn.classList.contains('selector-add');
+
+      /* Replace text content with the arrow character */
+      btn.textContent = isAdd ? '\u2192' : '\u2190';
+
+      sp(btn, 'display',          'inline-flex');
+      sp(btn, 'align-items',      'center');
+      sp(btn, 'justify-content',  'center');
+      sp(btn, 'width',            '32px');
+      sp(btn, 'height',           '32px');
+      sp(btn, 'border-radius',    '8px');
+      sp(btn, 'cursor',           'pointer');
+      sp(btn, 'border',           'none');
+      sp(btn, 'text-decoration',  'none');
+      sp(btn, 'text-indent',      '0');
+      sp(btn, 'overflow',         'visible');
+      sp(btn, 'font-size',        '18px');
+      sp(btn, 'font-weight',      '800');
+      sp(btn, 'line-height',      '1');
+      sp(btn, 'background-image', 'none');
+
+      if (isAdd) {
+        sp(btn, 'background', '#1a5276');
+        sp(btn, 'color',      '#ffffff');
+      } else {
+        sp(btn, 'background', '#fee2e2');
+        sp(btn, 'color',      '#991b1b');
+      }
+    });
+  }
+
+  /* Run on load AND with a short delay as fallback */
+  window.addEventListener('load', function () {
+    fixArrows();
+    setTimeout(fixArrows, 300);
+  });
+})();
+</script>
+{% endblock %}

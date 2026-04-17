@@ -1,0 +1,250 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Coupons - Radoki Training{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-ticket-alt me-2" style="color: #8B5CF6;"></i>
+                        Coupon Management
+                    </h2>
+                    <p class="text-muted mb-0">Create and manage promotional discount codes</p>
+                </div>
+                <div>
+                    <a href="{% url 'courses:create_coupon' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Coupon
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label for="search" class="form-label small fw-600">Search by Code</label>
+                            <input type="text" class="form-control" name="search"
+                                   placeholder="e.g., SAVE20" id="search"
+                                   value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label small fw-600">Status</label>
+                            <select class="form-select" name="status" id="status">
+                                <option value="">All Coupons</option>
+                                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                                <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Expired</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="type" class="form-label small fw-600">Discount Type</label>
+                            <select class="form-select" name="type" id="type">
+                                <option value="">All Types</option>
+                                <option value="percentage" {% if type_filter == 'percentage' %}selected{% endif %}>Percentage</option>
+                                <option value="fixed" {% if type_filter == 'fixed' %}selected{% endif %}>Fixed Amount</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="row">
+        <div class="col-12">
+            {% if page_obj.object_list %}
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4 py-3 fw-600">Code</th>
+                                <th class="py-3 fw-600">Discount</th>
+                                <th class="py-3 fw-600">Courses</th>
+                                <th class="py-3 fw-600">Valid Period</th>
+                                <th class="py-3 fw-600">Usage</th>
+                                <th class="py-3 fw-600">Status</th>
+                                <th class="py-3 fw-600">Created By</th>
+                                <th class="py-3 fw-600 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for coupon in page_obj %}
+                            <tr>
+                                <!-- Code -->
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light px-3 py-2 rounded me-3" style="min-width: 120px; text-align: center;">
+                                            <span class="fw-bold text-primary">{{ coupon.code }}</span>
+                                        </div>
+                                        <small class="text-muted">{{ coupon.description|truncatewords:3 }}</small>
+                                    </div>
+                                </td>
+
+                                <!-- Discount -->
+                                <td class="py-3">
+                                    {% if coupon.discount_type == 'PERCENTAGE' %}
+                                        <span class="badge bg-info">{{ coupon.discount_value }}% Off</span>
+                                    {% else %}
+                                        <span class="badge bg-success">TZS {{ coupon.discount_value|floatformat:2 }} Off</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Courses -->
+                                <td class="py-3">
+                                    {% if coupon.courses.exists %}
+                                        <small class="text-muted">{{ coupon.courses.count }} course{{ coupon.courses.count|pluralize }}</small>
+                                    {% else %}
+                                        <span class="badge bg-warning">All Courses</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Valid Period -->
+                                <td class="py-3">
+                                    <small class="text-muted">
+                                        {% if coupon.valid_from or coupon.valid_until %}
+                                            From: {{ coupon.valid_from|date:"M d, Y" }}<br>
+                                            To: {{ coupon.valid_until|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-secondary">No limit</span>
+                                        {% endif %}
+                                    </small>
+                                </td>
+
+                                <!-- Usage -->
+                                <td class="py-3">
+                                    <div class="d-flex align-items-center">
+                                        <small class="text-dark fw-600">{{ coupon.uses_count }}</small>
+                                        {% if coupon.max_uses %}
+                                            <small class="text-muted ms-1">/ {{ coupon.max_uses }}</small>
+                                        {% else %}
+                                            <small class="text-muted ms-1">/ ∞</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="py-3">
+                                    {% if coupon.is_active %}
+                                        {% if coupon.valid_from and now < coupon.valid_from %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif coupon.valid_until and now > coupon.valid_until %}
+                                            <span class="badge bg-danger">Expired</span>
+                                        {% elif coupon.max_uses and coupon.uses_count >= coupon.max_uses %}
+                                            <span class="badge bg-danger">Exhausted</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Created By -->
+                                <td class="py-3">
+                                    <small class="text-muted">
+                                        {{ coupon.created_by.first_name }} {{ coupon.created_by.last_name }}
+                                    </small>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3">
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <a href="{% url 'courses:edit_coupon' coupon.id %}" 
+                                           class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'courses:delete_coupon' coupon.id %}" 
+                                           class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if paginator.num_pages > 1 %}
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 px-1">
+                <small class="text-muted">
+                    Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+                    of {{ filtered_count }} coupon{{ filtered_count|pluralize }}
+                </small>
+                <nav aria-label="Coupons pagination">
+                    <ul class="pagination pagination-sm mb-0 flex-wrap">
+                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                            {% if page_obj.has_previous %}
+                            <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&type={{ type_filter }}&page={{ page_obj.previous_page_number }}" aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+                            {% else %}
+                            <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                            {% endif %}
+                        </li>
+                        {% for item in page_window %}
+                            {% if not item %}
+                            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                            {% elif item == page_obj.number %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&type={{ type_filter }}&page={{ item }}">{{ item }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                            {% if page_obj.has_next %}
+                            <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&type={{ type_filter }}&page={{ page_obj.next_page_number }}" aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+                            {% else %}
+                            <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <!-- Empty State -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-ticket-alt" style="font-size: 3rem; color: #e0e0e0;"></i>
+                    <h4 class="mt-3 text-muted">No coupons found</h4>
+                    <p class="text-muted mb-3">Start creating promotional codes to boost your course sales.</p>
+                    <a href="{% url 'courses:create_coupon' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Your First Coupon
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}

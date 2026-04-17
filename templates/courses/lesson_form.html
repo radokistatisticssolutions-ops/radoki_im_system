@@ -1,0 +1,372 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb" style="font-size:.82rem;">
+      <li class="breadcrumb-item"><a href="{% url 'courses:instructor_courses' %}">My Courses</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'courses:module_manager' course.pk %}">{{ course.title }}</a></li>
+      <li class="breadcrumb-item active">{{ action }} Lesson</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Module context banner -->
+      <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded-3" style="background:#d6eaf8; border-left:4px solid #2980b9;">
+        <i class="fas fa-layer-group fa-lg" style="color:#1a5276;"></i>
+        <div>
+          <div class="fw-semibold" style="color:#1a5276; font-size:.9rem;">Module: {{ module.title }}</div>
+          <div class="text-muted" style="font-size:.78rem;">{{ course.title }}</div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} alert-dismissible fade show mb-3" style="border-radius:10px;">
+          {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="card border-0 shadow-sm" style="border-radius:14px; overflow:hidden;">
+        <!-- Card header -->
+        <div class="card-header border-0 py-3 px-4"
+             style="background:linear-gradient(135deg,#1a5276,#2980b9);">
+          <h5 class="mb-0 text-white fw-semibold">
+            <i class="fas fa-{% if action == 'Edit' %}edit{% else %}plus-circle{% endif %} me-2"></i>
+            {{ action }} Lesson
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- ① Title -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                Lesson Title <span class="text-danger">*</span>
+              </label>
+              <input type="text" name="title" class="form-control" required
+                     value="{% if lesson %}{{ lesson.title }}{% endif %}"
+                     placeholder="e.g. Introduction to Variables"
+                     style="border-radius:8px; font-size:.95rem;">
+            </div>
+
+            <!-- ② Duration -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                Estimated Duration <span class="text-muted fw-normal">(minutes, optional)</span>
+              </label>
+              <input type="number" name="duration_minutes" class="form-control"
+                     value="{% if lesson and lesson.duration_minutes %}{{ lesson.duration_minutes }}{% endif %}"
+                     placeholder="e.g. 15" min="1" max="300"
+                     style="border-radius:8px; max-width:200px;">
+            </div>
+
+            <!-- ③ Text Content -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                Lesson Content <span class="text-muted fw-normal">(notes / text)</span>
+              </label>
+              <textarea name="content" rows="8" class="form-control"
+                        placeholder="Write lesson notes, explanations, or instructions here…"
+                        style="border-radius:8px; resize:vertical; font-size:.9rem; line-height:1.6;">{% if lesson %}{{ lesson.content }}{% endif %}</textarea>
+              <div class="form-text">Plain text. Students will see this formatted in the lesson view.</div>
+            </div>
+
+            <!-- ④ YouTube Video -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                <i class="fab fa-youtube me-1" style="color:#e74c3c;"></i>
+                YouTube Video URL <span class="text-muted fw-normal">(optional)</span>
+              </label>
+              <input type="url" name="youtube_url" class="form-control" id="youtube-url-input"
+                     value="{% if lesson %}{{ lesson.youtube_url }}{% endif %}"
+                     placeholder="https://www.youtube.com/watch?v=… or https://youtu.be/…"
+                     style="border-radius:8px;"
+                     oninput="previewYoutube(this.value)">
+              <div class="form-text">Paste any YouTube watch or short link — it will be embedded automatically.</div>
+
+              <!-- Live preview -->
+              <div id="yt-preview" class="mt-3" style="display:none;">
+
+                <!-- Thumbnail fallback — shown immediately while player loads,
+                     and permanently if embedding is blocked (Error 101/150/153) -->
+                <div id="yt-thumb-preview" style="display:none; max-width:480px;">
+                  <div style="position:relative; border-radius:10px; overflow:hidden; cursor:pointer;"
+                       onclick="window.open(document.getElementById('youtube-url-input').value, '_blank')">
+                    <img id="yt-thumb-img" src="" alt="Video thumbnail"
+                         style="width:100%; display:block; border-radius:10px;">
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                                background:rgba(0,0,0,0.7);border-radius:50%;width:60px;height:60px;
+                                display:flex;align-items:center;justify-content:center;">
+                      <i class="fab fa-youtube fa-2x" style="color:#e74c3c;"></i>
+                    </div>
+                    <div style="position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,0.6);
+                                color:#fff;font-size:.75rem;padding:2px 8px;border-radius:4px;">
+                      Click to watch on YouTube
+                    </div>
+                  </div>
+                  <div class="mt-2 alert alert-info d-flex align-items-center gap-2 mb-0"
+                       style="border-radius:8px; font-size:.82rem;">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="yt-thumb-msg">Loading preview…</span>
+                  </div>
+                </div>
+
+                <!-- IFrame API player — only shown when onReady fires without error -->
+                <div id="yt-embed-preview" style="display:none; max-width:480px;">
+                  <div id="yt-player-container" style="border-radius:10px; overflow:hidden;"></div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ⑤ Resource File -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                <i class="fas fa-paperclip me-1" style="color:#27ae60;"></i>
+                Attachment <span class="text-muted fw-normal">(optional)</span>
+              </label>
+
+              {% if lesson and lesson.resource_file %}
+              <div class="alert mb-2 d-flex align-items-center gap-2"
+                   style="background:#d5f5e3; border:none; border-radius:8px; color:#0a3622; font-size:.85rem;">
+                <i class="fas fa-file-alt"></i>
+                Current: <strong>{{ lesson.resource_filename }}</strong>
+                <label class="ms-auto form-check-label" style="font-size:.82rem; cursor:pointer;">
+                  <input type="checkbox" name="clear_resource" value="yes" class="form-check-input me-1">
+                  Remove file
+                </label>
+              </div>
+              {% endif %}
+
+              <div class="border-2 rounded p-3 text-center"
+                   style="border:2px dashed #aed6f1; border-radius:10px !important; background:#f8fbff; cursor:pointer;"
+                   id="file-drop-zone">
+                <input type="file" name="resource_file" id="resource-file-input" class="d-none">
+                <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:#2980b9;"></i>
+                <p class="mb-1 fw-semibold" style="color:#2c3e50; font-size:.88rem;">
+                  Drag & drop or <span style="color:#2980b9; cursor:pointer;"
+                    onclick="document.getElementById('resource-file-input').click()">browse</span>
+                </p>
+                <p class="text-muted mb-0" style="font-size:.75rem;">PDF, Word, Excel, ZIP, images (max 50 MB)</p>
+                <div id="file-name-display" class="mt-2 fw-semibold" style="color:#1a5276; display:none;"></div>
+              </div>
+            </div>
+
+            <!-- ⑥ Published toggle -->
+            <div class="mb-4 p-3 rounded-3" style="background:#f8fbff; border:1px solid #d6eaf8;">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="is_published" name="is_published"
+                       {% if not lesson or lesson.is_published %}checked{% endif %}
+                       style="width:2.5em;height:1.25em;">
+                <label class="form-check-label fw-semibold ms-2" for="is_published">
+                  Visible to students
+                </label>
+              </div>
+              <div class="form-text ms-5">Hidden lessons are only visible to you (the instructor).</div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-3">
+              <button type="submit" class="btn"
+                      style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;flex:1;">
+                <i class="fas fa-save me-1"></i>
+                {% if action == 'Edit' %}Save Changes{% else %}Create Lesson{% endif %}
+              </button>
+              <a href="{% url 'courses:module_manager' course.pk %}"
+                 class="btn btn-outline-secondary" style="border-radius:8px; flex:1; text-align:center;">
+                Cancel
+              </a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- YouTube IFrame API script tag must come before our logic below -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+/* ═══════════════════════════════════════════════
+   YouTube IFrame API — state variables
+═══════════════════════════════════════════════ */
+var ytPlayer     = null;   // current YT.Player instance
+var ytCurrentVid = null;   // video ID currently loaded
+var ytAPIReady   = false;  // true once onYouTubeIframeAPIReady fires
+var ytPendingVid = null;   // video queued before API was ready
+
+/* Called automatically by the YouTube IFrame API once it has loaded */
+function onYouTubeIframeAPIReady() {
+  ytAPIReady = true;
+  if (ytPendingVid) {
+    createYTPlayer(ytPendingVid);
+    ytPendingVid = null;
+  }
+}
+
+/* Create (or recreate) the YT.Player for the given video ID */
+function createYTPlayer(vid) {
+  /* Destroy previous player */
+  if (ytPlayer) {
+    try { ytPlayer.destroy(); } catch (e) {}
+    ytPlayer = null;
+  }
+
+  /* YT.Player.destroy() removes the target div from the DOM — recreate it */
+  var wrapper   = document.getElementById('yt-embed-preview');
+  var container = document.getElementById('yt-player-container');
+  if (!container) {
+    container         = document.createElement('div');
+    container.id      = 'yt-player-container';
+    container.style.cssText = 'border-radius:10px; overflow:hidden;';
+    wrapper.appendChild(container);
+  }
+
+  ytPlayer = new YT.Player('yt-player-container', {
+    videoId: vid,
+    width:   '480',
+    height:  '270',
+    playerVars: {
+      rel:            0,
+      modestbranding: 1,
+      origin:         window.location.origin
+    },
+    events: {
+      /* ✅ Player ready — embedding is allowed, switch to player */
+      onReady: function () {
+        document.getElementById('yt-embed-preview').style.display = 'block';
+        document.getElementById('yt-thumb-preview').style.display = 'none';
+      },
+      /* ❌ Any player error — codes 101 & 150 mean embedding disabled
+             (same root cause as the visual "Error 153" screen).
+             Fall back to thumbnail permanently.                        */
+      onError: function () {
+        document.getElementById('yt-embed-preview').style.display = 'none';
+        document.getElementById('yt-thumb-preview').style.display = 'block';
+        document.getElementById('yt-thumb-msg').textContent =
+          'Embedding is disabled by the video owner. ' +
+          'The URL is saved — students can watch it directly on YouTube.';
+        try { ytPlayer.destroy(); } catch (e) {}
+        ytPlayer = null;
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Extract 11-char video ID from any YouTube URL
+═══════════════════════════════════════════════ */
+function extractYoutubeId(url) {
+  if (!url) return null;
+  var patterns = [
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (var i = 0; i < patterns.length; i++) {
+    var m = url.match(patterns[i]);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════════
+   Main preview function
+   — called via oninput on the URL field
+   — called once on page load when editing
+═══════════════════════════════════════════════ */
+function previewYoutube(url) {
+  var vid      = extractYoutubeId(url);
+  var box      = document.getElementById('yt-preview');
+  var embedDiv = document.getElementById('yt-embed-preview');
+  var thumbDiv = document.getElementById('yt-thumb-preview');
+  var thumbImg = document.getElementById('yt-thumb-img');
+  var thumbMsg = document.getElementById('yt-thumb-msg');
+
+  /* No valid video ID — hide everything and reset */
+  if (!vid) {
+    box.style.display      = 'none';
+    embedDiv.style.display = 'none';
+    thumbDiv.style.display = 'none';
+    if (ytPlayer) { try { ytPlayer.destroy(); } catch (e) {} ytPlayer = null; }
+    ytCurrentVid = null;
+    return;
+  }
+
+  /* Same video already showing — do nothing */
+  if (vid === ytCurrentVid) return;
+  ytCurrentVid = vid;
+
+  /* Show outer preview wrapper */
+  box.style.display = 'block';
+
+  /* Show thumbnail immediately as a safe placeholder while player initialises */
+  thumbImg.src           = 'https://img.youtube.com/vi/' + vid + '/hqdefault.jpg';
+  thumbMsg.textContent   = 'Loading preview…';
+  thumbDiv.style.display = 'block';
+  embedDiv.style.display = 'none';
+
+  /* Hand off to the IFrame API player.
+     onReady  → switch to embedded player (embedding allowed)
+     onError  → keep thumbnail + show informative message (embedding blocked) */
+  if (ytAPIReady) {
+    createYTPlayer(vid);
+  } else {
+    ytPendingVid = vid; /* API not ready yet — will be picked up by onYouTubeIframeAPIReady */
+  }
+}
+
+/* Auto-preview when the page opens in Edit mode with an existing URL */
+(function () {
+  var input = document.getElementById('youtube-url-input');
+  if (input && input.value) previewYoutube(input.value);
+}());
+
+/* ═══════════════════════════════════════════════
+   File drag & drop
+═══════════════════════════════════════════════ */
+(function () {
+  var zone  = document.getElementById('file-drop-zone');
+  var input = document.getElementById('resource-file-input');
+  var label = document.getElementById('file-name-display');
+
+  function showName(name) {
+    label.textContent   = '📎 ' + name;
+    label.style.display = 'block';
+  }
+
+  input.addEventListener('change', function () {
+    if (input.files.length) showName(input.files[0].name);
+  });
+  zone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    zone.style.background = '#eaf4fb';
+  });
+  zone.addEventListener('dragleave', function () {
+    zone.style.background = '#f8fbff';
+  });
+  zone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    zone.style.background = '#f8fbff';
+    if (e.dataTransfer.files.length) {
+      input.files = e.dataTransfer.files;
+      showName(e.dataTransfer.files[0].name);
+    }
+  });
+}());
+</script>
+{% endblock %}

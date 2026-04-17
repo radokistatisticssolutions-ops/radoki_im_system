@@ -1,0 +1,744 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+    
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    }
+    
+    /* Strip the base template's main-content padding/max-width so the
+       preview fills edge-to-edge without any surrounding whitespace */
+    .main-content {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .preview-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e6ecf1 100%);
+        height: calc(100vh - var(--topbar-h));
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* On mobile the fixed topbar can obscure content if margin-top on
+       #main-wrapper is not honoured (body overflow:hidden quirk on some
+       mobile browsers).  Use position:fixed on the container itself so
+       its top edge is ALWAYS exactly below the auth topbar – no reliance
+       on document-flow margins. */
+    @media (max-width: 991.98px) {
+        body.authenticated .preview-container {
+            position: fixed;
+            top: var(--topbar-h);   /* flush below the 64px topbar */
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: auto;           /* let top+bottom define the height */
+        }
+    }
+    
+    .preview-header {
+        background: linear-gradient(135deg, #2980b9 0%, #1a5276 100%);
+        color: white;
+        padding: 18px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        box-shadow: 0 10px 35px rgba(41, 128, 185, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .preview-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(100px, -100px);
+    }
+    
+    .preview-header h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .preview-header h2 i {
+        font-size: 24px;
+    }
+    
+    .preview-header-actions {
+        display: flex;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .back-button, .download-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+    }
+    
+    .back-button {
+        background-color: rgba(255, 255, 255, 0.95);
+        color: #2980b9;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .back-button:hover {
+        background-color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .download-button {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+    }
+    
+    .download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(243, 156, 18, 0.4);
+    }
+    
+    .preview-frame {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: white;
+    }
+    
+    .preview-content {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 15px;
+        background: #f8f9fa;
+        width: 100%;
+        box-sizing: border-box;
+        -webkit-overflow-scrolling: touch;
+        gap: 0;
+    }
+    
+    /* Custom scrollbar styling */
+    .preview-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .preview-content::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 10px;
+    }
+    
+    .preview-content::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #2980b9 0%, #1a5276 100%);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .preview-content::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #1a5276 0%, #2980b9 100%);
+        box-shadow: 0 0 6px rgba(41, 128, 185, 0.5);
+    }
+    
+    #pdf-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 0;
+    }
+    
+    .pdf-page {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        background: white;
+        margin: 0;
+        padding: 8px;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .pdf-page:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    .pdf-page canvas {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
+    }
+    
+    #pdf-canvas {
+        width: 100% !important;
+        height: auto !important;
+        display: block;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        max-height: none !important;
+        object-fit: contain;
+        margin: 0 auto;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
+        border-radius: 6px;
+    }
+    
+    #pdf-loader {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 50px 30px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 250, 0.98) 100%);
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        min-width: 240px;
+        backdrop-filter: blur(10px);
+    }
+    
+    #pdf-loader.hidden {
+        display: none;
+    }
+    
+    #pdf-loader p {
+        margin: 12px 0 0 0;
+        color: #2980b9;
+        font-weight: 500;
+        font-size: 15px;
+    }
+    
+    .spinner {
+        border: 4px solid #d6eaf8;
+        border-top: 4px solid #2980b9;
+        border-right: 4px solid #1a5276;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        margin: 0 auto 15px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .pdf-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e6ecf1 100%);
+        border-top: 1px solid #e0e0e0;
+        flex-shrink: 0;
+    }
+    
+    .pdf-controls button {
+        padding: 10px 16px;
+        border: 1px solid #ddd;
+        background-color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #2980b9;
+    }
+    
+    .pdf-controls button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #2980b9 0%, #1a5276 100%);
+        color: white;
+        border-color: transparent;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(41, 128, 185, 0.3);
+    }
+    
+    .pdf-controls button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .pdf-page-info {
+        font-size: 14px;
+        color: #2980b9;
+        font-weight: 500;
+        min-width: 140px;
+        text-align: center;
+    }
+        font-size: 13px;
+        color: #666;
+        min-width: 120px;
+        text-align: center;
+    }
+    
+    .preview-message {
+        text-align: center;
+        padding: 50px 30px;
+        color: #999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+    }
+    
+    .preview-message i {
+        font-size: 64px;
+        background: linear-gradient(135deg, #2980b9 0%, #1a5276 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+    }
+    
+    .preview-message h4 {
+        font-size: 20px;
+        color: #333;
+        margin: 0 0 12px 0;
+        font-weight: 600;
+    }
+    
+    .preview-message p {
+        margin: 8px 0;
+        color: #666;
+        font-size: 15px;
+    }
+    
+    .preview-message .btn {
+        margin-top: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #2980b9 0%, #1a5276 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(41, 128, 185, 0.3);
+    }
+    
+    .preview-message .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(41, 128, 185, 0.4);
+    }
+    
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+        
+        .preview-header {
+            padding: 12px 16px;
+            flex-wrap: wrap;
+        }
+        
+        .preview-header h2 {
+            font-size: 16px;
+            flex: 1 100%;
+        }
+        
+        .preview-header h2 i {
+            font-size: 18px;
+        }
+        
+        .preview-header-actions {
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .back-button, .download-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 12px;
+            font-size: 13px;
+            justify-content: center;
+        }
+        
+        .pdf-controls {
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+        }
+        
+        .pdf-controls button {
+            flex: 1;
+            min-width: 80px;
+            padding: 9px 12px;
+            font-size: 12px;
+        }
+        
+        .pdf-page-info {
+            flex: 1 100%;
+            order: 3;
+            font-size: 13px;
+        }
+        
+        .preview-content {
+            padding: 10px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+        
+        #pdf-container {
+            width: 100% !important;
+            padding: 0 !important;
+            gap: 8px;
+        }
+        
+        .pdf-page {
+            width: 100% !important;
+            padding: 6px !important;
+            margin: 0 !important;
+            border-radius: 6px;
+        }
+        
+        .pdf-page canvas {
+            max-width: 100% !important;
+            height: auto !important;
+            width: 100% !important;
+            display: block !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+        }
+        
+        #pdf-canvas {
+            width: 100% !important;
+            height: auto !important;
+            max-width: 100% !important;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        #pdf-loader {
+            padding: 30px 20px;
+            font-size: 14px;
+            min-width: 200px;
+            border-radius: 12px;
+        }
+        
+        #pdf-loader p {
+            font-size: 13px;
+        }
+        
+        .spinner {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto 12px;
+        }
+        
+        .preview-message {
+            padding: 30px 20px;
+            min-height: 250px;
+        }
+        
+        .preview-message i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .preview-message h4 {
+            font-size: 17px;
+            margin-bottom: 8px;
+        }
+        
+        .preview-message p {
+            font-size: 14px;
+        }
+        
+        .preview-message .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+    }
+    
+    /* High-DPI Display Optimization */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        #pdf-canvas {
+            image-rendering: auto;
+            image-rendering: crisp-edges;
+        }
+        
+        .pdf-page canvas {
+            image-rendering: auto;
+            image-rendering: crisp-edges;
+        }
+    }
+    
+    /* Tablet Orientation */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .preview-header {
+            padding: 16px 22px;
+        }
+        
+        .preview-header h2 {
+            font-size: 18px;
+        }
+        
+        .back-button, .download-button {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div class="preview-container">
+    <!-- Header -->
+    <div class="preview-header">
+        <h2><i class="fas fa-file-pdf"></i> {{ resource.title }}</h2>
+        <div class="preview-header-actions">
+            <a href="{% url 'courses:course_detail' course.id %}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            {% if preview_type != 'download' %}
+                <a href="{% url 'courses:download_resource' resource.id %}" class="download-button">
+                    <i class="fas fa-download"></i> Download
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Preview Content -->
+    <div class="preview-frame">
+        {% if preview_type == 'pdf' %}
+            <!-- PDF Preview using PDF.js - Render all pages -->
+            <div class="preview-content">
+                <div id="pdf-container"></div>
+            </div>
+            
+            <div id="pdf-loader">
+                <div class="spinner"></div>
+                <p>Loading first page...</p>
+            </div>
+            
+            <div class="pdf-controls">
+                <div class="pdf-page-info">
+                    Pages loaded: <span id="page-count">0</span>
+                </div>
+            </div>
+                
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+                <script>
+                    // Detect mobile device
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    
+                    let pdfDoc = null;
+                    let totalPages = 0;
+                    let pagesRendered = 0;
+                    let renderInProgress = false;
+                    let pageRenderQueue = [];
+                    let firstPageReady = false;
+                    
+                    const pdfUrl = "{{ file_url }}";
+                    const loader = document.getElementById('pdf-loader');
+                    const container = document.getElementById('pdf-container');
+                    const previewContent = document.querySelector('.preview-content');
+                    
+                    // Optimize rendering scale based on device
+                    const dpr = window.devicePixelRatio || 1;
+                    const scale = isMobile ? 2.5 : 3.0;
+                    
+                    console.log('PDF URL:', pdfUrl);
+                    console.log('Device: ' + (isMobile ? 'Mobile' : 'Desktop'));
+                    console.log('Device Pixel Ratio:', dpr);
+                    
+                    function renderPage(pageNum) {
+                        if (!pdfDoc || pageNum > totalPages || pageNum < 1) {
+                            console.log('renderPage called with invalid args - pageNum:', pageNum, 'totalPages:', totalPages);
+                            return Promise.reject('Invalid page number');
+                        }
+                        
+                        console.log('Starting to render page', pageNum);
+                        
+                        return pdfDoc.getPage(pageNum).then(function(page) {
+                            // Get container width
+                            const containerWidth = container.offsetWidth || window.innerWidth;
+                            const availableWidth = Math.max(containerWidth - 10, 300);
+                            
+                            // Calculate scale to fit width
+                            const pageViewport = page.getViewport({ scale: 1 });
+                            const pageScale = Math.min(scale, availableWidth / pageViewport.width);
+                            
+                            console.log('Page', pageNum, 'scale:', pageScale, 'container width:', availableWidth);
+                            
+                            // Get final viewport with device pixel ratio for higher quality
+                            const viewport = page.getViewport({ scale: pageScale * dpr });
+                            
+                            // Create canvas for this page
+                            const pageDiv = document.createElement('div');
+                            pageDiv.className = 'pdf-page';
+                            pageDiv.id = 'page-' + pageNum;
+                            pageDiv.setAttribute('data-page-num', pageNum);
+                            
+                            const canvas = document.createElement('canvas');
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            
+                            // Set CSS dimensions for proper display (scaled down from HiDPI)
+                            canvas.style.width = '100%';
+                            canvas.style.height = 'auto';
+                            canvas.style.display = 'block';
+                            canvas.style.margin = '0 auto';
+                            
+                            pageDiv.appendChild(canvas);
+                            container.appendChild(pageDiv);
+                            
+                            const ctx = canvas.getContext('2d', { alpha: false });
+                            const renderContext = {
+                                canvasContext: ctx,
+                                viewport: viewport
+                            };
+                            
+                            return page.render(renderContext).promise;
+                        }).then(function() {
+                            pagesRendered++;
+                            console.log('Page', pageNum, 'rendered successfully. Total rendered:', pagesRendered, '/', totalPages);
+                            document.getElementById('page-count').textContent = pagesRendered;
+                            return true;
+                        }).catch(function(error) {
+                            console.error('Error rendering page ' + pageNum + ':', error);
+                            return false;
+                        });
+                    }
+                    
+                    function renderNextInQueue() {
+                        if (pageRenderQueue.length === 0) {
+                            if (pagesRendered === totalPages) {
+                                console.log('All pages rendered!');
+                                loader.style.display = 'none';
+                            }
+                            renderInProgress = false;
+                            return;
+                        }
+                        
+                        renderInProgress = true;
+                        const nextPage = pageRenderQueue.shift();
+                        
+                        renderPage(nextPage).then(function(success) {
+                            // Small delay between pages to prevent blocking UI
+                            setTimeout(renderNextInQueue, 10);
+                        });
+                    }
+                    
+                    // Load PDF with optimized settings
+                    const pdfOptions = {
+                        url: pdfUrl,
+                        withCredentials: true,
+                        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                        cMapPacked: true
+                    };
+                    
+                    pdfjsLib.getDocument(pdfOptions).promise.then(function(doc) {
+                        console.log('PDF loaded successfully');
+                        console.log('Total pages in PDF:', doc.numPages);
+                        pdfDoc = doc;
+                        totalPages = doc.numPages;
+                        
+                        // Show loader while rendering
+                        loader.classList.remove('hidden');
+                        loader.style.display = 'flex';
+                        
+                        // Strategy: Render first page immediately, queue rest for background
+                        renderPage(1).then(function() {
+                            firstPageReady = true;
+                            loader.classList.add('hidden');
+                            console.log('First page ready! User can start viewing immediately.');
+                            
+                            // Build queue for remaining pages (2 to totalPages)
+                            for (let i = 2; i <= totalPages; i++) {
+                                pageRenderQueue.push(i);
+                            }
+                            
+                            // Start rendering remaining pages in background with low priority
+                            if (pageRenderQueue.length > 0) {
+                                console.log('Queued', pageRenderQueue.length, 'pages for background rendering');
+                                setTimeout(renderNextInQueue, 500); // Start after 500ms delay
+                            }
+                        });
+                    }).catch(function(error) {
+                        console.error('PDF loading error:', error);
+                        loader.innerHTML = '<div class="preview-message"><i class="fas fa-exclamation-triangle"></i><p>Error loading PDF: ' + error.message + '</p><p>Please try downloading instead.</p></div>';
+                        loader.classList.remove('hidden');
+                        loader.style.display = 'flex';
+                    });
+                </script>
+                
+            {% else %}
+                <!-- File cannot be previewed -->
+                <div class="preview-content">
+                    <div class="preview-message">
+                        <i class="fas fa-file"></i>
+                        <h4>Preview Not Available</h4>
+                        <p>This file type cannot be previewed in the browser.</p>
+                        <p style="margin-top: 20px;">
+                            <a href="{% url 'courses:download_resource' resource.id %}" class="btn btn-primary">
+                                <i class="fas fa-download"></i> Download File
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

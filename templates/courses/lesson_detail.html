@@ -1,0 +1,363 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Layout ── */
+.lesson-layout { display:grid; grid-template-columns:280px 1fr; gap:0; min-height:calc(100vh - var(--topbar-h, 64px)); }
+@media(max-width:991.98px){
+  .lesson-layout{ grid-template-columns:1fr; }
+  .lesson-sidebar{ display:none; }
+  .lesson-sidebar.mobile-open{ display:block; }
+}
+
+/* ── Sidebar ── */
+.lesson-sidebar {
+  background:#fff; border-right:1px solid #e2e8f0;
+  overflow-y:auto; position:sticky; top:var(--topbar-h, 64px);
+  height:calc(100vh - var(--topbar-h, 64px));
+}
+.ls-course-title { padding:16px 18px 10px; font-size:.78rem; font-weight:700; color:#2980b9; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #edf2f7; }
+.ls-module { border-bottom:1px solid #edf2f7; }
+.ls-module-title { padding:10px 18px; font-size:.82rem; font-weight:700; color:#2c3e50; cursor:pointer; display:flex; align-items:center; justify-content:space-between; user-select:none; background:#f8fbff; }
+.ls-module-title:hover { background:#eaf4fd; }
+.ls-lesson-link { display:flex; align-items:center; gap:10px; padding:9px 18px 9px 28px; font-size:.82rem; color:#4a5568; text-decoration:none; transition:background .15s; border-left:3px solid transparent; }
+.ls-lesson-link:hover { background:#f0f7ff; color:#2980b9; }
+.ls-lesson-link.active { background:#eaf4fd; color:#1a5276; font-weight:600; border-left-color:#2980b9; }
+.ls-lesson-link.done .check-icon { color:#27ae60; }
+.ls-lesson-link .check-icon { font-size:.75rem; color:#ddd; flex-shrink:0; }
+.ls-lesson-link .lesson-icons { display:flex; gap:3px; font-size:.68rem; color:#aaa; flex-shrink:0; }
+
+/* ── Main ── */
+.lesson-main { overflow-y:auto; background:#f0f4f8; }
+.lesson-body { max-width:860px; margin:0 auto; padding:28px 24px 60px; }
+
+/* ── Topbar ── */
+.lesson-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:10px; }
+.lesson-topbar .breadcrumb { margin:0; font-size:.8rem; }
+
+/* ── Progress bar ── */
+.progress-pill { display:flex; align-items:center; gap:8px; background:#fff; border-radius:20px; padding:6px 14px; box-shadow:0 1px 8px rgba(0,0,0,.07); font-size:.8rem; font-weight:600; color:#2c3e50; }
+.progress-pill .bar-wrap { width:80px; height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden; }
+.progress-pill .bar-fill { height:100%; background:linear-gradient(90deg,#1a5276,#2980b9); border-radius:3px; transition:width .5s ease; }
+
+/* ── Video ── */
+.video-wrapper { border-radius:14px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.12); margin-bottom:28px; }
+.video-wrapper .ratio { border-radius:14px; overflow:hidden; }
+
+/* ── YouTube fallback ── */
+.yt-fallback { display:none; border-radius:14px; background:linear-gradient(135deg,#1a1a2e,#16213e); color:#fff; padding:40px 28px; text-align:center; margin-bottom:28px; box-shadow:0 4px 20px rgba(0,0,0,.18); }
+.yt-fallback .yt-icon { font-size:3rem; color:#e74c3c; margin-bottom:12px; }
+.yt-fallback h5 { font-size:1.05rem; font-weight:700; margin-bottom:6px; }
+.yt-fallback p { font-size:.85rem; color:#b2bec3; margin-bottom:20px; }
+.yt-fallback .yt-btn { display:inline-flex; align-items:center; gap:8px; background:#e74c3c; color:#fff; padding:10px 24px; border-radius:8px; text-decoration:none; font-weight:700; font-size:.9rem; transition:background .2s; }
+.yt-fallback .yt-btn:hover { background:#c0392b; color:#fff; }
+
+/* ── Content ── */
+.lesson-content { background:#fff; border-radius:14px; padding:28px 32px; margin-bottom:24px; box-shadow:0 2px 10px rgba(0,0,0,.05); white-space:pre-line; font-size:.95rem; line-height:1.8; color:#2c3e50; }
+
+/* ── Attachment ── */
+.attachment-card { background:#fff; border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:14px; margin-bottom:24px; box-shadow:0 2px 10px rgba(0,0,0,.05); border-left:4px solid #27ae60; }
+.attachment-icon { width:44px; height:44px; background:#d5f5e3; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#27ae60; font-size:1.1rem; flex-shrink:0; }
+
+/* ── Mark complete ── */
+.complete-btn { display:flex; align-items:center; gap:8px; padding:12px 28px; border-radius:10px; font-size:.95rem; font-weight:700; cursor:pointer; border:2px solid #27ae60; background:#fff; color:#27ae60; transition:all .2s; }
+.complete-btn.done { background:#27ae60; color:#fff; border-color:#27ae60; }
+.complete-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(39,174,96,.25); }
+
+/* ── Nav buttons ── */
+.nav-btn { display:flex; align-items:center; gap:6px; padding:10px 20px; border-radius:10px; font-size:.85rem; font-weight:600; text-decoration:none; transition:all .15s; }
+.nav-btn.prev { background:#f0f4f8; color:#4a5568; }
+.nav-btn.next { background:linear-gradient(135deg,#1a5276,#2980b9); color:#fff; }
+.nav-btn:hover { transform:translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,.1); }
+</style>
+
+<div class="lesson-layout">
+
+  <!-- ════════════════  LEFT SIDEBAR  ════════════════ -->
+  <aside class="lesson-sidebar">
+    <div class="ls-course-title">
+      <a href="{% url 'courses:course_detail' course.pk %}" style="color:inherit;text-decoration:none;">
+        <i class="fas fa-arrow-left me-1"></i> {{ course.title }}
+      </a>
+    </div>
+
+    {% if enrollment %}
+    <div style="padding:10px 18px 8px; border-bottom:1px solid #edf2f7;">
+      <div class="progress-pill">
+        <div class="bar-wrap">
+          <div class="bar-fill" id="sidebar-progress-bar"
+               style="width:{{ enrollment.get_completion_percentage }}%;"></div>
+        </div>
+        <span id="sidebar-progress-text">{{ enrollment.get_lesson_stats.0 }}/{{ enrollment.get_lesson_stats.1 }} lessons</span>
+      </div>
+    </div>
+    {% endif %}
+
+    {% for mod in all_modules %}
+    <div class="ls-module">
+      <div class="ls-module-title" onclick="this.nextElementSibling.classList.toggle('d-none')">
+        {{ mod.title }}
+        <i class="fas fa-chevron-down" style="font-size:.7rem;color:#aaa;"></i>
+      </div>
+      <div {% if mod.pk != module.pk %}class="d-none"{% endif %}>
+        {% for ls in mod.lessons.all %}
+        {% if ls.is_published %}
+        <a href="{% url 'courses:lesson_detail' ls.pk %}"
+           class="ls-lesson-link {% if ls.pk == lesson.pk %}active{% endif %} {% if ls.pk in completed_ids %}done{% endif %}">
+          <i class="fas fa-check-circle check-icon"></i>
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ ls.title }}</span>
+          <div class="lesson-icons">
+            {% if ls.youtube_url %}<i class="fab fa-youtube" style="color:#e74c3c;"></i>{% endif %}
+            {% if ls.resource_file %}<i class="fas fa-paperclip" style="color:#27ae60;"></i>{% endif %}
+          </div>
+          {% if ls.duration_minutes %}<span style="font-size:.7rem;color:#aaa;white-space:nowrap;">{{ ls.duration_minutes }}m</span>{% endif %}
+        </a>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </aside>
+
+  <!-- ════════════════  MAIN CONTENT  ════════════════ -->
+  <main class="lesson-main">
+    <div class="lesson-body">
+
+      <!-- Breadcrumb & meta -->
+      <div class="lesson-topbar">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.pk %}">{{ course.title }}</a></li>
+            <li class="breadcrumb-item text-muted">{{ module.title }}</li>
+            <li class="breadcrumb-item active">{{ lesson.title }}</li>
+          </ol>
+        </nav>
+        {% if is_instructor_preview %}
+        <div class="d-flex gap-2">
+          <a href="{% url 'courses:edit_lesson' lesson.pk %}" class="btn btn-sm btn-outline-primary" style="border-radius:8px;">
+            <i class="fas fa-edit me-1"></i> Edit Lesson
+          </a>
+          <a href="{% url 'courses:module_manager' course.pk %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+            <i class="fas fa-layer-group me-1"></i> Module Manager
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Lesson title -->
+      <h1 style="color:#2c3e50; font-size:1.5rem; font-weight:700; margin-bottom:6px;">{{ lesson.title }}</h1>
+      <div class="d-flex align-items-center gap-3 mb-4 flex-wrap" style="font-size:.82rem; color:#7f8c8d;">
+        <span><i class="fas fa-layer-group me-1"></i>{{ module.title }}</span>
+        {% if lesson.duration_minutes %}
+        <span><i class="fas fa-clock me-1"></i>{{ lesson.duration_minutes }} min</span>
+        {% endif %}
+        <span><i class="fas fa-calendar-alt me-1"></i>{{ lesson.created_at|date:"d M Y" }}</span>
+      </div>
+
+      <!-- ① YouTube Video -->
+      {% if embed_url %}
+      <!-- The IFrame API replaces this div with the player iframe -->
+      <div class="video-wrapper" id="yt-player-wrapper">
+        <div class="ratio ratio-16x9" style="background:#000;">
+          <div id="yt-player"></div>
+        </div>
+      </div>
+      <!-- Shown automatically if YouTube blocks the embed (Error 101/150/153) -->
+      <div class="yt-fallback" id="yt-fallback">
+        <div class="yt-icon"><i class="fab fa-youtube"></i></div>
+        <h5>Video cannot be embedded</h5>
+        <p>The owner of this video has disabled embedding.<br>You can still watch it directly on YouTube.</p>
+        <a href="{{ lesson.youtube_url }}" target="_blank" rel="noopener noreferrer" class="yt-btn">
+          <i class="fab fa-youtube"></i> Watch on YouTube
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- ② Text Content -->
+      {% if lesson.content %}
+      <div class="lesson-content">{{ lesson.content }}</div>
+      {% endif %}
+
+      <!-- ③ Attachment -->
+      {% if lesson.resource_file %}
+      <div class="attachment-card">
+        <div class="attachment-icon">
+          <i class="fas fa-file-download"></i>
+        </div>
+        <div style="flex:1;">
+          <div class="fw-semibold" style="color:#2c3e50;">{{ lesson.resource_filename }}</div>
+          <div class="text-muted" style="font-size:.78rem;">Lesson attachment</div>
+        </div>
+        <a href="{% url 'courses:download_lesson_resource' lesson.id %}" class="btn btn-sm"
+           style="background:#27ae60;color:#fff;border-radius:8px;font-weight:600;">
+          <i class="fas fa-download me-1"></i> Download
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- ④ Mark Complete + Navigation -->
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-4 pt-4"
+           style="border-top:2px solid #e2e8f0;">
+
+        <!-- Prev / Next -->
+        <div class="d-flex gap-2">
+          {% if prev_lesson %}
+          <a href="{% url 'courses:lesson_detail' prev_lesson.pk %}" class="nav-btn prev">
+            <i class="fas fa-arrow-left"></i> Previous
+          </a>
+          {% endif %}
+          {% if next_lesson %}
+          <a href="{% url 'courses:lesson_detail' next_lesson.pk %}" class="nav-btn next"
+             id="next-lesson-btn">
+            Next <i class="fas fa-arrow-right"></i>
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- Mark Complete (students only) -->
+        {% if request.user.is_student and enrollment %}
+        <button id="complete-btn" class="complete-btn {% if is_completed %}done{% endif %}"
+                onclick="toggleComplete()">
+          <i class="fas fa-{% if is_completed %}check-circle{% else %}circle{% endif %}" id="complete-icon"></i>
+          <span id="complete-text">{% if is_completed %}Completed{% else %}Mark as Complete{% endif %}</span>
+        </button>
+        {% endif %}
+
+      </div>
+
+      <!-- Progress summary (mobile) -->
+      {% if enrollment %}
+      <div class="mt-4 p-3 rounded-3" style="background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.05);">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span style="font-size:.82rem; font-weight:600; color:#2c3e50;">Course Progress</span>
+          <span style="font-size:.82rem; color:#2980b9; font-weight:700;" id="progress-label">
+            {{ enrollment.get_lesson_stats.0 }} / {{ enrollment.get_lesson_stats.1 }} lessons
+          </span>
+        </div>
+        <div style="height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+          <div id="main-progress-bar" style="height:100%; width:{{ enrollment.get_completion_percentage }}%; background:linear-gradient(90deg,#1a5276,#2980b9); border-radius:4px; transition:width .5s ease;"></div>
+        </div>
+        <div class="text-muted mt-1" style="font-size:.75rem;" id="progress-pct">
+          {{ enrollment.get_completion_percentage }}% complete
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  const CSRF      = "{{ csrf_token }}";
+  const lessonId  = {{ lesson.pk }};
+  let completed   = {{ is_completed|lower }};
+
+  async function toggleComplete() {
+    const btn  = document.getElementById('complete-btn');
+    const icon = document.getElementById('complete-icon');
+    const text = document.getElementById('complete-text');
+
+    btn.disabled = true;
+    try {
+      const res  = await fetch(`/courses/lessons/${lessonId}/complete/`, {
+        method:  'POST',
+        headers: { 'X-CSRFToken': CSRF },
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        completed = data.completed;
+
+        // Update button
+        btn.classList.toggle('done', completed);
+        icon.className = `fas fa-${completed ? 'check-circle' : 'circle'}`;
+        text.textContent = completed ? 'Completed' : 'Mark as Complete';
+
+        // Update sidebar check icon
+        const sidebarLink = document.querySelector(`.ls-lesson-link[href*="/lessons/${lessonId}/"]`);
+        if (sidebarLink) sidebarLink.classList.toggle('done', completed);
+
+        // Update progress bars
+        updateProgress(data.progress, data.done, data.total);
+      }
+    } catch(e) {}
+    btn.disabled = false;
+  }
+
+  function updateProgress(pct, done, total) {
+    const bars = [
+      document.getElementById('main-progress-bar'),
+      document.getElementById('sidebar-progress-bar'),
+    ];
+    bars.forEach(b => { if (b) b.style.width = pct + '%'; });
+    const label = document.getElementById('progress-label');
+    if (label) label.textContent = `${done} / ${total} lessons`;
+    const pctEl = document.getElementById('progress-pct');
+    if (pctEl) pctEl.textContent = `${pct}% complete`;
+    const sidebarText = document.getElementById('sidebar-progress-text');
+    if (sidebarText) sidebarText.textContent = `${done}/${total} lessons`;
+  }
+
+  window.toggleComplete = toggleComplete;
+}());
+
+// ── YouTube IFrame Player API — graceful fallback for Error 101/150/153 ──────
+{% if embed_url %}
+(function () {
+  // Extract video ID from embed URL: https://www.youtube.com/embed/VIDEO_ID?…
+  var embedUrl = "{{ embed_url }}";
+  var m = embedUrl.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
+  if (!m) return;   // not a recognised embed URL; leave the section hidden
+  var videoId = m[1];
+
+  function showFallback() {
+    var wrapper  = document.getElementById('yt-player-wrapper');
+    var fallback = document.getElementById('yt-fallback');
+    if (wrapper)  wrapper.style.display  = 'none';
+    if (fallback) fallback.style.display = 'block';
+  }
+
+  // Called by YouTube IFrame API once the script is ready
+  window.onYouTubeIframeAPIReady = function () {
+    new YT.Player('yt-player', {
+      videoId: videoId,
+      playerVars: { rel: 0, modestbranding: 1 },
+      events: {
+        onError: function (e) {
+          // Error codes 100 = removed/private, 101/150 = embedding disabled
+          showFallback();
+        }
+      }
+    });
+  };
+
+  // Load the IFrame API script (async, won't block page render)
+  var tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  var first = document.getElementsByTagName('script')[0];
+  first.parentNode.insertBefore(tag, first);
+}());
+{% endif %}
+
+{% if request.user.is_student and enrollment %}
+// ── Time tracking: ping server every 60 s ────────────────────────────────────
+(function(){
+  var LESSON_ID = {{ lesson.pk }};
+  var PING_URL  = "{% url 'courses:log_lesson_time' lesson.pk %}";
+  var CSRF      = "{{ csrf_token }}";
+  var interval  = 60; // seconds
+  function ping() {
+    fetch(PING_URL, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'seconds=' + interval
+    });
+  }
+  setInterval(ping, interval * 1000);
+})();
+{% endif %}
+</script>
+{% endblock %}

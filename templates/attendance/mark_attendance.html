@@ -1,0 +1,306 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+/* ── Toggle switch ── */
+.att-toggle-wrap { display: flex; align-items: center; gap: 10px; }
+.att-toggle-sw   { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; }
+.att-toggle-sw input { opacity: 0; width: 0; height: 0; }
+.att-slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: #dee2e6; border-radius: 26px; transition: .3s;
+}
+.att-slider::before {
+  content: ''; position: absolute;
+  height: 20px; width: 20px; left: 3px; bottom: 3px;
+  background: #fff; border-radius: 50%; transition: .3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+input:checked + .att-slider             { background: #198754; }
+input:checked + .att-slider::before    { transform: translateX(24px); }
+.att-toggle-lbl                         { font-size: .82rem; font-weight: 600; min-width: 52px; }
+.lbl-present                            { color: #198754; }
+.lbl-absent                             { color: #dc3545; }
+
+/* ── Avatar ── */
+.att-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #2980b9, #1a5276);
+  color: #fff; display: inline-flex; align-items: center;
+  justify-content: center; font-weight: 800; font-size: .78rem;
+}
+
+/* ── Mobile: CSS card transform ── */
+@media (max-width: 767.98px) {
+  .att-table thead         { display: none; }
+  .att-table,
+  .att-table tbody,
+  .att-table tr,
+  .att-table td            { display: block; width: 100%; box-sizing: border-box; }
+  .att-table tr {
+    border-radius: 10px; margin-bottom: 10px; overflow: hidden;
+    background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border: 1px solid #e9ecef;
+  }
+  .att-table tr.row-present { border-left: 4px solid #198754; }
+  .att-table tr.row-absent  { border-left: 4px solid #dc3545; }
+  .att-table td {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 14px; border: none; border-bottom: 1px solid #f4f6f8;
+    font-size: .875rem; min-height: 38px;
+  }
+  .att-table td:last-child  { border-bottom: none; }
+  .att-table td[data-label]::before {
+    content: attr(data-label); font-weight: 700; color: #6c757d;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .5px;
+    min-width: 80px; flex-shrink: 0; margin-right: 10px;
+  }
+  .att-num-col { display: none !important; }
+  /* Keep toggle centred in card row */
+  .att-toggle-wrap { justify-content: flex-end; }
+}
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-4" style="max-width: 900px; margin: 0 auto;">
+
+  <!-- Breadcrumb + Header -->
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item">
+        <a href="{% url 'courses:course_detail' course.pk %}">{{ course.title|truncatechars:20 }}</a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'attendance:session_list' course.pk %}">Attendance</a>
+      </li>
+      <li class="breadcrumb-item active">Mark</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <h1 class="h3 fw-bold mb-0" style="color: #1a1a2e;">
+      <i class="fas fa-user-check me-2" style="color: #2980b9;"></i>Mark Attendance
+    </h1>
+    <a href="{% url 'attendance:session_list' course.pk %}"
+       class="btn btn-outline-secondary btn-sm fw-semibold">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  <!-- Session Info Banner -->
+  <div class="card border-0 shadow-sm mb-3"
+       style="background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%); color: #fff;">
+    <div class="card-body py-3 px-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h5 class="fw-bold mb-1">{{ session.title }}</h5>
+          <div class="d-flex flex-wrap gap-3" style="font-size: .82rem; opacity: .9;">
+            <span><i class="fas fa-calendar me-1"></i>{{ session.date|date:"l, d F Y" }}</span>
+            {% if session.start_time %}
+            <span>
+              <i class="fas fa-clock me-1"></i>{{ session.start_time|time:"H:i" }}
+              {% if session.end_time %}&ndash; {{ session.end_time|time:"H:i" }}{% endif %}
+            </span>
+            {% endif %}
+            {% if session.venue %}
+            <span><i class="fas fa-map-marker-alt me-1"></i>{{ session.venue }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Live stat pills -->
+        <div class="d-flex gap-4 text-center flex-shrink-0">
+          <div>
+            <div class="fw-bold" style="font-size: 1.5rem; line-height: 1;" id="presentCount">
+              {{ present_count }}
+            </div>
+            <div style="font-size: .7rem; opacity: .8; text-transform: uppercase; letter-spacing: .05em;">
+              Present
+            </div>
+          </div>
+          <div>
+            <div class="fw-bold" style="font-size: 1.5rem; line-height: 1;">{{ total_count }}</div>
+            <div style="font-size: .7rem; opacity: .8; text-transform: uppercase; letter-spacing: .05em;">
+              Enrolled
+            </div>
+          </div>
+          <div>
+            <div class="fw-bold" style="font-size: 1.5rem; line-height: 1;" id="pctNum">{{ pct }}%</div>
+            <div style="font-size: .7rem; opacity: .8; text-transform: uppercase; letter-spacing: .05em;">
+              Rate
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress + Bulk Actions -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="text-success fw-semibold small">
+          <i class="fas fa-circle me-1"></i><span id="presentLabel">{{ present_count }}</span> present
+        </span>
+        <div class="flex-grow-1" style="min-width: 80px;">
+          <div class="progress" style="height: 8px;" role="progressbar"
+               aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"
+               aria-label="Attendance rate {{ pct }}%">
+            <div class="progress-bar bg-success" id="progressFill" style="width: {{ pct }}%;"></div>
+          </div>
+        </div>
+        <span class="text-muted small">{{ total_count }} total</span>
+        <div class="d-flex gap-2 flex-wrap ms-auto">
+          <button class="btn btn-sm btn-success fw-semibold" onclick="markAll(true)"
+                  aria-label="Mark all students present">
+            <i class="fas fa-check-double me-1"></i>All Present
+          </button>
+          <button class="btn btn-sm btn-danger fw-semibold" onclick="markAll(false)"
+                  aria-label="Mark all students absent">
+            <i class="fas fa-times me-1"></i>All Absent
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Table Card -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header border-0 rounded-top-3 py-3"
+         style="background-color: #ecf0f1; border-bottom: 2px solid #2980b9;">
+      <h5 class="mb-0" style="color: #1a5276;">
+        <i class="fas fa-users me-2"></i>Students
+        <span class="badge bg-secondary ms-2 fw-normal" style="font-size: .75rem;">
+          {{ total_count }} enrolled
+        </span>
+      </h5>
+    </div>
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 att-table"
+               aria-label="Student attendance for {{ session.title }}">
+          <thead style="background-color: #2c3e50; color: white;">
+            <tr>
+              <th scope="col" class="att-num-col" style="width: 46px;">#</th>
+              <th scope="col">Student</th>
+              <th scope="col" class="d-none d-sm-table-cell">Email</th>
+              <th scope="col" style="text-align: center; width: 140px;">Attendance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr id="row-{{ row.student.pk }}"
+                class="{% if row.is_present %}row-present{% else %}row-absent{% endif %}">
+
+              <td class="att-num-col align-middle text-muted">{{ forloop.counter }}</td>
+
+              <td data-label="Student" class="align-middle">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="att-avatar" aria-hidden="true">
+                    {{ row.student.first_name|first|upper }}{{ row.student.last_name|first|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold" style="font-size: .88rem;">
+                      {{ row.student.get_full_name|default:row.student.username }}
+                    </div>
+                    <!-- Email shown inline on xs (column hidden on xs) -->
+                    <div class="d-sm-none text-muted" style="font-size: .75rem;">
+                      {{ row.student.email }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <td data-label="Email" class="d-none d-sm-table-cell align-middle"
+                  style="font-size: .8rem; color: #6c757d;">
+                {{ row.student.email }}
+              </td>
+
+              <td data-label="Attendance" class="align-middle" style="text-align: center;">
+                <div class="att-toggle-wrap justify-content-center">
+                  <label class="att-toggle-sw"
+                         aria-label="Toggle attendance for {{ row.student.get_full_name|default:row.student.username }}">
+                    <input type="checkbox"
+                           class="att-toggle"
+                           data-student="{{ row.student.pk }}"
+                           {% if row.is_present %}checked{% endif %}>
+                    <span class="att-slider"></span>
+                  </label>
+                  <span class="att-toggle-lbl {% if row.is_present %}lbl-present{% else %}lbl-absent{% endif %}"
+                        id="lbl-{{ row.student.pk }}">
+                    {% if row.is_present %}Present{% else %}Absent{% endif %}
+                  </span>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-5" style="color: #7f8c8d;">
+                <i class="fas fa-users"
+                   style="font-size: 2.5rem; display: block; margin-bottom: 12px; color: #bdc3c7;"></i>
+                <strong>No approved students enrolled yet.</strong>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var CSRF     = "{{ csrf_token }}";
+var MARK_URL = "{% url 'attendance:mark_attendance' session.pk %}";
+var total    = {{ total_count }};
+
+function updateStats(presentCount) {
+  var pct = total > 0 ? Math.round(presentCount / total * 100) : 0;
+  document.getElementById('presentCount').textContent  = presentCount;
+  document.getElementById('presentLabel').textContent  = presentCount;
+  document.getElementById('pctNum').textContent        = pct + '%';
+  document.getElementById('progressFill').style.width  = pct + '%';
+  document.getElementById('progressFill').setAttribute('aria-valuenow', pct);
+}
+
+document.querySelectorAll('.att-toggle').forEach(function(cb) {
+  cb.addEventListener('change', function() {
+    var studentId = this.getAttribute('data-student');
+    var present   = this.checked;
+    var lbl       = document.getElementById('lbl-' + studentId);
+    var row       = document.getElementById('row-' + studentId);
+
+    fetch(MARK_URL, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': CSRF,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'student_id=' + studentId + '&present=' + present
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        lbl.textContent = data.present ? 'Present' : 'Absent';
+        lbl.className   = 'att-toggle-lbl ' + (data.present ? 'lbl-present' : 'lbl-absent');
+        if (row) {
+          row.classList.remove('row-present', 'row-absent');
+          row.classList.add(data.present ? 'row-present' : 'row-absent');
+        }
+        updateStats(data.present_count);
+      }
+    });
+  });
+});
+
+function markAll(present) {
+  document.querySelectorAll('.att-toggle').forEach(function(cb) {
+    if (cb.checked !== present) {
+      cb.checked = present;
+      cb.dispatchEvent(new Event('change'));
+    }
+  });
+}
+</script>
+{% endblock %}

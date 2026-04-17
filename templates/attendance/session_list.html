@@ -1,0 +1,298 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+@media (max-width: 767.98px) {
+  .att-table thead         { display: none; }
+  .att-table,
+  .att-table tbody,
+  .att-table tr,
+  .att-table td            { display: block; width: 100%; box-sizing: border-box; }
+  .att-table tr {
+    border-radius: 10px; margin-bottom: 12px; overflow: hidden;
+    background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border: 1px solid #e9ecef;
+  }
+  .att-table tr.row-good   { border-left: 4px solid #198754; }
+  .att-table tr.row-fair   { border-left: 4px solid #fd7e14; }
+  .att-table tr.row-poor   { border-left: 4px solid #dc3545; }
+  .att-table tr.row-none   { border-left: 4px solid #6c757d; }
+  .att-table td {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 14px; border: none; border-bottom: 1px solid #f4f6f8;
+    font-size: .875rem; min-height: 38px;
+  }
+  .att-table td:last-child  { border-bottom: none; }
+  .att-table td[data-label]::before {
+    content: attr(data-label); font-weight: 700; color: #6c757d;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .5px;
+    min-width: 80px; flex-shrink: 0; margin-right: 10px;
+  }
+  .att-num-col { display: none !important; }
+}
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-4" style="max-width: 1100px; margin: 0 auto;">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'courses:instructor_courses' %}">My Courses</a></li>
+      <li class="breadcrumb-item">
+        <a href="{% url 'courses:course_detail' course.pk %}">{{ course.title|truncatechars:25 }}</a>
+      </li>
+      <li class="breadcrumb-item active">Attendance</li>
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color: #1a1a2e;">
+        <i class="fas fa-clipboard-user me-2" style="color: #2980b9;"></i>Session Attendance
+      </h1>
+      <p class="text-muted small mb-0">{{ course.title }} &mdash; {{ course.get_mode_display }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'attendance:export_attendance' course.pk %}"
+         class="btn btn-outline-success btn-sm fw-semibold">
+        <i class="fas fa-file-csv me-1"></i>Export CSV
+      </a>
+      <a href="{% url 'attendance:export_attendance_pdf' course.pk %}"
+         class="btn btn-outline-danger btn-sm fw-semibold">
+        <i class="fas fa-file-pdf me-1"></i>Export PDF
+      </a>
+      <a href="{% url 'attendance:create_session' course.pk %}"
+         class="btn btn-primary btn-sm fw-semibold">
+        <i class="fas fa-plus me-1"></i>Add Session
+      </a>
+    </div>
+  </div>
+
+  <!-- Sessions Table Card -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header border-0 rounded-top-3 py-3"
+         style="background-color: #ecf0f1; border-bottom: 2px solid #2980b9;">
+
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="mb-0" style="color: #1a5276;">
+          <i class="fas fa-list-alt me-2"></i>Sessions
+        </h5>
+        <span class="badge bg-secondary" aria-live="polite">
+          {{ filtered_count }} of {{ total_count }} session{{ total_count|pluralize }}
+        </span>
+      </div>
+
+      <!-- Search & Filter -->
+      <form method="get" action="" role="search" aria-label="Search and filter sessions">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-5 col-md-4">
+            <label for="q" class="form-label small fw-semibold mb-1">Search by title</label>
+            <input type="text" id="q" name="q"
+                   class="form-control form-control-sm"
+                   value="{{ q }}" placeholder="Type session title..."
+                   autocomplete="off" aria-label="Search sessions by title">
+          </div>
+          <div class="col-12 col-sm-4 col-md-3">
+            <label for="att" class="form-label small fw-semibold mb-1">Attendance</label>
+            <select id="att" name="att" class="form-select form-select-sm"
+                    aria-label="Filter by attendance level"
+                    onchange="this.form.submit();">
+              <option value="">All levels</option>
+              <option value="good" {% if att == 'good' %}selected{% endif %}>&#10003; Good (&ge;70%)</option>
+              <option value="fair" {% if att == 'fair' %}selected{% endif %}>&#9888; Fair (40&ndash;69%)</option>
+              <option value="poor" {% if att == 'poor' %}selected{% endif %}>&#10007; Poor (&lt;40%)</option>
+              <option value="none" {% if att == 'none' %}selected{% endif %}>&#9203; No Students</option>
+            </select>
+          </div>
+          <div class="col-auto d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-sm" aria-label="Apply filters">
+              <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            {% if q or att %}
+            <a href="{% url 'attendance:session_list' course.pk %}"
+               class="btn btn-outline-secondary btn-sm" aria-label="Clear filters">
+              <i class="fas fa-times me-1"></i>Clear
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card-body p-0">
+      {% if session_data %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 att-table"
+               aria-label="Sessions for {{ course.title }}">
+          <thead style="background-color: #2c3e50; color: white;">
+            <tr>
+              <th scope="col" class="att-num-col" style="width: 46px;">#</th>
+              <th scope="col">Session</th>
+              <th scope="col" style="width: 110px;">Date</th>
+              <th scope="col" class="d-none d-md-table-cell" style="width: 100px;">Time</th>
+              <th scope="col" class="d-none d-lg-table-cell">Venue</th>
+              <th scope="col" style="text-align: center; width: 110px;">Attendance</th>
+              <th scope="col" style="text-align: center; width: 130px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in session_data %}
+            <tr class="{% if item.total == 0 %}row-none{% elif item.pct >= 70 %}row-good{% elif item.pct >= 40 %}row-fair{% else %}row-poor{% endif %}">
+
+              <td class="att-num-col align-middle text-muted">{{ forloop.counter }}</td>
+
+              <td data-label="Session" class="align-middle">
+                <span class="fw-semibold">{{ item.session.title }}</span>
+                {% if item.session.start_time %}
+                <div class="d-md-none text-muted mt-1" style="font-size: 12px;">
+                  <i class="fas fa-clock me-1"></i>{{ item.session.start_time|time:"H:i" }}
+                  {% if item.session.end_time %}&ndash; {{ item.session.end_time|time:"H:i" }}{% endif %}
+                </div>
+                {% endif %}
+                {% if item.session.venue %}
+                <div class="d-lg-none text-muted" style="font-size: 12px;">
+                  <i class="fas fa-map-marker-alt me-1"></i>{{ item.session.venue }}
+                </div>
+                {% endif %}
+              </td>
+
+              <td data-label="Date" class="align-middle" style="font-size: 13px; white-space: nowrap;">
+                {{ item.session.date|date:"M d, Y" }}
+                <div class="text-muted" style="font-size: 11px;">{{ item.session.date|date:"l" }}</div>
+              </td>
+
+              <td data-label="Time" class="d-none d-md-table-cell align-middle"
+                  style="font-size: 13px; white-space: nowrap;">
+                {% if item.session.start_time %}
+                  {{ item.session.start_time|time:"H:i" }}
+                  {% if item.session.end_time %}
+                  <div style="font-size: 11px; color: #999;">&ndash; {{ item.session.end_time|time:"H:i" }}</div>
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted">&mdash;</span>
+                {% endif %}
+              </td>
+
+              <td data-label="Venue" class="d-none d-lg-table-cell align-middle"
+                  style="font-size: 13px;">
+                {% if item.session.venue %}{{ item.session.venue }}
+                {% else %}<span class="text-muted">&mdash;</span>{% endif %}
+              </td>
+
+              <td data-label="Attendance" class="align-middle" style="text-align: center;">
+                {% if item.total == 0 %}
+                  <span class="badge bg-secondary" style="font-size: .75rem;">No students</span>
+                {% else %}
+                  <span class="badge
+                    {% if item.pct >= 70 %}bg-success{% elif item.pct >= 40 %}bg-warning text-dark{% else %}bg-danger{% endif %}"
+                        style="font-size: .75rem;">
+                    {{ item.pct }}%
+                  </span>
+                  <div class="text-muted" style="font-size: 11px; margin-top: 3px;">
+                    {{ item.present }}/{{ item.total }}
+                  </div>
+                {% endif %}
+              </td>
+
+              <td data-label="Actions" class="align-middle" style="text-align: center;">
+                <div class="d-flex gap-1 justify-content-center">
+                  <a href="{% url 'attendance:mark_attendance' item.session.pk %}"
+                     class="btn btn-sm btn-primary" title="Mark Attendance"
+                     aria-label="Mark attendance for {{ item.session.title }}">
+                    <i class="fas fa-user-check"></i>
+                  </a>
+                  <a href="{% url 'attendance:edit_session' item.session.pk %}"
+                     class="btn btn-sm btn-outline-secondary" title="Edit"
+                     aria-label="Edit {{ item.session.title }}">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <form method="post" action="{% url 'attendance:delete_session' item.session.pk %}"
+                        onsubmit="return confirm('Delete session \'{{ item.session.title }}\'?');"
+                        style="display: inline;">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger" title="Delete"
+                            aria-label="Delete {{ item.session.title }}">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <div class="text-center py-5" style="color: #7f8c8d;">
+        {% if q or att %}
+          <i class="fas fa-search"
+             style="font-size: 2.5rem; display: block; margin-bottom: 12px; color: #bdc3c7;"></i>
+          <strong>No sessions found</strong>
+          <p class="small mt-1 mb-3">Try a different search term or adjust the filter.</p>
+          <a href="{% url 'attendance:session_list' course.pk %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-times me-1"></i>Clear Filters
+          </a>
+        {% else %}
+          <i class="fas fa-calendar-plus"
+             style="font-size: 3rem; display: block; margin-bottom: 14px; color: #bdc3c7;"></i>
+          <strong class="fs-5">No sessions yet</strong>
+          <p class="small mt-2 mb-3">Create the first session to start tracking attendance.</p>
+          <a href="{% url 'attendance:create_session' course.pk %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Add First Session
+          </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if paginator.num_pages > 1 %}
+    <div class="card-footer bg-white py-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <small class="text-muted" aria-live="polite">
+          Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+          of {{ filtered_count }} session{{ filtered_count|pluralize }}
+        </small>
+        <nav aria-label="Sessions pagination">
+          <ul class="pagination pagination-sm mb-0 flex-wrap">
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+              {% if page_obj.has_previous %}
+              <a class="page-link"
+                 href="?q={{ q }}&att={{ att }}&page={{ page_obj.previous_page_number }}"
+                 aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+              {% endif %}
+            </li>
+            {% for item in page_window %}
+              {% if not item %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+              {% elif item == page_obj.number %}
+              <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+              {% else %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?q={{ q }}&att={{ att }}&page={{ item }}">{{ item }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+              {% if page_obj.has_next %}
+              <a class="page-link"
+                 href="?q={{ q }}&att={{ att }}&page={{ page_obj.next_page_number }}"
+                 aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+              {% endif %}
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

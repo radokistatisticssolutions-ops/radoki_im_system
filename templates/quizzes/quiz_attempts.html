@@ -1,0 +1,206 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.qa-layout { max-width:960px; margin:28px auto; padding:0 16px 60px; }
+.qa-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
+.qa-header h1 { font-size:1.4rem; font-weight:800; color:#2c3e50; margin:0; }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:14px; margin-bottom:28px; }
+.stat-box { background:#fff; border-radius:14px; padding:18px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+.stat-box .val { font-size:1.8rem; font-weight:800; }
+.stat-box .lbl { font-size:.72rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+.attempts-table { width:100%; border-collapse:separate; border-spacing:0; }
+.attempts-table thead th { padding:10px 16px; font-size:.75rem; font-weight:700; color:#7f8c8d; text-transform:uppercase; letter-spacing:.05em; background:#f8f9fa; border-bottom:2px solid #e2e8f0; }
+.attempts-table tbody tr { border-bottom:1px solid #f0f4f8; }
+.attempts-table tbody tr:hover { background:#f8fbff; }
+.attempts-table tbody td { padding:14px 16px; font-size:.87rem; color:#2c3e50; vertical-align:middle; }
+.score-pill { display:inline-block; padding:3px 12px; border-radius:20px; font-weight:700; font-size:.85rem; }
+.score-pill.pass { background:#d5f5e3; color:#1e8449; }
+.score-pill.fail { background:#fadbd8; color:#c0392b; }
+.score-pill.pending { background:#fdebd0; color:#d35400; }
+.table-card { background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+.empty-state { text-align:center; padding:50px 20px; }
+@media (max-width: 767.98px) {
+  .qa-layout { margin: 12px 0; padding: 0 10px 40px; }
+  .qa-header { flex-direction: column; align-items: flex-start; }
+  .qa-header h1 { font-size: 1.15rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .attempts-table thead th:nth-child(3),
+  .attempts-table tbody td:nth-child(3) { display: none; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .attempts-table thead th:nth-child(5),
+  .attempts-table tbody td:nth-child(5) { display: none; }
+}
+</style>
+
+<div class="qa-layout">
+  <div class="qa-header">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" style="font-size:.78rem; margin:0 0 6px;">
+          <li class="breadcrumb-item"><a href="{% url 'quizzes:quiz_list' course.pk %}">Quizzes</a></li>
+          <li class="breadcrumb-item active">{{ quiz.title }} — Results</li>
+        </ol>
+      </nav>
+      <h1><i class="fas fa-chart-bar me-2" style="color:#2980b9;"></i>Results: {{ quiz.title }}</h1>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'quizzes:question_manager' quiz.pk %}"
+         class="btn btn-outline-primary" style="border-radius:10px; padding:9px 18px; font-size:.85rem; font-weight:600;">
+        <i class="fas fa-list-ul me-1"></i>Questions
+      </a>
+      <a href="{% url 'quizzes:edit_quiz' quiz.pk %}"
+         class="btn btn-outline-secondary" style="border-radius:10px; padding:9px 18px; font-size:.85rem; font-weight:600;">
+        <i class="fas fa-cog me-1"></i>Settings
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats summary -->
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="val" style="color:#2980b9;">{{ stats.total|default:0 }}</div>
+      <div class="lbl">Total Attempts</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#27ae60;">{{ stats.pass_count|default:0 }}</div>
+      <div class="lbl">Passed</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#e74c3c;">{{ failed_count }}</div>
+      <div class="lbl">Not Passed</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#2980b9;">
+        {% if stats.avg_score %}{{ stats.avg_score|floatformat:1 }}%{% else %}—{% endif %}
+      </div>
+      <div class="lbl">Avg Score</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#e67e22;">
+        {% if stats.total %}
+          {% widthratio stats.pass_count stats.total 100 %}%
+        {% else %}—{% endif %}
+      </div>
+      <div class="lbl">Pass Rate</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" style="color:#2980b9;">{{ quiz.pass_mark }}%</div>
+      <div class="lbl">Pass Mark</div>
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <form method="get" class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+    <div class="input-group" style="max-width:360px;">
+      <span class="input-group-text bg-white border-end-0" style="border-radius:10px 0 0 10px;">
+        <i class="fas fa-search text-secondary" style="font-size:.82rem;"></i>
+      </span>
+      <input type="text" name="search" value="{{ search_query }}"
+             class="form-control border-start-0" style="border-left:none;"
+             placeholder="Search by student name…">
+      <button type="submit" class="btn btn-primary"
+              style="border-radius:0 10px 10px 0; font-size:.85rem; font-weight:600; padding:0 16px;">
+        <i class="fas fa-search me-1"></i>Search
+      </button>
+    </div>
+    {% if search_query %}
+    <a href="?" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+      <i class="fas fa-times me-1"></i>Clear
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- Attempts table -->
+  <div class="table-card">
+    {% if page_obj.object_list %}
+    <div class="table-responsive">
+    <table class="attempts-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Score</th>
+          <th>Marks</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for attempt in page_obj %}
+        <tr>
+          <td>
+            <div style="font-weight:600;">{{ attempt.student.get_full_name|default:attempt.student.username }}</div>
+            <div style="font-size:.75rem; color:#95a5a6;">{{ attempt.student.username }}</div>
+          </td>
+          <td>
+            <span class="score-pill {% if attempt.passed %}pass{% elif attempt.score == None %}pending{% else %}fail{% endif %}">
+              {% if attempt.score is not None %}{{ attempt.score|floatformat:1 }}%{% else %}—{% endif %}
+            </span>
+          </td>
+          <td style="color:#5d6d7e;">
+            {{ attempt.marks_obtained|floatformat:0 }} / {{ quiz.total_marks }}
+          </td>
+          <td>
+            {% if attempt.passed %}
+              <span style="color:#1e8449; font-weight:700; font-size:.82rem;"><i class="fas fa-check-circle me-1"></i>Passed</span>
+            {% else %}
+              <span style="color:#c0392b; font-weight:700; font-size:.82rem;"><i class="fas fa-times-circle me-1"></i>Not Passed</span>
+            {% endif %}
+          </td>
+          <td style="color:#7f8c8d; font-size:.82rem;">{{ attempt.completed_at|date:"d M Y, H:i"|default:"—" }}</td>
+          <td>
+            <a href="{% url 'quizzes:quiz_result' attempt.pk %}"
+               class="btn btn-sm" style="background:#eaf4fd; color:#2980b9; border-radius:8px; font-size:.78rem; font-weight:600;">
+              <i class="fas fa-eye me-1"></i>View
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% if paginator.num_pages > 1 %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-3 border-top">
+      <small class="text-muted">
+        Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+        of {{ filtered_count }} attempt{{ filtered_count|pluralize }}
+      </small>
+      <nav aria-label="Attempts pagination">
+        <ul class="pagination pagination-sm mb-0 flex-wrap">
+          <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+            <a class="page-link" href="?search={{ search_query|urlencode }}&page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>
+            {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+          </li>
+          {% for item in page_window %}
+            {% if not item %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            {% elif item == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ item }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="?search={{ search_query|urlencode }}&page={{ item }}">{{ item }}</a></li>
+            {% endif %}
+          {% endfor %}
+          <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+            <a class="page-link" href="?search={{ search_query|urlencode }}&page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>
+            {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+          </li>
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-chart-bar" style="font-size:2.5rem; color:#bdc3c7; display:block; margin-bottom:14px;"></i>
+      <h5 style="color:#2c3e50; font-weight:700; margin-bottom:6px;">No attempts yet</h5>
+      <p style="color:#7f8c8d; font-size:.85rem;">Students haven't taken this quiz yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

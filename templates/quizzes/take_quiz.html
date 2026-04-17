@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.tq-layout { max-width:820px; margin:28px auto; padding:0 16px 60px; }
+.tq-header { background:linear-gradient(135deg,#1a5276,#2980b9); border-radius:16px; padding:28px 32px; color:#fff; margin-bottom:24px; }
+.tq-header h1 { font-size:1.45rem; font-weight:800; margin:0 0 8px; }
+.tq-header .meta { display:flex; gap:18px; flex-wrap:wrap; font-size:.85rem; opacity:.88; }
+.timer-banner { background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:20px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 10px rgba(0,0,0,.08); font-weight:700; font-size:1rem; color:#2c3e50; }
+#timer { font-size:1.4rem; color:#e67e22; font-variant-numeric:tabular-nums; }
+#timer.urgent { color:#e74c3c; animation:pulse .8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.question-card { background:#fff; border-radius:14px; padding:24px 28px; margin-bottom:16px; box-shadow:0 2px 10px rgba(0,0,0,.05); border-left:5px solid #2980b9; }
+.question-card.answered { border-left-color:#27ae60; }
+.q-label { font-size:.72rem; font-weight:700; color:#2980b9; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
+.q-label .marks-pill { background:#eaf4fd; color:#2980b9; border-radius:20px; padding:2px 10px; font-size:.72rem; font-weight:700; }
+.q-text { font-size:1rem; font-weight:600; color:#2c3e50; line-height:1.6; margin-bottom:18px; }
+.opt-label { display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:10px; border:2px solid #e2e8f0; margin-bottom:8px; cursor:pointer; font-size:.9rem; color:#2c3e50; transition:all .15s; user-select:none; }
+.opt-label:hover { border-color:#2980b9; background:#f0f7ff; }
+.opt-label input[type=radio] { display:none; }
+.opt-circle { width:20px; height:20px; border-radius:50%; border:2px solid #bdc3c7; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.opt-label.selected { border-color:#2980b9; background:#eaf4fd; }
+.opt-label.selected .opt-circle { border-color:#2980b9; background:#2980b9; }
+.opt-label.selected .opt-circle::after { content:''; width:8px; height:8px; border-radius:50%; background:#fff; display:block; }
+.short-ta { width:100%; border:2px solid #e2e8f0; border-radius:10px; padding:12px 16px; font-size:.9rem; min-height:110px; resize:vertical; outline:none; transition:border .15s; }
+.short-ta:focus { border-color:#2980b9; }
+.progress-strip { background:#fff; border-radius:12px; padding:14px 20px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+.progress-strip .label { font-size:.78rem; font-weight:700; color:#2c3e50; margin-bottom:6px; display:flex; justify-content:space-between; }
+.progress-strip .bar { height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
+.progress-strip .bar-fill { height:100%; background:linear-gradient(90deg,#1a5276,#2980b9); border-radius:4px; transition:width .4s; }
+</style>
+
+<!-- Timer (if time limit set) -->
+{% if quiz.time_limit_minutes %}
+<div class="tq-layout" style="margin-bottom:0; padding-bottom:0;">
+  <div class="timer-banner">
+    <i class="fas fa-clock" style="color:#e67e22;"></i>
+    <span>Time Remaining:</span>
+    <span id="timer">{{ quiz.time_limit_minutes }}:00</span>
+    <span style="margin-left:auto; font-size:.78rem; font-weight:400; color:#7f8c8d;">Quiz auto-submits when time runs out</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="tq-layout">
+  <!-- Header -->
+  <div class="tq-header">
+    <div style="font-size:.75rem; opacity:.7; margin-bottom:6px;">
+      <a href="{% url 'courses:course_detail' course.pk %}" style="color:rgba(255,255,255,.7); text-decoration:none;">{{ course.title }}</a> /
+    </div>
+    <h1><i class="fas fa-tasks me-2"></i>{{ quiz.title }}</h1>
+    <div class="meta">
+      <span><i class="fas fa-question-circle me-1"></i>{{ questions|length }} question{{ questions|length|pluralize }}</span>
+      <span><i class="fas fa-star me-1"></i>Pass mark: {{ quiz.pass_mark }}%</span>
+      {% if quiz.time_limit_minutes %}<span><i class="fas fa-clock me-1"></i>{{ quiz.time_limit_minutes }} minutes</span>{% endif %}
+      {% if quiz.max_attempts %}<span><i class="fas fa-redo me-1"></i>Max {{ quiz.max_attempts }} attempt{{ quiz.max_attempts|pluralize }}</span>{% endif %}
+    </div>
+    {% if quiz.description %}
+    <div style="margin-top:10px; font-size:.88rem; opacity:.88; line-height:1.6;">{{ quiz.description }}</div>
+    {% endif %}
+  </div>
+
+  <!-- Answered progress -->
+  <div class="progress-strip">
+    <div class="label">
+      <span>Questions answered</span>
+      <span id="answered-label">0 / {{ questions|length }}</span>
+    </div>
+    <div class="bar">
+      <div class="bar-fill" id="answered-bar" style="width:0%;"></div>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'quizzes:submit_quiz' quiz.pk %}" id="quiz-form">
+    {% csrf_token %}
+
+    {% for question in questions %}
+    <div class="question-card" id="qcard-{{ forloop.counter }}" data-answered="0">
+      <div class="q-label">
+        <span>Question {{ forloop.counter }} of {{ questions|length }}</span>
+        <span class="marks-pill"><i class="fas fa-star me-1"></i>{{ question.marks }} mark{{ question.marks|pluralize }}</span>
+      </div>
+      <div class="q-text">{{ question.text }}</div>
+
+      {% if question.question_type == 'multiple_choice' or question.question_type == 'true_false' %}
+        {% for option in question.options.all %}
+        <label class="opt-label" id="opt-label-{{ option.pk }}"
+               onclick="selectOpt(this, {{ forloop.parentloop.counter }})">
+          <input type="radio" name="q_{{ question.pk }}" value="{{ option.pk }}">
+          <div class="opt-circle"></div>
+          <span>{{ option.text }}</span>
+        </label>
+        {% empty %}
+          <p class="text-muted fst-italic" style="font-size:.85rem;">No options defined for this question.</p>
+        {% endfor %}
+
+      {% elif question.question_type == 'short_answer' %}
+        <textarea class="short-ta" name="q_{{ question.pk }}"
+                  placeholder="Type your answer here…"
+                  oninput="markAnswered({{ forloop.counter }})"></textarea>
+        <div class="text-muted mt-2" style="font-size:.78rem;">
+          <i class="fas fa-info-circle me-1"></i>This answer will be reviewed manually by your instructor.
+        </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if is_instructor_preview %}
+    <div class="alert alert-warning" style="border-radius:12px; font-size:.85rem;">
+      <i class="fas fa-eye me-2"></i><strong>Instructor Preview.</strong>
+      Your attempt will be recorded if you submit. This is for testing purposes only.
+    </div>
+    {% endif %}
+
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3 pt-3"
+         style="border-top:2px solid #e2e8f0;">
+      <button type="button" class="btn btn-outline-secondary" style="border-radius:10px; padding:10px 22px;" onclick="history.back()">
+        <i class="fas fa-arrow-left me-2"></i>Back
+      </button>
+      <button type="submit" id="submit-btn"
+              class="btn" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:10px;padding:12px 32px;font-weight:700;font-size:1rem;">
+        <i class="fas fa-paper-plane me-2"></i>Submit Quiz
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+const TOTAL = {{ questions|length }};
+let answeredCount = 0;
+let isAutoSubmit = false;  // Flag to track auto-submission (prevent beforeunload dialog)
+
+function selectOpt(label, cardIdx) {
+  const card = document.getElementById('qcard-' + cardIdx);
+  const wasAnswered = card.dataset.answered === '1';
+  card.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
+  label.classList.add('selected');
+  label.querySelector('input[type=radio]').checked = true;
+  card.classList.add('answered');
+  card.dataset.answered = '1';
+  if (!wasAnswered) {
+    answeredCount++;
+    updateProgress();
+  }
+}
+
+function markAnswered(cardIdx) {
+  const card = document.getElementById('qcard-' + cardIdx);
+  if (card.dataset.answered === '0') {
+    card.dataset.answered = '1';
+    card.classList.add('answered');
+    answeredCount++;
+    updateProgress();
+  }
+}
+
+function updateProgress() {
+  const pct = TOTAL ? (answeredCount / TOTAL * 100) : 0;
+  document.getElementById('answered-bar').style.width = pct + '%';
+  document.getElementById('answered-label').textContent = `${answeredCount} / ${TOTAL}`;
+}
+
+{% if quiz.time_limit_minutes %}
+(function () {
+  let secs = {{ quiz.time_limit_minutes }} * 60;
+  const el  = document.getElementById('timer');
+  function tick() {
+    if (secs <= 0) {
+      isAutoSubmit = true;  // Flag that this is auto-submit
+      window.onbeforeunload = null;  // Disable the warning dialog
+      document.getElementById('quiz-form').submit();
+      return;
+    }
+    const m = Math.floor(secs / 60), s = secs % 60;
+    el.textContent = m + ':' + String(s).padStart(2, '0');
+    if (secs <= 60) el.classList.add('urgent');
+    secs--;
+    setTimeout(tick, 1000);
+  }
+  tick();
+}());
+{% endif %}
+
+// Warn on accidental navigation away - EXCEPT during timer auto-submit
+window.addEventListener('beforeunload', e => {
+  if (!isAutoSubmit) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+document.getElementById('quiz-form').addEventListener('submit', () => {
+  window.onbeforeunload = null;
+});
+</script>
+{% endblock %}

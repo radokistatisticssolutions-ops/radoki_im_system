@@ -1,0 +1,334 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Drag-and-drop ── */
+.module-card      { border-radius:14px; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:18px; overflow:hidden; transition:box-shadow .2s; }
+.module-card:hover{ box-shadow:0 4px 20px rgba(41,128,185,.13); }
+.module-header    { display:flex; align-items:center; gap:10px; padding:14px 18px; background:linear-gradient(135deg,#1a5276,#2980b9); color:#fff; cursor:grab; }
+.module-header:active{ cursor:grabbing; }
+.drag-handle      { color:rgba(255,255,255,.5); font-size:1rem; cursor:grab; }
+.module-body      { padding:0 18px 14px; }
+.lesson-row       { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; background:#f8fbff; margin-top:8px; cursor:grab; border:1px solid #e8f4fd; transition:background .15s; }
+.lesson-row:hover { background:#eaf4fd; }
+.lesson-row:active{ cursor:grabbing; }
+.lesson-badge     { font-size:.72rem; padding:3px 8px; border-radius:10px; font-weight:600; }
+.add-lesson-btn   { display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; background:#eaf4fd; color:#2980b9; font-size:.82rem; font-weight:600; border:none; cursor:pointer; margin-top:10px; transition:background .15s; text-decoration:none; }
+.add-lesson-btn:hover{ background:#d6eaf8; color:#1a5276; }
+.ghost            { opacity:.4; border:2px dashed #2980b9 !important; background:#eaf4fd !important; }
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-7">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1" style="font-size:.82rem;">
+          <li class="breadcrumb-item"><a href="{% url 'courses:instructor_courses' %}">My Courses</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.pk %}">{{ course.title }}</a></li>
+          <li class="breadcrumb-item active">Module Manager</li>
+        </ol>
+      </nav>
+      <h1 class="h3 mb-0" style="color:#2c3e50;"><i class="fas fa-layer-group me-2" style="color:#2980b9;"></i>Module Manager</h1>
+      <p class="text-muted mt-1 mb-0">Drag to reorder · Add modules and lessons</p>
+    </div>
+    <div class="col-md-5 text-end d-flex gap-2 justify-content-end flex-wrap">
+      <span class="badge bg-primary p-2" style="font-size:.9rem; align-self:center;">
+        {{ modules|length }} module{{ modules|length|pluralize }}
+      </span>
+      <button class="btn btn-sm"
+              style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;"
+              data-bs-toggle="modal" data-bs-target="#addModuleModal">
+        <i class="fas fa-plus me-1"></i> Add Module
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} alert-dismissible fade show mb-3" style="border-radius:10px;">
+      {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Module List (drag-sortable) -->
+  <div id="module-list">
+    {% if modules %}
+      {% for mod in modules %}
+      <div class="module-card" data-module-id="{{ mod.id }}">
+
+        <!-- Module Header -->
+        <div class="module-header">
+          <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+          <div style="flex:1; min-width:0;">
+            <div class="fw-bold" style="font-size:.95rem;">{{ mod.title }}</div>
+            {% if mod.description %}
+            <div style="font-size:.78rem; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ mod.description }}</div>
+            {% endif %}
+          </div>
+          <span class="badge" style="background:rgba(255,255,255,.2); color:#fff; font-size:.75rem;">
+            {{ mod.lesson_count }} lesson{{ mod.lesson_count|pluralize }}
+          </span>
+          {% if not mod.is_published %}
+          <span class="badge" style="background:#e74c3c; font-size:.72rem;">Hidden</span>
+          {% endif %}
+          <!-- Module actions -->
+          <div class="dropdown">
+            <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-radius:6px;padding:4px 8px;"
+                    data-bs-toggle="dropdown">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius:10px; font-size:.85rem;">
+              <li>
+                <button class="dropdown-item" onclick="openEditModule({{ mod.id }}, '{{ mod.title|escapejs }}', '{{ mod.description|escapejs }}', {{ mod.is_published|lower }})">
+                  <i class="fas fa-edit me-2 text-primary"></i> Edit Module
+                </button>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button class="dropdown-item text-danger"
+                        onclick="confirmDeleteModule({{ mod.id }}, '{{ mod.title|escapejs }}')">
+                  <i class="fas fa-trash me-2"></i> Delete Module
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Lessons inside module -->
+        <div class="module-body">
+          <div class="lesson-list" data-module-id="{{ mod.id }}">
+            {% for lesson in mod.lessons.all %}
+            <div class="lesson-row" data-lesson-id="{{ lesson.id }}">
+              <span class="drag-handle text-muted"><i class="fas fa-grip-vertical"></i></span>
+              <!-- Icons -->
+              <div style="display:flex;gap:4px;">
+                {% if lesson.youtube_url %}<span title="Video"><i class="fab fa-youtube" style="color:#e74c3c;"></i></span>{% endif %}
+                {% if lesson.content %}<span title="Text content"><i class="fas fa-align-left" style="color:#2980b9;"></i></span>{% endif %}
+                {% if lesson.resource_file %}<span title="Attachment"><i class="fas fa-paperclip" style="color:#27ae60;"></i></span>{% endif %}
+              </div>
+              <span style="flex:1; font-size:.85rem; font-weight:500; color:#2c3e50;">{{ lesson.title }}</span>
+              {% if lesson.duration_minutes %}
+              <span class="lesson-badge" style="background:#d6eaf8;color:#1a5276;">
+                <i class="fas fa-clock me-1"></i>{{ lesson.duration_minutes }}m
+              </span>
+              {% endif %}
+              {% if not lesson.is_published %}
+              <span class="lesson-badge" style="background:#f8d7da;color:#842029;">Hidden</span>
+              {% endif %}
+              <div class="d-flex gap-1">
+                <a href="{% url 'courses:edit_lesson' lesson.id %}"
+                   class="btn btn-sm btn-outline-primary" style="border-radius:6px;font-size:.72rem;" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-danger" style="border-radius:6px;font-size:.72rem;" title="Delete"
+                        onclick="confirmDeleteLesson({{ lesson.id }}, '{{ lesson.title|escapejs }}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            {% empty %}
+            <p class="text-muted mt-2 mb-0" style="font-size:.82rem; padding:6px 0;">No lessons yet. Add your first lesson below.</p>
+            {% endfor %}
+          </div>
+          <a href="{% url 'courses:create_lesson' mod.id %}" class="add-lesson-btn">
+            <i class="fas fa-plus-circle"></i> Add Lesson
+          </a>
+        </div>
+
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="card border-0 shadow-sm text-center py-5" style="border-radius:14px;">
+      <i class="fas fa-layer-group fa-3x mb-3" style="color:#aed6f1;"></i>
+      <p class="text-muted mb-1 fw-semibold">No modules yet.</p>
+      <p class="text-muted" style="font-size:.85rem;">Create your first module to start building your course content.</p>
+      <button class="btn btn-primary mt-2" style="border-radius:8px; width:fit-content; margin:0 auto;"
+              data-bs-toggle="modal" data-bs-target="#addModuleModal">
+        <i class="fas fa-plus me-1"></i> Create First Module
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Add Module Modal ── -->
+<div class="modal fade" id="addModuleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+    <div class="modal-content" style="border-radius:14px; border:none; overflow:hidden;">
+      <div class="modal-header text-white border-0" style="background:linear-gradient(135deg,#1a5276,#2980b9); padding:18px 24px;">
+        <h5 class="modal-title fw-bold"><i class="fas fa-layer-group me-2"></i>Add Module</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'courses:create_module' course.pk %}">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" required placeholder="e.g. Week 1 – Introduction" style="border-radius:8px;">
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Description <span class="text-muted fw-normal">(optional)</span></label>
+            <textarea name="description" class="form-control" rows="2" placeholder="Brief overview of this module…" style="border-radius:8px;resize:none;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+          <button type="button" class="btn btn-outline-secondary" style="border-radius:8px;" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;">
+            <i class="fas fa-plus me-1"></i> Create Module
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit Module Modal ── -->
+<div class="modal fade" id="editModuleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+    <div class="modal-content" style="border-radius:14px; border:none; overflow:hidden;">
+      <div class="modal-header text-white border-0" style="background:linear-gradient(135deg,#1a5276,#2980b9); padding:18px 24px;">
+        <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Edit Module</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="edit-module-form" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" id="edit-mod-title" class="form-control" required style="border-radius:8px;">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea name="description" id="edit-mod-desc" class="form-control" rows="2" style="border-radius:8px;resize:none;"></textarea>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="edit-mod-published" name="is_published" style="width:2.5em;height:1.25em;">
+            <label class="form-check-label fw-semibold ms-2" for="edit-mod-published">Visible to students</label>
+          </div>
+        </div>
+        <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+          <button type="button" class="btn btn-outline-secondary" style="border-radius:8px;" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;">
+            <i class="fas fa-save me-1"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete Module Confirm ── -->
+<div class="modal fade" id="deleteModuleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-body p-4 text-center">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3 text-danger"></i>
+        <h5 class="fw-bold">Delete Module?</h5>
+        <p class="text-muted">You are about to delete <strong id="del-mod-name"></strong> and <strong>all its lessons</strong>. This cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-3 pb-4">
+        <button class="btn btn-outline-secondary" style="border-radius:8px;" data-bs-dismiss="modal">Cancel</button>
+        <form id="del-mod-form" method="post" action="" style="display:inline;">{% csrf_token %}
+          <button type="submit" class="btn btn-danger" style="border-radius:8px;font-weight:600;">
+            <i class="fas fa-trash me-1"></i> Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete Lesson Confirm ── -->
+<div class="modal fade" id="deleteLessonModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-body p-4 text-center">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3 text-danger"></i>
+        <h5 class="fw-bold">Delete Lesson?</h5>
+        <p class="text-muted">Delete <strong id="del-lesson-name"></strong>? Student progress on this lesson will also be removed.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-3 pb-4">
+        <button class="btn btn-outline-secondary" style="border-radius:8px;" data-bs-dismiss="modal">Cancel</button>
+        <form id="del-lesson-form" method="post" action="" style="display:inline;">{% csrf_token %}
+          <button type="submit" class="btn btn-danger" style="border-radius:8px;font-weight:600;">
+            <i class="fas fa-trash me-1"></i> Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sortable.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+const CSRF = "{{ csrf_token }}";
+
+/* ── Module-level drag reorder ── */
+const moduleList = document.getElementById('module-list');
+if (moduleList) {
+  Sortable.create(moduleList, {
+    animation: 150,
+    handle: '.module-header .drag-handle',
+    ghostClass: 'ghost',
+    onEnd() {
+      const ids = [...moduleList.querySelectorAll('.module-card')]
+        .map(el => el.dataset.moduleId).join(',');
+      fetch('{% url "courses:reorder_modules" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'order=' + ids,
+      });
+    }
+  });
+}
+
+/* ── Lesson-level drag reorder (per module) ── */
+document.querySelectorAll('.lesson-list').forEach(list => {
+  const moduleId = list.dataset.moduleId;
+  Sortable.create(list, {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'ghost',
+    onEnd() {
+      const ids = [...list.querySelectorAll('.lesson-row')]
+        .map(el => el.dataset.lessonId).join(',');
+      fetch('{% url "courses:reorder_lessons" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'order=' + ids,
+      });
+    }
+  });
+});
+
+/* ── Edit module modal ── */
+function openEditModule(id, title, desc, published) {
+  document.getElementById('edit-mod-title').value   = title;
+  document.getElementById('edit-mod-desc').value    = desc;
+  document.getElementById('edit-mod-published').checked = published;
+  document.getElementById('edit-module-form').action = `/courses/modules/${id}/edit/`;
+  new bootstrap.Modal(document.getElementById('editModuleModal')).show();
+}
+
+/* ── Delete module ── */
+function confirmDeleteModule(id, name) {
+  document.getElementById('del-mod-name').textContent = '"' + name + '"';
+  document.getElementById('del-mod-form').action = `/courses/modules/${id}/delete/`;
+  new bootstrap.Modal(document.getElementById('deleteModuleModal')).show();
+}
+
+/* ── Delete lesson ── */
+function confirmDeleteLesson(id, name) {
+  document.getElementById('del-lesson-name').textContent = '"' + name + '"';
+  document.getElementById('del-lesson-form').action = `/courses/lessons/${id}/delete/`;
+  new bootstrap.Modal(document.getElementById('deleteLessonModal')).show();
+}
+</script>
+{% endblock %}

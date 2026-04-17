@@ -1,0 +1,309 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+  @media (max-width: 768px) {
+    .card-header, .card-body {
+      padding: 1rem !important;
+    }
+    
+    .mb-4, .mb-3, .mb-2 {
+      margin-bottom: 0.6rem !important;
+    }
+    
+    .col-lg-8, .col-lg-4 {
+      width: 100% !important;
+    }
+  }
+  
+  /* Ensure sidebar stays on the right on desktop */
+  @media (min-width: 992px) {
+    .col-lg-8 {
+      max-width: 66.666667% !important;
+    }
+    
+    .col-lg-4 {
+      max-width: 33.333333% !important;
+    }
+    
+    /* Make sidebar sticky on desktop */
+    .sidebar-sticky {
+      position: sticky;
+      top: 20px;
+    }
+  }
+  
+  /* Accordion styling improvements */
+  .accordion-button {
+    padding: 1rem;
+    font-weight: 500;
+    color: #2c3e50;
+  }
+  
+  .accordion-button:not(.collapsed) {
+    background-color: #ebf5fb;
+    color: #2980b9;
+  }
+  
+  .accordion-body {
+    padding: 1.5rem 1rem;
+  }
+  
+  .accordion-item {
+    border: 1px solid #ecf0f1;
+  }
+</style>
+
+<div class="container-fluid py-4" style="background-color: #f0f2f5; min-height: 100vh;">
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header border-0 rounded-top-4" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+          <div class="py-4">
+            <h1 class="text-white mb-2" style="font-size: 2.5rem;">
+              <i class="fas fa-question-circle"></i> Help & Support
+            </h1>
+            <p class="text-white mb-0" style="opacity: 0.9;">Find answers to common questions and get assistance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- For Students -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-light border-0 rounded-top-3">
+          <h5 class="mb-0" style="color: #2c3e50;">
+            <i class="fas fa-graduation-cap" style="color: #3498db;"></i> For Students
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="studentAccordion">
+            <!-- Q1 -->
+            <div class="accordion-item border-0 mb-3">
+              <h2 class="accordion-header" id="heading1">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                  How do I enroll in a course?
+                </button>
+              </h2>
+              <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#studentAccordion">
+                <div class="accordion-body">
+                  <p>To enroll in a course:</p>
+                  <ol>
+                    <li>Navigate to "Browse Courses" from the home page</li>
+                    <li>Select the course you're interested in</li>
+                    <li>Click the "Enroll" button</li>
+                    <li>Complete the enrollment process</li>
+                    <li>Upload your payment receipt</li>
+                    <li>Wait for instructor approval (usually instant)</li>
+                    <li>Access the course materials once approved</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="accordion-item border-0 mb-3">
+              <h2 class="accordion-header" id="heading2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                  How do I upload a payment receipt?
+                </button>
+              </h2>
+              <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#studentAccordion">
+                <div class="accordion-body">
+                  <p>After enrolling in a course:</p>
+                  <ol>
+                    <li>Go to your enrolled courses</li>
+                    <li>Click on the course you enrolled in</li>
+                    <li>Click "Upload Receipt"</li>
+                    <li>Select the receipt image or PDF from your device</li>
+                    <li>Submit for verification</li>
+                    <li>The instructor will review and approve within hours</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- Q3 -->
+            <div class="accordion-item border-0 mb-3">
+              <h2 class="accordion-header" id="heading3">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                  Can I download course materials?
+                </button>
+              </h2>
+              <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#studentAccordion">
+                <div class="accordion-body">
+                  <p>Download availability depends on the instructor's settings for each resource. Some instructors allow downloads while others require you to view materials within the platform. Check the download icon next to each resource to see if downloads are enabled.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="accordion-item border-0">
+              <h2 class="accordion-header" id="heading4">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                  What do I do if my payment isn't approved?
+                </button>
+              </h2>
+              <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#studentAccordion">
+                <div class="accordion-body">
+                  <p>If your payment isn't approved:</p>
+                  <ol>
+                    <li>Double-check that your receipt is clear and legible</li>
+                    <li>Verify the payment amount matches the course price</li>
+                    <li>Ensure you used the correct payment method</li>
+                    <li>Resubmit a clearer copy if needed</li>
+                    <li>Contact support if you continue having issues</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- For Instructors -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-light border-0 rounded-top-3">
+          <h5 class="mb-0" style="color: #2c3e50;">
+            <i class="fas fa-chalkboard-user" style="color: #27ae60;"></i> For Instructors
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="instructorAccordion">
+            <!-- Q1 -->
+            <div class="accordion-item border-0 mb-3">
+              <h2 class="accordion-header" id="heading5">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5">
+                  How do I create a course?
+                </button>
+              </h2>
+              <div id="collapse5" class="accordion-collapse collapse" data-bs-parent="#instructorAccordion">
+                <div class="accordion-body">
+                  <p>To create a course:</p>
+                  <ol>
+                    <li>Sign in to your instructor account</li>
+                    <li>Go to "My Courses" in your dashboard</li>
+                    <li>Click "Create New Course"</li>
+                    <li>Fill in course details (title, description, price, duration, etc.)</li>
+                    <li>Configure payment methods</li>
+                    <li>Save and publish your course</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="accordion-item border-0 mb-3">
+              <h2 class="accordion-header" id="heading6">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse6">
+                  How do I upload course resources?
+                </button>
+              </h2>
+              <div id="collapse6" class="accordion-collapse collapse" data-bs-parent="#instructorAccordion">
+                <div class="accordion-body">
+                  <p>To upload course materials:</p>
+                  <ol>
+                    <li>Go to your course details page</li>
+                    <li>Click "Upload Resource"</li>
+                    <li>Select a file (PDF, documents, videos, etc.)</li>
+                    <li>Add a title for the resource</li>
+                    <li>Choose if students can download it</li>
+                    <li>Submit and publish</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- Q3 -->
+            <div class="accordion-item border-0 mb-3">
+              <h2 class="accordion-header" id="heading7">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse7">
+                  How do I approve student payments?
+                </button>
+              </h2>
+              <div id="collapse7" class="accordion-collapse collapse" data-bs-parent="#instructorAccordion">
+                <div class="accordion-body">
+                  <p>To review and approve student payments:</p>
+                  <ol>
+                    <li>Go to your dashboard</li>
+                    <li>Click "Review Receipts"</li>
+                    <li>View pending payment submissions</li>
+                    <li>Review the payment amount and receipt image</li>
+                    <li>Click "Approve" to grant student access</li>
+                    <li>Or click "Reject" with a reason if needed</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            </li>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="sidebar-sticky">
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-headset" style="color: #3498db;"></i> Still Need Help?
+          </h5>
+          <p class="text-muted mb-4">Can't find the answer you're looking for? Contact our support team.</p>
+          <a href="{% url 'core:contact_us' %}" class="btn btn-primary btn-block w-100">
+            <i class="fas fa-envelope"></i> Contact Support
+          </a>
+        </div>
+      </div>
+
+      <!-- Business Hours Card -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-clock" style="color: #f39c12;"></i> Business Hours
+          </h5>
+          <ul class="list-unstyled small">
+            <li class="mb-2">
+              <strong>Monday - Friday:</strong><br>
+              9:00 AM - 6:00 PM EAT
+            </li>
+            <li class="mb-2">
+              <strong>Saturday - Sunday:</strong><br>
+              Closed
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Contact Info Card -->
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-phone" style="color: #27ae60;"></i> Contact Info
+          </h5>
+          <p class="small mb-2">
+            <strong>Email:</strong><br>
+            <a href="mailto:radokistatisticssolutions@gmail.com" style="color: #3498db; text-decoration: none;">
+              radokistatisticssolutions@gmail.com
+            </a>
+          </p>
+          <p class="small mb-0">
+            <strong>Phone:</strong><br>
+            <a href="tel:+255753093786" style="color: #3498db; text-decoration: none;">
+              +255753093786
+            </a>
+          </p>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

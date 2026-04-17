@@ -1,0 +1,283 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+  @media (max-width: 768px) {
+    .card-header.p-4,
+    .card-body.p-4,
+    .card-body.p-5 {
+      padding: 0.5rem !important;
+    }
+    
+    .mb-5, .mb-4, .mb-3, .mb-2 {
+      margin-bottom: 0.3rem !important;
+    }
+    
+    .p-4, .p-5 {
+      padding: 0.5rem !important;
+    }
+    
+    .p-3 {
+      padding: 0.3rem !important;
+    }
+  }
+</style>
+
+<div class="container-fluid py-5" style="background-color: #f0f2f5; min-height: 100vh; display: flex; align-items: center;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-6 col-md-8">
+        <!-- Upload Receipt Card -->
+        <div class="card border-0 shadow-lg rounded-4">
+          <!-- Card Header -->
+          <div class="card-header border-0 rounded-top-4 p-4" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <h2 class="text-white text-center mb-0">
+              <i class="fas fa-upload"></i> Upload Payment Receipt
+            </h2>
+            <p class="text-center text-white mt-2 mb-0" style="opacity: 0.9;">Submit proof of payment for {{ enrollment.course.title }}</p>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" novalidate>
+              {% csrf_token %}
+
+              <!-- Error Messages -->
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border: none; border-radius: 10px;">
+                  <strong><i class="fas fa-exclamation-circle"></i> Upload Failed!</strong>
+                  {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+              {% endif %}
+
+              <!-- Course Information -->
+              <div class="mb-4 p-3 rounded-3" style="background-color: #f8f9fa; border: 2px solid #ecf0f1;">
+                <h5 class="mb-2" style="color: #2c3e50;">
+                  <i class="fas fa-book" style="color: #3498db;"></i> Course Details
+                </h5>
+                <p class="mb-1"><strong>Course:</strong> {{ enrollment.course.title }}</p>
+                <p class="mb-1"><strong>Instructor:</strong> {{ enrollment.course.instructor.first_name }} {{ enrollment.course.instructor.last_name }}</p>
+                <p class="mb-0"><strong>Status:</strong> 
+                  {% if enrollment.approved %}
+                    <span class="badge bg-success">Approved</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">Pending Approval</span>
+                  {% endif %}
+                </p>
+              </div>
+
+              <!-- Payment Method Selection Section -->
+              {% if enrollment.course.payment_methods.all %}
+                <div class="mb-4">
+                  <h5 class="mb-3" style="color: #2c3e50;">
+                    <i class="fas fa-credit-card" style="color: #3498db;"></i> Step 1: Select Payment Method
+                  </h5>
+                  
+                  <!-- Payment Method Dropdown -->
+                  <div class="mb-4">
+                    <label for="paymentMethodSelect" class="form-label fw-bold" style="color: #2c3e50;">
+                      <i class="fas fa-hand-pointer" style="color: #3498db;"></i> Choose a payment method
+                    </label>
+                    <select id="paymentMethodSelect" class="form-select form-select-lg" style="border-color: #3498db; border-radius: 10px;">
+                      <option value="">-- Select a payment method --</option>
+                      {% for payment_method in enrollment.course.payment_methods.all %}
+                        <option value="payment-{{ payment_method.id }}" data-method-id="{{ payment_method.id }}">
+                          {{ payment_method.get_method_type_display }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                  <!-- Payment Method Details Container -->
+                  <div id="paymentDetailsContainer">
+                    {% for payment_method in enrollment.course.payment_methods.all %}
+                      <div id="payment-{{ payment_method.id }}" class="payment-method-details" style="display: none;">
+                        <div class="card border-2 h-100 mb-4" style="border-color: #3498db; background-color: #ebf5fb; border-radius: 15px;">
+                          <div class="card-header" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-color: #3498db; border-radius: 15px 15px 0 0;">
+                            <h5 class="text-white mb-0">
+                              <i class="fas fa-mobile-alt"></i> {{ payment_method.get_method_type_display }}
+                            </h5>
+                          </div>
+                          <div class="card-body">
+                            <!-- Payment Details Grid -->
+                            <div class="row g-3 mb-3">
+                              <div class="col-12">
+                                <div class="p-3 rounded-3" style="background-color: #ffffff; border: 2px solid #3498db;">
+                                  <small class="text-muted d-block mb-1">
+                                    <i class="fas fa-id-card" style="color: #3498db;"></i> Merchant ID
+                                  </small>
+                                  <h6 class="mb-0" style="color: #2980b9; font-family: 'Courier New', monospace; font-weight: 600;">
+                                    {{ payment_method.merchant_id }}
+                                  </h6>
+                                </div>
+                              </div>
+                              <div class="col-12">
+                                <div class="p-3 rounded-3" style="background-color: #ffffff; border: 2px solid #3498db;">
+                                  <small class="text-muted d-block mb-1">
+                                    <i class="fas fa-store" style="color: #3498db;"></i> Merchant Name
+                                  </small>
+                                  <h6 class="mb-0" style="color: #2980b9;">
+                                    {{ payment_method.merchant_name }}
+                                  </h6>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Payment Instructions -->
+                            <div class="alert alert-info rounded-3 mb-3" style="border: none; background-color: #d6eaf8; color: #1a5f7a;">
+                              <small class="d-block">
+                                <i class="fas fa-lightbulb"></i> <strong>Payment Instructions:</strong><br>
+                                Use the Merchant ID above to make your payment. After payment is complete, upload your receipt below.
+                              </small>
+                            </div>
+
+                            <!-- Copy Merchant ID Button -->
+                            <button type="button" class="btn btn-primary btn-sm w-100" onclick="copyToClipboard('{{ payment_method.merchant_id }}', this)" style="background-color: #3498db; border-color: #3498db;">
+                              <i class="fas fa-copy"></i> Copy Merchant ID
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  <!-- Empty State Message -->
+                  <div id="paymentEmptyState" class="alert alert-secondary rounded-3 text-center mb-4" style="border: none; background-color: #e8eef2; color: #34495e;">
+                    <i class="fas fa-arrow-up"></i> Select a payment method above to view details
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- Receipt Upload Section (Hidden until payment method is selected) -->
+              <div id="uploadSection" style="display: none;">
+                <h5 class="mb-3" style="color: #2c3e50;">
+                  <i class="fas fa-file-upload" style="color: #3498db;"></i> Step 2: Upload Receipt
+                </h5>
+
+                <div class="mb-4">
+                  <label for="{{ form.receipt.id_for_label }}" class="form-label fw-bold" style="color: #2c3e50;">
+                    <i class="fas fa-file-upload"></i> Payment Receipt
+                  </label>
+                  <div class="input-group">
+                    <input 
+                      type="file" 
+                      name="receipt" 
+                      accept=".pdf,.jpg,.jpeg,.png" 
+                      required 
+                      class="form-control form-control-lg" 
+                      id="{{ form.receipt.id_for_label }}"
+                      style="border-radius: 10px 0 0 10px; border: 1px solid #ddd;"
+                    >
+                    <span class="input-group-text" style="border-radius: 0 10px 10px 0; background-color: #f8f9fa;">
+                      <i class="fas fa-file-pdf text-danger"></i>
+                    </span>
+                  </div>
+                  {% if form.receipt.errors %}
+                    <small class="text-danger mt-1">{{ form.receipt.errors }}</small>
+                  {% endif %}
+                  <small class="form-text text-muted mt-1">
+                    <i class="fas fa-info-circle"></i> Accepted formats: PDF, JPG, PNG. Max size: 5MB
+                  </small>
+                </div>
+
+                <!-- Upload Button -->
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold mb-3" style="border-radius: 10px;">
+                  <i class="fas fa-upload"></i> Upload Receipt
+                </button>
+              </div>
+
+              <!-- Navigation Links -->
+              <div class="text-center">
+                <p class="text-muted mb-2">
+                  Need help? 
+                  <a href="{% url 'dashboard:index' %}" class="fw-bold" style="color: #3498db; text-decoration: none;">
+                    Return to Dashboard
+                  </a>
+                </p>
+              </div>
+            </form>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer bg-light border-0 rounded-bottom-4 p-4 text-center">
+            <small class="text-muted">
+              <i class="fas fa-shield-alt"></i> Your payment information is kept secure and confidential
+            </small>
+          </div>
+        </div>
+
+        <!-- Instructions Box -->
+        <div class="alert alert-info rounded-3 mt-4 mb-0" style="border: none; background-color: #d6eaf8; color: #1a5f7a;">
+          <i class="fas fa-lightbulb"></i> <strong>Upload Tips:</strong> 
+          Make sure your receipt is clear and shows the payment details clearly. Supported formats include PDF and image files.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Payment Method Selection Handler
+document.addEventListener('DOMContentLoaded', function() {
+  const selectDropdown = document.getElementById('paymentMethodSelect');
+  const detailsContainer = document.getElementById('paymentDetailsContainer');
+  const emptyState = document.getElementById('paymentEmptyState');
+  const uploadSection = document.getElementById('uploadSection');
+
+  if (selectDropdown) {
+    // Handle dropdown change
+    selectDropdown.addEventListener('change', function() {
+      const selectedValue = this.value;
+      
+      // Hide all payment method details
+      const allDetails = document.querySelectorAll('.payment-method-details');
+      allDetails.forEach(detail => {
+        detail.style.display = 'none';
+      });
+
+      // Show selected payment method details and upload section
+      if (selectedValue) {
+        const selectedDetails = document.getElementById(selectedValue);
+        if (selectedDetails) {
+          selectedDetails.style.display = 'block';
+          emptyState.style.display = 'none';
+          uploadSection.style.display = 'block';
+          
+          // Add smooth scroll to details
+          selectedDetails.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      } else {
+        // Hide upload section and show empty state if no selection
+        uploadSection.style.display = 'none';
+        emptyState.style.display = 'block';
+      }
+    });
+  }
+});
+
+// Copy to Clipboard Function
+function copyToClipboard(text, button) {
+  navigator.clipboard.writeText(text).then(() => {
+    // Show feedback
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    button.disabled = true;
+    
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    alert('Failed to copy to clipboard. Please try again.');
+  });
+}
+</script>
+
+{% endblock %}
+

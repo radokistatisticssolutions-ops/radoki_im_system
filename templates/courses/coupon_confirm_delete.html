@@ -1,0 +1,155 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Delete Coupon - Radoki Training{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5" style="max-width: 600px;">
+    <!-- Page Header -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <a href="{% url 'courses:coupon_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h2 class="mb-0">
+                <i class="fas fa-trash me-2 text-danger"></i>
+                Delete Coupon
+            </h2>
+        </div>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="card border-0 shadow-lg">
+        <!-- Red Top Border -->
+        <div style="background: linear-gradient(90deg, #DC2626 0%, #EF4444 100%); height: 4px;"></div>
+
+        <div class="card-body p-4">
+            <!-- Warning Icon -->
+            <div class="text-center mb-4">
+                <div class="bg-danger-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <i class="fas fa-exclamation-triangle text-danger" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+
+            <!-- Title and Description -->
+            <h4 class="text-center mb-3">Are you sure?</h4>
+            <p class="text-center text-muted mb-4">
+                You are about to permanently delete this coupon code. This action cannot be undone.
+            </p>
+
+            <!-- Coupon Details -->
+            <div class="alert alert-light border-1 mb-4">
+                <div class="row g-3">
+                    <!-- Code -->
+                    <div class="col-6">
+                        <p class="mb-1">
+                            <small class="text-muted">Coupon Code</small>
+                        </p>
+                        <p class="mb-0">
+                            <strong class="text-primary" style="font-size: 1.1rem;">{{ coupon.code }}</strong>
+                        </p>
+                    </div>
+
+                    <!-- Discount -->
+                    <div class="col-6">
+                        <p class="mb-1">
+                            <small class="text-muted">Discount</small>
+                        </p>
+                        <p class="mb-0">
+                            {% if coupon.discount_type == 'PERCENTAGE' %}
+                                <strong class="text-success">{{ coupon.discount_value }}% Off</strong>
+                            {% else %}
+                                <strong class="text-success">TZS {{ coupon.discount_value|floatformat:2 }} Off</strong>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Current Uses -->
+                    <div class="col-6">
+                        <p class="mb-1">
+                            <small class="text-muted">Current Uses</small>
+                        </p>
+                        <p class="mb-0">
+                            <strong>{{ coupon.uses_count }}</strong>
+                            {% if coupon.max_uses %}
+                                <span class="text-muted">/ {{ coupon.max_uses }}</span>
+                            {% else %}
+                                <span class="text-muted">/ ∞</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-6">
+                        <p class="mb-1">
+                            <small class="text-muted">Status</small>
+                        </p>
+                        <p class="mb-0">
+                            {% if coupon.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Message -->
+            <div class="alert alert-warning d-flex align-items-start" role="alert">
+                <i class="fas fa-info-circle me-3 mt-1" style="flex-shrink: 0;"></i>
+                <div>
+                    <strong>Important Note:</strong> This coupon has been used {{ coupon.uses_count }} time{{ coupon.uses_count|pluralize }}. 
+                    Deleting it will not affect existing enrollments, but the coupon code will no longer be available for new student enrollments.
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a href="{% url 'courses:coupon_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+                <form method="post" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete Coupon
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Link -->
+    <div class="text-center mt-4">
+        <a href="{% url 'courses:coupon_list' %}" class="text-decoration-none text-muted">
+            <i class="fas fa-arrow-left me-2"></i>Back to Coupon List
+        </a>
+    </div>
+</div>
+
+<style>
+    .bg-danger-light {
+        background-color: #FEE2E2 !important;
+    }
+
+    .alert-light {
+        background-color: #F9FAFB !important;
+        border-color: #E5E7EB !important;
+    }
+
+    .btn {
+        font-weight: 500;
+        padding: 0.6rem 1.5rem;
+    }
+
+    .btn-danger {
+        background-color: #DC2626;
+        border-color: #DC2626;
+    }
+
+    .btn-danger:hover {
+        background-color: #B91C1C;
+        border-color: #B91C1C;
+    }
+</style>
+{% endblock %}

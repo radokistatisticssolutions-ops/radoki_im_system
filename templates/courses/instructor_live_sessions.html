@@ -1,0 +1,320 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* Banner */
+  .ls-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 14px; padding: 24px 28px; margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px;
+  }
+  .ls-banner h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin: 0; }
+  .ls-banner p  { color: rgba(255,255,255,.78); margin: 3px 0 0; font-size: .85rem; }
+
+  /* Section divider title */
+  .ls-section-title {
+    font-size: .78rem; font-weight: 700; color: #7f8c8d;
+    text-transform: uppercase; letter-spacing: .08em;
+    margin: 0 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ls-section-title::after {
+    content: ''; flex: 1; height: 1px; background: #e8edf2;
+  }
+
+  /* Card */
+  .ls-card {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    overflow: hidden; margin-bottom: 28px;
+  }
+
+  /* Table */
+  .ls-table { width: 100%; border-collapse: collapse; margin: 0; }
+
+  .ls-table thead th {
+    background: #f7fafc;
+    border-bottom: 2px solid #e8edf2;
+    padding: 10px 14px;
+    font-size: .68rem; font-weight: 700; color: #7f8c8d;
+    text-transform: uppercase; letter-spacing: .07em;
+    white-space: nowrap;
+  }
+  .ls-table tbody tr {
+    border-bottom: 1px solid #f0f4f8;
+    transition: background .12s;
+  }
+  .ls-table tbody tr:last-child { border-bottom: none; }
+  .ls-table tbody tr:hover { background: #f8fbff; }
+  .ls-table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  /* Only session title cell can wrap */
+  .ls-table td.cell-title { white-space: normal; min-width: 160px; }
+
+  /* Session title + course */
+  .s-title  { font-weight: 700; color: #1a5276; font-size: .9rem; margin-bottom: 2px; }
+  .s-course { font-size: .76rem; color: #7f8c8d; }
+
+  /* Date / Time cells */
+  .cell-date { font-weight: 700; color: #2c3e50; font-size: .86rem; }
+  .cell-time { font-weight: 600; color: #2980b9; font-size: .86rem; }
+
+  /* Status badges */
+  .ls-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: .7rem; font-weight: 700; white-space: nowrap;
+  }
+  .ls-badge.upcoming { background: #eaf4fb; color: #1a5276; }
+  .ls-badge.past     { background: #f0f4f8; color: #7f8c8d; }
+
+  /* Action + link buttons */
+  .ls-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 11px; border-radius: 7px;
+    font-size: .75rem; font-weight: 600;
+    text-decoration: none; border: none; white-space: nowrap;
+    transition: opacity .15s;
+  }
+  .ls-btn:hover { opacity: .82; }
+  .ls-btn.edit { background: #fef9e7; color: #9a7d0a; }
+  .ls-btn.del  { background: #fdf2f2; color: #c0392b; }
+  .ls-btn.lnk  { background: #eaf4fb; color: #1a5276; }
+
+  /* Add session bar */
+  .ls-add-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 14px 18px;
+    background: #f7fafc; border-top: 1px solid #edf2f7;
+  }
+  .ls-add-bar select {
+    flex: 1; min-width: 180px; max-width: 320px;
+    padding: 8px 12px; border: 1px solid #dce6f0;
+    border-radius: 9px; font-size: .85rem;
+    background: #fff; color: #2c3e50;
+  }
+  .ls-add-bar select:focus { outline: none; border-color: #2980b9; }
+
+  /* Empty state */
+  .ls-empty { text-align: center; padding: 48px 24px; color: #b2bec3; }
+  .ls-empty i { font-size: 2.5rem; display: block; margin-bottom: 12px; }
+
+  /* Responsive — hide lower-priority columns on small screens */
+  @media (max-width: 860px) {
+    .col-status, .col-meeting { display: none; }
+  }
+  @media (max-width: 600px) {
+    .ls-banner { flex-direction: column; align-items: flex-start; }
+    .ls-add-bar { flex-direction: column; align-items: stretch; }
+    .ls-add-bar select { max-width: 100%; }
+    /* icon-only action buttons */
+    .ls-btn span { display: none; }
+    .ls-btn { padding: 6px 8px; }
+  }
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+<div style="max-width:1100px; margin:0 auto; padding:0 16px 80px;">
+
+  <!-- Banner -->
+  <div class="ls-banner">
+    <div>
+      <h1><i class="fas fa-video me-2"></i>Upcoming Live Sessions</h1>
+      <p>Schedule and manage live classes for your courses</p>
+    </div>
+    <span style="background:rgba(255,255,255,.18); color:#fff; border-radius:10px;
+                 padding:6px 16px; font-size:.85rem; font-weight:700;">
+      {{ upcoming_count }} upcoming
+    </span>
+  </div>
+
+  <!-- ── Upcoming ── -->
+  <div class="ls-section-title">
+    <i class="fas fa-calendar-check" style="color:#2980b9;"></i> Upcoming
+  </div>
+
+  <div class="ls-card">
+    {% if upcoming %}
+      <div class="table-responsive">
+        <table class="ls-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">#</th>
+              <th>Session &amp; Course</th>
+              <th class="col-status" style="width:100px;">Status</th>
+              <th style="width:130px;">Date</th>
+              <th style="width:90px;">Time</th>
+              <th class="col-meeting" style="width:90px;">Meeting</th>
+              <th style="width:80px; text-align:center;">Edit</th>
+              <th style="width:80px; text-align:center;">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for session in upcoming %}
+            <tr>
+              <td style="color:#b2bec3; font-size:.8rem;">{{ forloop.counter }}</td>
+              <td class="cell-title">
+                <div class="s-title">{{ session.title }}</div>
+                <div class="s-course"><i class="fas fa-book me-1"></i>{{ session.course.title }}</div>
+              </td>
+              <td class="col-status">
+                <span class="ls-badge upcoming">
+                  <i class="fas fa-circle" style="font-size:.4rem;"></i> Upcoming
+                </span>
+              </td>
+              <td class="cell-date">
+                <i class="fas fa-calendar-alt me-1" style="color:#2980b9; font-size:.8rem;"></i>
+                {{ session.scheduled_at|date:"M d, Y" }}
+              </td>
+              <td class="cell-time">
+                <i class="fas fa-clock me-1" style="font-size:.8rem;"></i>
+                {{ session.scheduled_at|time:"H:i" }}
+              </td>
+              <td class="col-meeting">
+                {% if session.meeting_link %}
+                  <a href="{{ session.meeting_link }}" target="_blank" class="ls-btn lnk">
+                    <i class="fas fa-external-link-alt"></i><span> Open</span>
+                  </a>
+                {% else %}
+                  <span style="font-size:.78rem; color:#b2bec3;">—</span>
+                {% endif %}
+              </td>
+              <td style="text-align:center;">
+                <a href="{% url 'courses:edit_session' session.id %}" class="ls-btn edit">
+                  <i class="fas fa-edit"></i><span> Edit</span>
+                </a>
+              </td>
+              <td style="text-align:center;">
+                <a href="{% url 'courses:delete_session' session.id %}" class="ls-btn del">
+                  <i class="fas fa-trash"></i><span> Delete</span>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="ls-empty">
+        <i class="fas fa-calendar-plus"></i>
+        <p style="color:#636e72; font-weight:600;">No upcoming sessions.</p>
+        <p style="font-size:.85rem; color:#95a5a6;">Schedule a session using the selector below.</p>
+      </div>
+    {% endif %}
+
+    <!-- Add session bar -->
+    {% if courses %}
+    <div class="ls-add-bar">
+      <i class="fas fa-plus-circle" style="color:#2980b9; font-size:1rem; flex-shrink:0;"></i>
+      <select id="course-select" required>
+        <option value="" disabled selected>Select a course to schedule a session…</option>
+        {% for course in courses %}
+          <option value="{{ course.id }}">{{ course.title }}</option>
+        {% endfor %}
+      </select>
+      <a href="#" id="add-session-btn"
+         class="btn btn-primary btn-sm fw-bold"
+         style="border-radius:9px; padding:8px 18px; font-size:.85rem;
+                pointer-events:none; opacity:.5; white-space:nowrap;">
+        <i class="fas fa-plus me-1"></i> Schedule Session
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Past sessions ── -->
+  {% if past %}
+  <div class="ls-section-title">
+    <i class="fas fa-history" style="color:#95a5a6;"></i> Recent Past Sessions
+  </div>
+
+  <div class="ls-card">
+    <div class="table-responsive">
+      <table class="ls-table">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Session &amp; Course</th>
+            <th class="col-status" style="width:100px;">Status</th>
+            <th style="width:130px;">Date</th>
+            <th style="width:90px;">Time</th>
+            <th class="col-meeting" style="width:90px;">Meeting</th>
+            <th style="width:80px; text-align:center;">Edit</th>
+            <th style="width:80px; text-align:center;">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in past %}
+          <tr style="opacity:.72;">
+            <td style="color:#b2bec3; font-size:.8rem;">{{ forloop.counter }}</td>
+            <td class="cell-title">
+              <div class="s-title" style="color:#636e72;">{{ session.title }}</div>
+              <div class="s-course"><i class="fas fa-book me-1"></i>{{ session.course.title }}</div>
+            </td>
+            <td class="col-status">
+              <span class="ls-badge past">Past</span>
+            </td>
+            <td class="cell-date" style="color:#636e72;">
+              {{ session.scheduled_at|date:"M d, Y" }}
+            </td>
+            <td class="cell-time" style="color:#7f8c8d;">
+              {{ session.scheduled_at|time:"H:i" }}
+            </td>
+            <td class="col-meeting">
+              {% if session.meeting_link %}
+                <a href="{{ session.meeting_link }}" target="_blank"
+                   class="ls-btn lnk" style="opacity:.7;">
+                  <i class="fas fa-external-link-alt"></i><span> Open</span>
+                </a>
+              {% else %}
+                <span style="font-size:.78rem; color:#b2bec3;">—</span>
+              {% endif %}
+            </td>
+            <td style="text-align:center;">
+              <a href="{% url 'courses:edit_session' session.id %}" class="ls-btn edit">
+                <i class="fas fa-edit"></i><span> Edit</span>
+              </a>
+            </td>
+            <td style="text-align:center;">
+              <a href="{% url 'courses:delete_session' session.id %}" class="ls-btn del">
+                <i class="fas fa-trash"></i><span> Delete</span>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+
+<script>
+const sel = document.getElementById('course-select');
+const btn = document.getElementById('add-session-btn');
+if (sel && btn) {
+  sel.addEventListener('change', function () {
+    const id = this.value;
+    if (id) {
+      btn.href = '/courses/' + id + '/sessions/add/';
+      btn.style.pointerEvents = '';
+      btn.style.opacity = '1';
+    } else {
+      btn.href = '#';
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '.5';
+    }
+  });
+  btn.addEventListener('click', function (e) {
+    if (!sel.value) e.preventDefault();
+  });
+}
+</script>
+{% endblock %}

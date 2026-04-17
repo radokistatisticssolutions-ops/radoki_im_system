@@ -1,0 +1,197 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+  @media (max-width: 768px) {
+    .card-header, .card-body {
+      padding: 1rem !important;
+    }
+    
+    .mb-4, .mb-3, .mb-2 {
+      margin-bottom: 0.6rem !important;
+    }
+    
+    .col-lg-9, .col-lg-3 {
+      width: 100% !important;
+    }
+  }
+  
+  /* Ensure sidebar stays on the right on desktop */
+  @media (min-width: 992px) {
+    .col-lg-9 {
+      max-width: 75% !important;
+    }
+    
+    .col-lg-3 {
+      max-width: 25% !important;
+    }
+    
+    /* Make sidebar sticky on desktop */
+    .sidebar-sticky {
+      position: sticky;
+      top: 20px;
+    }
+  }
+  
+  /* Typography improvements */
+  h6 {
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  
+  ul li {
+    margin-bottom: 0.5rem;
+  }
+</style>
+
+<div class="container-fluid py-4" style="background-color: #f0f2f5; min-height: 100vh;">
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header border-0 rounded-top-4" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+          <div class="py-4">
+            <h1 class="text-white mb-2" style="font-size: 2.5rem;">
+              <i class="fas fa-file-contract"></i> Terms & Privacy
+            </h1>
+            <p class="text-white mb-0" style="opacity: 0.9;">Our terms of service and privacy policy</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-9">
+      <!-- Terms of Service -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-light border-0 rounded-top-3">
+          <h5 class="mb-0" style="color: #2c3e50;">
+            <i class="fas fa-scroll" style="color: #3498db;"></i> Terms of Service
+          </h5>
+        </div>
+        <div class="card-body">
+          <h6 style="color: #2c3e50;">1. Acceptance of Terms</h6>
+          <p>By accessing and using RADOKI IMS, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.</p>
+
+          <h6 style="color: #2c3e50;">2. Use License</h6>
+          <p>Permission is granted to temporarily download one copy of the materials (information or software) on RADOKI IMS for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
+          <ul>
+            <li>Modifying or copying the materials</li>
+            <li>Using the materials for any commercial purpose or for any public display</li>
+            <li>Attempting to decompile or reverse engineer any software contained on RADOKI IMS</li>
+            <li>Transferring the materials to another person or "mirroring" the materials on any other server</li>
+            <li>Removing any copyright or other proprietary notations from the materials</li>
+          </ul>
+
+          <h6 style="color: #2c3e50;">3. Disclaimer</h6>
+          <p>The materials on RADOKI IMS are provided on an 'as is' basis. RADOKI IMS makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.</p>
+
+          <h6 style="color: #2c3e50;">4. Limitations</h6>
+          <p>In no event shall RADOKI IMS or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on RADOKI IMS, even if RADOKI IMS or an authorized representative has been notified orally or in writing of the possibility of such damage.</p>
+
+          <h6 style="color: #2c3e50;">5. Accuracy of Materials</h6>
+          <p>The materials appearing on RADOKI IMS could include technical, typographical, or photographic errors. RADOKI IMS does not warrant that any of the materials on its website are accurate, complete, or current. RADOKI IMS may make changes to the materials contained on its website at any time without notice.</p>
+
+          <h6 style="color: #2c3e50;">6. Links</h6>
+          <p>RADOKI IMS has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by RADOKI IMS of the site. Use of any such linked website is at the user's own risk.</p>
+
+          <h6 style="color: #2c3e50;">7. Modifications</h6>
+          <p>RADOKI IMS may revise these terms of service for its website at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of service.</p>
+
+          <hr style="margin: 2rem 0;">
+
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-shield-alt" style="color: #27ae60;"></i> Privacy Policy
+          </h5>
+
+          <h6 style="color: #2c3e50;">1. Information We Collect</h6>
+          <p>We collect information you provide directly, such as when you create an account, enroll in a course, or contact us. This includes:</p>
+          <ul>
+            <li>Name, email address, phone number</li>
+            <li>Account credentials and profile information</li>
+            <li>Payment and receipt information</li>
+            <li>Course enrollment and progress data</li>
+            <li>Communication preferences</li>
+          </ul>
+
+          <h6 style="color: #2c3e50;">2. How We Use Your Information</h6>
+          <p>We use the information we collect to:</p>
+          <ul>
+            <li>Provide, maintain, and improve our services</li>
+            <li>Process payments and verify course enrollments</li>
+            <li>Send you technical notices and support messages</li>
+            <li>Respond to your comments and questions</li>
+            <li>Send marketing communications (with your consent)</li>
+            <li>Comply with legal obligations</li>
+          </ul>
+
+          <h6 style="color: #2c3e50;">3. Data Protection</h6>
+          <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, modification, disclosure, or destruction. However, no internet transmission is completely secure.</p>
+
+          <h6 style="color: #2c3e50;">4. Data Sharing</h6>
+          <p>We do not sell, trade, or rent your personal information. We may share information with:</p>
+          <ul>
+            <li>Course instructors (for enrollment and progress data)</li>
+            <li>Service providers who assist in our operations</li>
+            <li>Legal authorities when required by law</li>
+          </ul>
+
+          <h6 style="color: #2c3e50;">5. Cookies</h6>
+          <p>RADOKI IMS uses cookies to enhance your experience. You can control cookies through your browser settings. Disabling cookies may impact functionality.</p>
+
+          <h6 style="color: #2c3e50;">6. Your Rights</h6>
+          <p>You have the right to:</p>
+          <ul>
+            <li>Access your personal information</li>
+            <li>Correct inaccurate information</li>
+            <li>Request deletion of your account</li>
+            <li>Opt-out of marketing communications</li>
+          </ul>
+
+          <h6 style="color: #2c3e50;">7. Contact Us</h6>
+          <p>If you have questions about our Terms & Privacy policy, please contact us at: <a href="email:radokistatisticssolutions@gmail.com">radokistatisticssolutions@gmail.com</a></p>
+
+          <p class="text-muted small mt-4">
+            Last updated: March 2026
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="sidebar-sticky">
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <h6 class="mb-3" style="color: #2c3e50;">Quick Links</h6>
+          <ul class="list-unstyled small">
+            <li class="mb-2">
+              <a href="#" onclick="document.querySelector('h5').scrollIntoView()" style="color: #3498db; text-decoration: none;">
+                Terms of Service
+              </a>
+            </li>
+            <li>
+              <a href="#" onclick="document.querySelector('h5:nth-of-type(2)').scrollIntoView()" style="color: #3498db; text-decoration: none;">
+                Privacy Policy
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <h6 class="mb-3" style="color: #2c3e50;">Questions?</h6>
+          <p class="small text-muted mb-3">If you have questions about our terms or privacy policy, we're happy to help.</p>
+          <a href="{% url 'core:contact_us' %}" class="btn btn-sm btn-primary w-100">Contact Us</a>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

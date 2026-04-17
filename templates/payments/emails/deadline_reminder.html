@@ -1,0 +1,266 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 8px 20px rgba(245,158,11,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%);
+            color: white;
+            padding: 50px 30px 45px;
+            border-radius: 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -40px;
+            width: 220px; height: 220px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .content {
+            background: #ffffff;
+            padding: 45px 40px;
+        }
+        .content > p {
+            font-size: 15px;
+            color: #4a4a6a;
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+        .content h3 {
+            color: #1a1a2e;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 22px 0 10px;
+        }
+        .content ol {
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+        .content ol li {
+            color: #4a4a6a;
+            font-size: 14px;
+            margin: 8px 0;
+            line-height: 1.7;
+        }
+        .alert {
+            background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(251,191,36,0.07) 100%);
+            border: none;
+            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 22px 0;
+            color: #92400e;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(252,165,165,0.06) 100%);
+            border-left: 4px solid #ef4444;
+            color: #7f1d1d;
+        }
+        .deadline-info {
+            background: linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(251,191,36,0.04) 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 20px 22px;
+            margin: 22px 0;
+            border-radius: 12px;
+        }
+        .deadline-info h3 {
+            margin-top: 0;
+            color: #d97706;
+            font-size: 17px;
+            font-weight: 700;
+        }
+        .deadline-info p { color: #4a4a6a; font-size: 14px; margin: 8px 0; }
+        .course-details {
+            background: linear-gradient(135deg, #f7f5ff 0%, #fffbeb 100%);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 12px;
+            padding: 20px 22px;
+            margin: 22px 0;
+        }
+        .course-details h4 {
+            color: #1a1a2e;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .course-details p { margin: 10px 0; color: #4a4a6a; font-size: 14px; }
+        .course-details a { color: #f59e0b; text-decoration: none; font-weight: 600; }
+        .btn {
+            display: inline-block;
+            padding: 17px 50px;
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%);
+            color: white !important;
+            text-decoration: none;
+            border-radius: 50px;
+            margin: 20px 0;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 28px rgba(245,158,11,0.5), 0 2px 8px rgba(251,191,36,0.3);
+        }
+        .days-remaining {
+            font-size: 40px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            display: block;
+            margin: 6px 0;
+        }
+        .footer {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 35px 25px;
+            text-align: center;
+            font-size: 13px;
+            color: #9999bb;
+            width: 100%;
+        }
+        .footer p { margin: 8px 0; line-height: 1.6; }
+        .footer-brand {
+            font-weight: 700;
+            font-size: 15px;
+            color: #e0e0f5;
+            margin-bottom: 4px;
+        }
+        .footer-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(153,153,187,0.35) 50%, transparent 100%);
+            margin: 16px auto;
+            width: 80%;
+        }
+        .footer-note {
+            font-size: 11px;
+            color: #6666aa;
+            margin-top: 10px;
+        }
+        .support-link { color: #f59e0b; text-decoration: none; font-weight: 600; }
+        @media only screen and (max-width: 600px) {
+            .container { margin: 10px !important; border-radius: 14px !important; }
+            .header { padding: 35px 20px 30px !important; }
+            .header h1 { font-size: 20px !important; }
+            .content { padding: 28px 20px !important; }
+            .btn { padding: 14px 28px !important; font-size: 14px !important; }
+            .footer { padding: 25px 18px !important; }
+            .days-remaining { font-size: 30px !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏰ Payment Deadline Reminder</h1>
+        </div>
+
+        <div class="content">
+            <p>Hi <strong>{{ student_name }}</strong>,</p>
+
+            <p>This is a friendly reminder that the payment deadline for your course is approaching.</p>
+
+            <div class="alert alert-danger">
+                <strong>⚠️ Payment due in {{ days_remaining }} days!</strong>
+            </div>
+
+            <div class="deadline-info">
+                <h3>Deadline Information</h3>
+                <p><strong>Course:</strong> {{ course_title }}</p>
+                <p><strong>Amount Due:</strong> TZS {{ course_price|floatformat:0 }}</p>
+                <p><strong>Deadline:</strong> {{ deadline|date:"F d, Y" }}</p>
+                <p><strong>Days Remaining:</strong> <span class="days-remaining">{{ days_remaining }}</span></p>
+            </div>
+
+            <h3>What You Need to Do:</h3>
+            <ol>
+                <li>Log in to your account at Radoki IM System</li>
+                <li>Go to your dashboard</li>
+                <li>Find "{{ course_title }}" in your enrolled courses</li>
+                <li>Click "Upload Receipt" and submit your payment proof</li>
+            </ol>
+
+            <div class="course-details">
+                <h4>Course Details:</h4>
+                <p><strong>Title:</strong> {{ course_title }}</p>
+                <p><strong>Instructor:</strong> {{ instructor_name }}</p>
+                <p><strong>Instructor Email:</strong> <a href="mailto:{{ instructor_email }}">{{ instructor_email }}</a></p>
+            </div>
+
+            <h3>Payment Methods Available:</h3>
+            <p>
+                You can submit your payment using any of the following methods:
+                M-Pesa, MIXX by YAS, Airtel Money, AzaM pesa, or Halotel.
+                Check your course page for specific merchant details.
+            </p>
+
+            <p style="text-align: center;">
+                <a href="http://127.0.0.1:8000/dashboard/" class="btn">Go to Dashboard</a>
+            </p>
+
+            <p>
+                If you've already submitted your payment, please disregard this reminder. 
+                Your instructor will review and approve your receipt shortly.
+            </p>
+
+            <p>
+                If you have any questions or need assistance, please contact your instructor:
+                <a href="mailto:{{ instructor_email }}">{{ instructor_email }}</a>
+            </p>
+
+            <p>
+                Best regards,<br>
+                <strong>Radoki IM System</strong>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p class="footer-brand">Radoki IM System — Act before it's too late!</p>
+            <div class="footer-divider"></div>
+            <p>This reminder was sent because your payment deadline is approaching.</p>
+            <p>Need help? <a href="mailto:{{ instructor_email }}" class="support-link">Contact your instructor</a></p>
+            <div class="footer-divider"></div>
+            <p>&copy; 2026 Radoki IM System. All rights reserved.</p>
+            <p class="footer-note">This is an automated email. Please do not reply to this message.</p>
+        </div>
+    </div>
+</body>
+</html>
+{% endautoescape %}

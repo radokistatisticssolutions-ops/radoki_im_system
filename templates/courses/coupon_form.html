@@ -1,0 +1,407 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit Coupon{% else %}Create Coupon{% endif %} - Radoki Training{% endblock %}
+
+{% block content %}
+<style>
+    /* Style for course selection dropdown */
+    #id_courses {
+        min-height: 200px;
+        border: 2px solid #dee2e6 !important;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+        font-size: 0.95rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    #id_courses:focus {
+        border-color: #8B5CF6 !important;
+        box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25) !important;
+        outline: 0;
+    }
+    
+    #id_courses option {
+        padding: 8px 5px;
+        border-radius: 3px;
+    }
+    
+    #id_courses option:checked {
+        background: linear-gradient(#8B5CF6, #8B5CF6);
+        background-color: #8B5CF6;
+        color: white;
+    }
+</style>
+
+<div class="container-fluid py-4" style="max-width: 900px;">
+    <!-- Header Section -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <a href="{% url 'courses:coupon_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h2 class="mb-0">
+                    <i class="fas fa-ticket-alt me-2" style="color: #8B5CF6;"></i>
+                    {% if form.instance.pk %}
+                        Edit Coupon: {{ form.instance.code }}
+                    {% else %}
+                        Create New Coupon
+                    {% endif %}
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card border-0 shadow-sm">
+        <!-- Gradient Header -->
+        <div style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); height: 4px;"></div>
+        
+        <div class="card-body p-4">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Error:</strong>
+                    <ul class="mb-0 mt-2">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+                <!-- Row 1: Code & Status -->
+                <div class="row mb-4">
+                    <!-- Code -->
+                    <div class="col-md-6">
+                        <label for="{{ form.code.id_for_label }}" class="form-label">
+                            <i class="fas fa-key me-2"></i>Coupon Code
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.code }}
+                        {% if form.code.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.code.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-2">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            Unique code customers will use (e.g., SAVE20, SUMMER2024)
+                        </small>
+                    </div>
+
+                    <!-- Is Active -->
+                    <div class="col-md-6">
+                        <div class="form-check mt-4">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                <i class="fas fa-toggle-on me-2"></i>Active
+                            </label>
+                        </div>
+                        <small class="form-text text-muted d-block mt-2">
+                            Inactive coupons cannot be used by students
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Row 2: Description -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>Description
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted d-block mt-2">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            Optional: Explain what this coupon is for
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Discount Configuration Section -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-percentage me-2" style="color: #10B981;"></i>
+                            Discount Configuration
+                        </h5>
+
+                        <div class="row">
+                            <!-- Discount Type -->
+                            <div class="col-md-6">
+                                <label for="{{ form.discount_type.id_for_label }}" class="form-label">
+                                    Discount Type
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.discount_type }}
+                                {% if form.discount_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.discount_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Discount Value -->
+                            <div class="col-md-6">
+                                <label for="{{ form.discount_value.id_for_label }}" class="form-label">
+                                    Discount Value
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.discount_value }}
+                                    <span class="input-group-text" id="discount-unit">%</span>
+                                </div>
+                                {% if form.discount_value.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.discount_value.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Enter the percentage (0-100) or fixed amount
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Scope Section -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-book me-2" style="color: #F59E0B;"></i>
+                            Course Scope
+                        </h5>
+                        
+                        <label for="{{ form.courses.id_for_label }}" class="form-label">
+                            Select Courses (Leave empty to apply to all courses)
+                        </label>
+                        
+                        <div class="position-relative">
+                            {{ form.courses }}
+                            {% if form.courses.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.courses.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <small class="form-text text-muted d-block mt-3">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            <strong>How to use:</strong>
+                        </small>
+                        <small class="form-text text-muted d-block">
+                            • <strong>Leave empty</strong> = Coupon applies to ALL courses<br>
+                            • <strong>Select one or more</strong> = Coupon applies only to selected courses<br>
+                            • Use <strong>Ctrl+Click</strong> (Windows) or <strong>Cmd+Click</strong> (Mac) to select multiple courses<br>
+                            • Click and drag to scroll through the list if many courses exist
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Validity Period Section -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-calendar-alt me-2" style="color: #3B82F6;"></i>
+                            Validity Period
+                        </h5>
+
+                        <div class="row">
+                            <!-- Valid From -->
+                            <div class="col-md-6">
+                                <label for="{{ form.valid_from.id_for_label }}" class="form-label">
+                                    Valid From
+                                </label>
+                                {{ form.valid_from }}
+                                {% if form.valid_from.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.valid_from.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Leave empty for no start date limit
+                                </small>
+                            </div>
+
+                            <!-- Valid Until -->
+                            <div class="col-md-6">
+                                <label for="{{ form.valid_until.id_for_label }}" class="form-label">
+                                    Valid Until
+                                </label>
+                                {{ form.valid_until }}
+                                {% if form.valid_until.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.valid_until.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Leave empty for no expiration date
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usage Limits Section -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-chart-bar me-2" style="color: #EF4444;"></i>
+                            Usage Limits
+                        </h5>
+
+                        <div class="row">
+                            <!-- Max Uses -->
+                            <div class="col-md-6">
+                                <label for="{{ form.max_uses.id_for_label }}" class="form-label">
+                                    Maximum Uses
+                                </label>
+                                {{ form.max_uses }}
+                                {% if form.max_uses.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.max_uses.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Leave empty for unlimited uses
+                                </small>
+                            </div>
+
+                            <!-- Current Uses (Read-only) -->
+                            {% if form.instance.pk %}
+                            <div class="col-md-6">
+                                <label class="form-label">Current Uses</label>
+                                <input type="text" class="form-control" value="{{ form.instance.uses_count }}" disabled>
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Times this coupon has been used
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{% url 'courses:coupon_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        {% if form.instance.pk %}Update Coupon{% else %}Create Coupon{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="card bg-info-light border-0 mt-4">
+        <div class="card-body">
+            <h5 class="card-title mb-2">
+                <i class="fas fa-lightbulb text-warning me-2"></i>Tips for Creating Effective Coupons
+            </h5>
+            <ul class="list-unstyled mb-0">
+                <li><i class="fas fa-check text-success me-2"></i>Use memorable codes (e.g., SAVE20, SUMMER24)</li>
+                <li><i class="fas fa-check text-success me-2"></i>Set validity periods to create urgency</li>
+                <li><i class="fas fa-check text-success me-2"></i>Limit max uses for exclusive offers</li>
+                <li><i class="fas fa-check text-success me-2"></i>Leave course scope empty to apply sitewide</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-color: #e0e0e0;
+        padding: 0.625rem 0.875rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+    }
+
+    .form-check-input:checked {
+        background-color: #8B5CF6;
+        border-color: #8B5CF6;
+    }
+
+    .form-check-input:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+    }
+
+    .bg-info-light {
+        background-color: #DBEAFE !important;
+    }
+
+    label {
+        font-weight: 500;
+        color: #374151;
+    }
+</style>
+
+<script>
+    // Update the discount unit label based on discount type selection
+    document.getElementById('{{ form.discount_type.id_for_label }}').addEventListener('change', function() {
+        const unit = document.getElementById('discount-unit');
+        if (this.value === 'PERCENTAGE') {
+            unit.textContent = '%';
+        } else if (this.value === 'FIXED') {
+            unit.textContent = 'TZS';
+        }
+    });
+
+    // Trigger change event on page load
+    document.getElementById('{{ form.discount_type.id_for_label }}').dispatchEvent(new Event('change'));
+
+    // Bootstrap form validation
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            let forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

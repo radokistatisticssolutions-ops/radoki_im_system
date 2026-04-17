@@ -1,0 +1,395 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.status-select {
+  border:none; border-radius:20px; padding:4px 10px;
+  font-size:.78rem; font-weight:600; cursor:pointer;
+  outline:none; appearance:none; -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 8px center; padding-right:24px;
+  transition:box-shadow .2s;
+}
+.status-select:focus { box-shadow:0 0 0 3px rgba(41,128,185,.25); }
+.status-feedback.ok  { color:#198754; font-size:.8rem; }
+.status-feedback.err { color:#dc3545; font-size:.8rem; }
+
+/* Grade badge */
+.grade-badge {
+  display:inline-block; min-width:44px; text-align:center;
+  padding:4px 10px; border-radius:20px; font-size:.82rem; font-weight:700;
+  background:#d6eaf8; color:#1a5276;
+}
+.grade-badge.empty { background:#f0f4f8; color:#aaa; font-weight:400; }
+
+/* Status badge (read-only, for quick scan) */
+.status-badge {
+  display:inline-block; padding:4px 10px; border-radius:20px;
+  font-size:.78rem; font-weight:600;
+}
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+      <h1 class="h3 mb-0" style="color:#2c3e50;"><i class="fas fa-tasks"></i> Submission Review</h1>
+      <p class="text-muted mt-1">Grade and give feedback on student submissions</p>
+    </div>
+    <div class="col-md-6 text-end d-flex gap-2 justify-content-end flex-wrap">
+      <span class="badge bg-primary p-2" style="font-size:.9rem; align-self:center;">
+        Total: <strong>{{ total }}</strong>
+      </span>
+      <a href="{% url 'assignments:instructor_assignments' %}" class="btn btn-sm btn-outline-primary"
+         style="border-radius:8px;font-weight:600;">
+        <i class="fas fa-list me-1"></i> My Assignments
+      </a>
+      <a href="{% url 'assignments:create_assignment' %}" class="btn btn-sm"
+         style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;">
+        <i class="fas fa-plus me-1"></i> Create Assignment
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label mb-1 small fw-semibold text-muted">Course</label>
+          <select name="course" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All Courses</option>
+            {% for c in instructor_courses %}
+              <option value="{{ c.id }}" {% if course_filter == c.id|stringformat:'s' %}selected{% endif %}>{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label mb-1 small fw-semibold text-muted">Status</label>
+          <select name="status" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All Statuses</option>
+            {% for val, label in STATUS_CHOICES %}
+              <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label mb-1 small fw-semibold text-muted">Student Name / Username</label>
+          <input type="text" name="student" class="form-control form-control-sm" placeholder="Search student…"
+                 value="{{ student_filter }}" style="border-radius:8px;">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-sm btn-primary w-100" style="border-radius:8px;">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+          <a href="{% url 'assignments:instructor_dashboard' %}" class="btn btn-sm btn-outline-secondary w-100" style="border-radius:8px;">
+            <i class="fas fa-times"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card border-0 shadow-sm" style="border-radius:12px;">
+    <div class="card-body p-0">
+      {% if page_obj.object_list %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" style="border-radius:12px; overflow:hidden;">
+          <thead style="background:linear-gradient(135deg,#1a5276 0%,#2980b9 100%); color:#fff;">
+            <tr>
+              <th class="py-3 px-3">#</th>
+              <th class="py-3 px-3">Student</th>
+              <th class="py-3 px-3">Course</th>
+              <th class="py-3 px-3">Assignment</th>
+              <th class="py-3 px-3">Submitted</th>
+              <th class="py-3 px-3">File</th>
+              <th class="py-3 px-3">Status</th>
+              <th class="py-3 px-3">Grade</th>
+              <th class="py-3 px-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in page_obj %}
+            <tr id="row-{{ sub.id }}">
+              <td class="px-3 py-3 text-muted" style="font-size:.85rem;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+              <td class="px-3 py-3 fw-semibold">
+                {{ sub.student.get_full_name|default:sub.student.username }}
+                <div class="text-muted" style="font-size:.78rem;">{{ sub.student.username }}</div>
+              </td>
+              <td class="px-3 py-3 text-muted" style="font-size:.85rem;">{{ sub.assignment.course.title }}</td>
+              <td class="px-3 py-3">
+                <span style="font-size:.85rem; font-weight:500;">{{ sub.assignment.title }}</span>
+                {% if sub.assignment.due_date %}
+                <div class="text-muted" style="font-size:.75rem;">Due: {{ sub.assignment.due_date|date:"d M Y" }}</div>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3 text-muted" style="font-size:.82rem; white-space:nowrap;">{{ sub.submitted_at|date:"d M Y" }}</td>
+              <td class="px-3 py-3">
+                <a href="{{ sub.file.url }}" target="_blank"
+                   class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-size:.78rem;">
+                  <i class="fas fa-download me-1"></i>{{ sub.filename }}
+                </a>
+              </td>
+              <td class="px-3 py-3" id="status-cell-{{ sub.id }}">
+                {% if sub.status == 'submitted' %}
+                  <span class="status-badge" style="background:#cff4fc;color:#055160;">Submitted</span>
+                {% elif sub.status == 'reviewed' %}
+                  <span class="status-badge" style="background:#fff3cd;color:#664d03;">Reviewed</span>
+                {% elif sub.status == 'graded' %}
+                  <span class="status-badge" style="background:#d1e7dd;color:#0a3622;">Graded</span>
+                {% elif sub.status == 'resubmit' %}
+                  <span class="status-badge" style="background:#f8d7da;color:#842029;">Needs Resubmission</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3" id="grade-cell-{{ sub.id }}">
+                {% if sub.grade %}
+                  <span class="grade-badge">{{ sub.grade }}</span>
+                {% else %}
+                  <span class="grade-badge empty">—</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3">
+                <button class="btn btn-sm"
+                        style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-size:.78rem;font-weight:600;"
+                        onclick="openGradeModal(
+                          {{ sub.id }},
+                          '{{ sub.student.get_full_name|default:sub.student.username|escapejs }}',
+                          '{{ sub.assignment.title|escapejs }}',
+                          '{{ sub.status }}',
+                          '{{ sub.grade|escapejs }}',
+                          '{{ sub.feedback|escapejs }}'
+                        )">
+                  <i class="fas fa-pen me-1"></i> Grade
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+      <div class="row mt-3 mb-3">
+        <div class="col-12">
+          <nav aria-label="Submissions pagination">
+            <ul class="pagination justify-content-center mb-0">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1&course={{ course_filter }}&status={{ status_filter }}&student={{ student_filter }}" style="border-radius:10px 0 0 10px;">
+                    <i class="fas fa-chevron-left"></i> First
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}&course={{ course_filter }}&status={{ status_filter }}&student={{ student_filter }}">
+                    <i class="fas fa-arrow-left"></i> Previous
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link" style="border-radius:10px 0 0 10px;"><i class="fas fa-chevron-left"></i> First</span></li>
+                <li class="page-item disabled"><span class="page-link"><i class="fas fa-arrow-left"></i> Previous</span></li>
+              {% endif %}
+
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}&course={{ course_filter }}&status={{ status_filter }}&student={{ student_filter }}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}&course={{ course_filter }}&status={{ status_filter }}&student={{ student_filter }}">Next <i class="fas fa-arrow-right"></i></a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&course={{ course_filter }}&status={{ status_filter }}&student={{ student_filter }}" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next <i class="fas fa-arrow-right"></i></span></li>
+                <li class="page-item disabled"><span class="page-link" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-inbox fa-3x mb-3" style="color:#aed6f1;"></i>
+        <p class="text-muted mb-0">No submissions found.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════  GRADE MODAL  ═══════════════════════════ -->
+<div class="modal fade" id="gradeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
+    <div class="modal-content" style="border-radius:16px; border:none; overflow:hidden;">
+
+      <!-- Header -->
+      <div class="modal-header text-white"
+           style="background:linear-gradient(135deg,#1a5276,#2980b9); border:none; padding:20px 24px;">
+        <div>
+          <h5 class="modal-title fw-bold mb-0"><i class="fas fa-pen-nib me-2"></i>Grade Submission</h5>
+          <small id="modal-meta" class="opacity-75"></small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4">
+        <input type="hidden" id="modal-sub-id">
+
+        <!-- Status -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+          <select id="modal-status" class="form-select" style="border-radius:8px;">
+            {% for val, label in STATUS_CHOICES %}
+              <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Grade -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Grade</label>
+          <input type="text" id="modal-grade" class="form-control" maxlength="10"
+                 placeholder="e.g. A, B+, 85/100, 90%…" style="border-radius:8px;">
+          <div class="form-text">Leave blank if not yet graded.</div>
+        </div>
+
+        <!-- Feedback -->
+        <div class="mb-2">
+          <label class="form-label fw-semibold">Feedback</label>
+          <textarea id="modal-feedback" class="form-control" rows="5"
+                    placeholder="Write detailed feedback for the student…"
+                    style="border-radius:8px; resize:vertical;"></textarea>
+        </div>
+
+        <!-- Alert -->
+        <div id="modal-alert" class="mt-3" style="display:none;"></div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+        <button type="button" class="btn btn-outline-secondary" style="border-radius:8px;" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn" id="modal-save-btn"
+                style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;min-width:120px;"
+                onclick="saveGrade()">
+          <span id="modal-save-text"><i class="fas fa-check me-1"></i> Save Grade</span>
+          <span id="modal-save-spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const CSRF = "{{ csrf_token }}";
+
+  /* ── Status colour map ── */
+  const STATUS_COLOURS = {
+    submitted: { bg:'#cff4fc', color:'#055160', label:'Submitted' },
+    reviewed:  { bg:'#fff3cd', color:'#664d03', label:'Reviewed'  },
+    graded:    { bg:'#d1e7dd', color:'#0a3622', label:'Graded'    },
+    resubmit:  { bg:'#f8d7da', color:'#842029', label:'Needs Resubmission' },
+  };
+
+  /* ── Open modal ── */
+  window.openGradeModal = function(id, studentName, assignmentTitle, status, grade, feedback){
+    document.getElementById('modal-sub-id').value  = id;
+    document.getElementById('modal-meta').textContent =
+      studentName + ' · ' + assignmentTitle;
+    document.getElementById('modal-status').value   = status;
+    document.getElementById('modal-grade').value    = grade;
+    document.getElementById('modal-feedback').value = feedback;
+    document.getElementById('modal-alert').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('gradeModal')).show();
+  };
+
+  /* ── Save grade ── */
+  window.saveGrade = async function(){
+    const id       = document.getElementById('modal-sub-id').value;
+    const status   = document.getElementById('modal-status').value;
+    const grade    = document.getElementById('modal-grade').value.trim();
+    const feedback = document.getElementById('modal-feedback').value.trim();
+
+    const btn     = document.getElementById('modal-save-btn');
+    const text    = document.getElementById('modal-save-text');
+    const spinner = document.getElementById('modal-save-spinner');
+    const alert   = document.getElementById('modal-alert');
+
+    btn.disabled = true;
+    text.classList.add('d-none');
+    spinner.classList.remove('d-none');
+    alert.style.display = 'none';
+
+    try {
+      const res  = await fetch(`/assignments/ajax/grade/${id}/`, {
+        method:  'POST',
+        headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body:    new URLSearchParams({ status, grade, feedback }),
+      });
+      const data = await res.json();
+
+      if(data.success){
+        /* Update status cell */
+        const sc = STATUS_COLOURS[data.status] || {};
+        const statusCell = document.getElementById('status-cell-' + id);
+        if(statusCell){
+          statusCell.innerHTML =
+            `<span class="status-badge" style="background:${sc.bg};color:${sc.color};">${sc.label}</span>`;
+        }
+
+        /* Update grade cell */
+        const gradeCell = document.getElementById('grade-cell-' + id);
+        if(gradeCell){
+          gradeCell.innerHTML = data.grade
+            ? `<span class="grade-badge">${data.grade}</span>`
+            : `<span class="grade-badge empty">—</span>`;
+        }
+
+        /* Show success inside modal briefly then close */
+        alert.className = 'alert alert-success py-2 px-3 mt-3';
+        alert.style.display = 'block';
+        alert.textContent = '✓ Saved successfully';
+        setTimeout(() => {
+          bootstrap.Modal.getInstance(document.getElementById('gradeModal')).hide();
+        }, 900);
+      } else {
+        alert.className = 'alert alert-danger py-2 px-3 mt-3';
+        alert.style.display = 'block';
+        alert.textContent = '✗ ' + (data.message || 'Error saving. Please try again.');
+      }
+    } catch {
+      alert.className = 'alert alert-danger py-2 px-3 mt-3';
+      alert.style.display = 'block';
+      alert.textContent = '✗ Network error. Please try again.';
+    } finally {
+      btn.disabled = false;
+      text.classList.remove('d-none');
+      spinner.classList.add('d-none');
+    }
+  };
+
+  /* Close modal resets alert */
+  document.getElementById('gradeModal').addEventListener('hidden.bs.modal', function(){
+    document.getElementById('modal-alert').style.display = 'none';
+  });
+}());
+</script>
+{% endblock %}

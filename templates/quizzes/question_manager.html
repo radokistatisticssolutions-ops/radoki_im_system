@@ -1,0 +1,477 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.qm-layout { max-width:900px; margin:28px auto; padding:0 16px 60px; }
+.qm-header { background:linear-gradient(135deg,#1a5276,#2980b9); border-radius:16px; padding:24px 28px; color:#fff; margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.qm-header h1 { font-size:1.3rem; font-weight:800; margin:0 0 4px; }
+.qm-header .meta { font-size:.82rem; opacity:.85; display:flex; gap:16px; flex-wrap:wrap; }
+.question-card { background:#fff; border-radius:14px; padding:20px 24px; margin-bottom:14px; box-shadow:0 2px 10px rgba(0,0,0,.06); border-left:4px solid #2980b9; }
+.question-card .q-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.question-card .q-num { font-size:.72rem; font-weight:700; color:#2980b9; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+.question-card .q-text { font-size:.95rem; font-weight:600; color:#2c3e50; margin:4px 0 10px; line-height:1.5; }
+.type-badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
+.type-mc { background:#d6eaf8; color:#2980b9; }
+.type-tf { background:#d5f5e3; color:#1e8449; }
+.type-sa { background:#fdebd0; color:#d35400; }
+.marks-badge { display:inline-block; background:#f0f4f8; color:#5d6d7e; border-radius:20px; padding:2px 10px; font-size:.72rem; font-weight:700; }
+.option-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:.8rem; margin:3px 4px 3px 0; }
+.option-pill.correct { background:#d5f5e3; color:#1e8449; font-weight:700; }
+.option-pill.wrong { background:#f0f3f4; color:#7f8c8d; }
+.q-actions { display:flex; gap:6px; flex-shrink:0; }
+.q-actions button { border:none; border-radius:8px; padding:6px 14px; font-size:.78rem; font-weight:600; cursor:pointer; }
+.btn-edit-q { background:#eaf4fd; color:#2980b9; }
+.btn-edit-q:hover { background:#d6eaf8; }
+.btn-del-q { background:#fadbd8; color:#e74c3c; }
+.btn-del-q:hover { background:#f1948a; color:#fff; }
+.add-btn { position:fixed; bottom:32px; right:32px; background:linear-gradient(135deg,#1a5276,#2980b9); color:#fff; border:none; border-radius:50px; padding:14px 26px; font-size:.95rem; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(41,128,185,.45); z-index:100; transition:transform .2s; }
+.add-btn:hover { transform:translateY(-2px); }
+/* Modal */
+.modal-content { border-radius:16px; overflow:hidden; border:none; }
+.modal-header { border:none; padding:24px 28px 16px; }
+.modal-footer { border:none; padding:16px 28px 24px; }
+.modal-body { padding:0 28px 8px; }
+.form-field { margin-bottom:18px; }
+.form-field label { display:block; font-size:.8rem; font-weight:700; color:#2c3e50; margin-bottom:5px; text-transform:uppercase; letter-spacing:.04em; }
+.form-field input, .form-field textarea, .form-field select { width:100%; border:2px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:.88rem; color:#2c3e50; outline:none; transition:border .15s; }
+.form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color:#2980b9; }
+.option-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.option-row input[type=text] { flex:1; }
+.option-row .correct-check { width:18px; height:18px; cursor:pointer; }
+.empty-state { text-align:center; padding:50px 20px; background:#fff; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,.05); margin-bottom:14px; }
+</style>
+
+<div class="qm-layout">
+  <!-- Header -->
+  <div class="qm-header">
+    <div>
+      <nav style="margin-bottom:8px;">
+        <ol class="breadcrumb" style="font-size:.78rem; margin:0;">
+          <li class="breadcrumb-item"><a href="{% url 'quizzes:quiz_list' course.pk %}" style="color:rgba(255,255,255,.7);">Quizzes</a></li>
+          <li class="breadcrumb-item active" style="color:#fff;">{{ quiz.title }}</li>
+        </ol>
+      </nav>
+      <h1><i class="fas fa-list-ul me-2"></i>Question Manager</h1>
+      <div class="meta">
+        <span><i class="fas fa-question-circle me-1"></i><span id="q-count">{{ questions|length }}</span> question{{ questions|length|pluralize }}</span>
+        <span><i class="fas fa-star me-1"></i>Pass mark: {{ quiz.pass_mark }}%</span>
+        {% if quiz.time_limit_minutes %}<span><i class="fas fa-clock me-1"></i>{{ quiz.time_limit_minutes }} min</span>{% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'quizzes:edit_quiz' quiz.pk %}"
+         class="btn btn-sm" style="background:rgba(255,255,255,.2); color:#fff; border-radius:8px; font-size:.8rem;">
+        <i class="fas fa-cog me-1"></i>Quiz Settings
+      </a>
+      <a href="{% url 'quizzes:quiz_attempts' quiz.pk %}"
+         class="btn btn-sm" style="background:rgba(255,255,255,.2); color:#fff; border-radius:8px; font-size:.8rem;">
+        <i class="fas fa-chart-bar me-1"></i>View Results
+      </a>
+    </div>
+  </div>
+
+  <!-- Questions list -->
+  <div id="questions-container">
+    {% if questions %}
+      {% for q in questions %}
+      <div class="question-card" id="qcard-{{ q.pk }}" data-id="{{ q.pk }}">
+        <div class="q-header">
+          <div style="flex:1;">
+            <div class="q-num">Question {{ forloop.counter }}</div>
+            <div class="q-text">{{ q.text }}</div>
+            <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+              <span class="type-badge type-{% if q.question_type == 'multiple_choice' %}mc{% elif q.question_type == 'true_false' %}tf{% else %}sa{% endif %}">
+                {% if q.question_type == 'multiple_choice' %}<i class="fas fa-dot-circle me-1"></i>Multiple Choice
+                {% elif q.question_type == 'true_false' %}<i class="fas fa-toggle-on me-1"></i>True / False
+                {% else %}<i class="fas fa-pen me-1"></i>Short Answer{% endif %}
+              </span>
+              <span class="marks-badge"><i class="fas fa-star me-1"></i>{{ q.marks }} mark{{ q.marks|pluralize }}</span>
+            </div>
+            {% if q.question_type != 'short_answer' %}
+            <div class="mt-2">
+              {% for opt in q.options.all %}
+              <span class="option-pill {% if opt.is_correct %}correct{% else %}wrong{% endif %}">
+                {% if opt.is_correct %}<i class="fas fa-check-circle"></i>{% else %}<i class="far fa-circle"></i>{% endif %}
+                {{ opt.text }}
+              </span>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="mt-2" style="font-size:.78rem; color:#95a5a6; font-style:italic;">
+              <i class="fas fa-pen me-1"></i>Open text response — graded manually
+            </div>
+            {% endif %}
+            {% if q.explanation %}
+            <div class="mt-2" style="font-size:.78rem; color:#7d6608; background:#fef9e7; padding:6px 12px; border-radius:8px; border-left:3px solid #f1c40f;">
+              <i class="fas fa-lightbulb me-1"></i>{{ q.explanation|truncatechars:100 }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="q-actions">
+            <button class="btn-edit-q" onclick="openEditModal({{ q.pk }})">
+              <i class="fas fa-edit me-1"></i>Edit
+            </button>
+            <button class="btn-del-q" onclick="deleteQuestion({{ q.pk }}, this)">
+              <i class="fas fa-trash me-1"></i>Delete
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty-state" id="empty-state">
+      <i class="fas fa-question-circle" style="font-size:2.5rem; color:#bdc3c7; display:block; margin-bottom:14px;"></i>
+      <h5 style="color:#2c3e50; font-weight:700; margin-bottom:6px;">No questions yet</h5>
+      <p style="color:#7f8c8d; font-size:.85rem;">Click the <strong>+ Add Question</strong> button to get started.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="height:100px;"></div><!-- spacer for FAB -->
+</div>
+
+<!-- Floating Add Button -->
+<button class="add-btn" onclick="openAddModal()">
+  <i class="fas fa-plus me-2"></i>Add Question
+</button>
+
+<!-- Question Modal -->
+<div class="modal fade" id="questionModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1a5276,#2980b9);">
+        <h5 class="modal-title" id="modal-title" style="color:#fff; font-weight:700;">
+          <i class="fas fa-plus-circle me-2"></i>Add Question
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editing-question-id" value="">
+
+        <div class="form-field">
+          <label>Question Text *</label>
+          <textarea id="q-text" rows="3" placeholder="Enter your question…"></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div class="form-field">
+            <label>Question Type *</label>
+            <select id="q-type" onchange="onTypeChange(this.value)">
+              <option value="multiple_choice">Multiple Choice</option>
+              <option value="true_false">True / False</option>
+              <option value="short_answer">Short Answer</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Marks</label>
+            <input type="number" id="q-marks" value="1" min="1">
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Explanation <span style="color:#95a5a6; font-weight:400;">(shown to student after submission)</span></label>
+          <textarea id="q-explanation" rows="2" placeholder="Optional explanation of the correct answer…"></textarea>
+        </div>
+
+        <!-- MC options -->
+        <div id="mc-section">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <label style="font-size:.8rem; font-weight:700; color:#2c3e50; text-transform:uppercase; letter-spacing:.04em;">
+              Answer Options <span style="color:#e74c3c;">*</span>
+            </label>
+            <button type="button" onclick="addOptionRow()" class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-size:.78rem;">
+              <i class="fas fa-plus me-1"></i>Add Option
+            </button>
+          </div>
+          <div id="options-container"></div>
+          <div class="text-muted" style="font-size:.75rem; margin-top:4px;">
+            <i class="fas fa-info-circle me-1"></i>Check the box on the right to mark an option as correct.
+          </div>
+        </div>
+
+        <!-- T/F section -->
+        <div id="tf-section" style="display:none;">
+          <div class="form-field">
+            <label>Correct Answer</label>
+            <div class="d-flex gap-3">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="radio" name="tf-correct" value="True" checked> <span style="font-size:.9rem;">True</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="radio" name="tf-correct" value="False"> <span style="font-size:.9rem;">False</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- SA note -->
+        <div id="sa-section" style="display:none; background:#fef9e7; border-radius:10px; padding:14px 16px; font-size:.85rem; color:#7d6608; border-left:3px solid #f1c40f;">
+          <i class="fas fa-info-circle me-2"></i>
+          Short answer questions are graded manually. Students type their answer and you review it from the Results page.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Cancel</button>
+        <button type="button" onclick="saveQuestion()" class="btn"
+                style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:700;padding:9px 24px;">
+          <i class="fas fa-save me-2"></i>Save Question
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUIZ_ID   = {{ quiz.pk }};
+const CSRF      = "{{ csrf_token }}";
+let   modalEl   = null;
+let   modal     = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  modalEl = document.getElementById('questionModal');
+  modal   = new bootstrap.Modal(modalEl);
+  addOptionRow(); addOptionRow(); addOptionRow(); addOptionRow(); // default 4 rows
+});
+
+function openAddModal() {
+  document.getElementById('modal-title').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Add Question';
+  document.getElementById('editing-question-id').value = '';
+  document.getElementById('q-text').value = '';
+  document.getElementById('q-marks').value = 1;
+  document.getElementById('q-explanation').value = '';
+  document.getElementById('q-type').value = 'multiple_choice';
+  document.querySelectorAll('input[name=tf-correct]')[0].checked = true;
+  resetOptions(4);
+  onTypeChange('multiple_choice');
+  modal.show();
+}
+
+function openEditModal(qId) {
+  // Fetch question data from the card DOM
+  const card = document.getElementById('qcard-' + qId);
+  if (!card) return;
+  // We'll call back to the server for full data — simpler than storing in DOM
+  fetch(`/quizzes/${QUIZ_ID}/questions/save/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ question_id: qId, _fetch_only: true }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error && !data.id) {
+      // fallback: just open empty edit with id set
+    }
+    document.getElementById('modal-title').innerHTML = '<i class="fas fa-edit me-2"></i>Edit Question';
+    document.getElementById('editing-question-id').value = qId;
+    document.getElementById('q-text').value = data.text || '';
+    document.getElementById('q-marks').value = data.marks || 1;
+    document.getElementById('q-explanation').value = data.explanation || '';
+    document.getElementById('q-type').value = data.question_type || 'multiple_choice';
+
+    if (data.question_type === 'true_false') {
+      const correct = (data.options || []).find(o => o.is_correct);
+      document.querySelectorAll('input[name=tf-correct]').forEach(r => {
+        r.checked = (correct && r.value === correct.text);
+      });
+    } else if (data.question_type === 'multiple_choice') {
+      const opts = data.options || [];
+      resetOptions(Math.max(opts.length, 4));
+      const rows = document.querySelectorAll('#options-container .option-row');
+      opts.forEach((opt, i) => {
+        if (rows[i]) {
+          rows[i].querySelector('input[type=text]').value = opt.text;
+          rows[i].querySelector('input[type=checkbox]').checked = opt.is_correct;
+        }
+      });
+    }
+    onTypeChange(data.question_type || 'multiple_choice');
+    modal.show();
+  })
+  .catch(() => {
+    // fallback: just open modal with id
+    document.getElementById('modal-title').innerHTML = '<i class="fas fa-edit me-2"></i>Edit Question';
+    document.getElementById('editing-question-id').value = qId;
+    document.getElementById('q-text').value = '';
+    document.getElementById('q-marks').value = 1;
+    document.getElementById('q-explanation').value = '';
+    resetOptions(4);
+    onTypeChange('multiple_choice');
+    modal.show();
+  });
+}
+
+function onTypeChange(type) {
+  document.getElementById('mc-section').style.display  = type === 'multiple_choice' ? '' : 'none';
+  document.getElementById('tf-section').style.display  = type === 'true_false' ? '' : 'none';
+  document.getElementById('sa-section').style.display  = type === 'short_answer' ? '' : 'none';
+}
+
+function resetOptions(n) {
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+  for (let i = 0; i < n; i++) addOptionRow();
+}
+
+function addOptionRow() {
+  const container = document.getElementById('options-container');
+  const row = document.createElement('div');
+  row.className = 'option-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Option text…">
+    <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.8rem;white-space:nowrap;">
+      <input type="checkbox" class="correct-check"> Correct
+    </label>
+    <button type="button" onclick="this.closest('.option-row').remove()"
+            style="border:none;background:#fadbd8;color:#e74c3c;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.8rem;">
+      <i class="fas fa-times"></i>
+    </button>`;
+  container.appendChild(row);
+}
+
+async function saveQuestion() {
+  const qId = document.getElementById('editing-question-id').value;
+  const type = document.getElementById('q-type').value;
+  const text = document.getElementById('q-text').value.trim();
+  if (!text) { alert('Question text is required.'); return; }
+
+  const payload = {
+    question_id: qId ? parseInt(qId) : null,
+    text,
+    question_type: type,
+    marks: parseInt(document.getElementById('q-marks').value) || 1,
+    explanation: document.getElementById('q-explanation').value.trim(),
+    options: [],
+    tf_correct: document.querySelector('input[name=tf-correct]:checked')?.value || 'True',
+  };
+
+  if (type === 'multiple_choice') {
+    document.querySelectorAll('#options-container .option-row').forEach(row => {
+      const t = row.querySelector('input[type=text]').value.trim();
+      if (t) payload.options.push({
+        text: t,
+        is_correct: row.querySelector('input[type=checkbox]').checked,
+      });
+    });
+    if (payload.options.length < 2) { alert('Please add at least 2 answer options.'); return; }
+    if (!payload.options.some(o => o.is_correct)) { alert('Please mark at least one option as correct.'); return; }
+  }
+
+  try {
+    const res = await fetch(`/quizzes/${QUIZ_ID}/questions/save/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+
+    // Rebuild card in DOM
+    upsertQuestionCard(data, !qId);
+    modal.hide();
+  } catch (e) {
+    alert('Error saving question. Please try again.');
+  }
+}
+
+function upsertQuestionCard(data, isNew) {
+  const container = document.getElementById('questions-container');
+  const emptyState = document.getElementById('empty-state');
+  if (emptyState) emptyState.remove();
+
+  let card = document.getElementById('qcard-' + data.id);
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = 'qcard-' + data.id;
+    container.appendChild(card);
+  }
+
+  const typeClasses = { multiple_choice: 'mc', true_false: 'tf', short_answer: 'sa' };
+  const typeIcons   = { multiple_choice: 'fas fa-dot-circle', true_false: 'fas fa-toggle-on', short_answer: 'fas fa-pen' };
+  const typeClass   = typeClasses[data.question_type] || 'mc';
+  const typeIcon    = typeIcons[data.question_type] || 'fas fa-circle';
+
+  let optionsPart = '';
+  if (data.question_type !== 'short_answer') {
+    optionsPart = data.options.map(o =>
+      `<span class="option-pill ${o.is_correct ? 'correct' : 'wrong'}">
+         ${o.is_correct ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'}
+         ${escHtml(o.text)}
+       </span>`
+    ).join('');
+  } else {
+    optionsPart = `<div style="font-size:.78rem;color:#95a5a6;font-style:italic;margin-top:6px;"><i class="fas fa-pen me-1"></i>Open text response — graded manually</div>`;
+  }
+
+  const explanationPart = data.explanation
+    ? `<div class="mt-2" style="font-size:.78rem;color:#7d6608;background:#fef9e7;padding:6px 12px;border-radius:8px;border-left:3px solid #f1c40f;">
+         <i class="fas fa-lightbulb me-1"></i>${escHtml(data.explanation).substring(0, 120)}
+       </div>`
+    : '';
+
+  // Count existing cards for question number
+  const allCards = document.querySelectorAll('.question-card');
+  const idx = Array.from(allCards).indexOf(card) + 1;
+
+  card.innerHTML = `
+    <div class="q-header">
+      <div style="flex:1;">
+        <div class="q-num">Question ${idx}</div>
+        <div class="q-text">${escHtml(data.text)}</div>
+        <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+          <span class="type-badge type-${typeClass}"><i class="${typeIcon} me-1"></i>${data.question_type_display}</span>
+          <span class="marks-badge"><i class="fas fa-star me-1"></i>${data.marks} mark${data.marks === 1 ? '' : 's'}</span>
+        </div>
+        <div class="mt-2">${optionsPart}</div>
+        ${explanationPart}
+      </div>
+      <div class="q-actions">
+        <button class="btn-edit-q" onclick="openEditModal(${data.id})"><i class="fas fa-edit me-1"></i>Edit</button>
+        <button class="btn-del-q" onclick="deleteQuestion(${data.id}, this)"><i class="fas fa-trash me-1"></i>Delete</button>
+      </div>
+    </div>`;
+
+  // Update count badge
+  updateCount();
+}
+
+async function deleteQuestion(qId, btn) {
+  if (!confirm('Delete this question? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`/quizzes/questions/${qId}/delete/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF },
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const card = document.getElementById('qcard-' + qId);
+      if (card) card.remove();
+      updateCount();
+      if (!document.querySelector('.question-card')) {
+        const c = document.getElementById('questions-container');
+        c.innerHTML = `<div class="empty-state" id="empty-state">
+          <i class="fas fa-question-circle" style="font-size:2.5rem;color:#bdc3c7;display:block;margin-bottom:14px;"></i>
+          <h5 style="color:#2c3e50;font-weight:700;margin-bottom:6px;">No questions yet</h5>
+          <p style="color:#7f8c8d;font-size:.85rem;">Click the <strong>+ Add Question</strong> button to get started.</p>
+        </div>`;
+      }
+    }
+  } catch (e) { alert('Error deleting question.'); }
+}
+
+function updateCount() {
+  const n = document.querySelectorAll('.question-card').length;
+  const el = document.getElementById('q-count');
+  if (el) el.textContent = n;
+  // Renumber
+  document.querySelectorAll('.question-card .q-num').forEach((el, i) => {
+    el.textContent = `Question ${i + 1}`;
+  });
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+{% endblock %}

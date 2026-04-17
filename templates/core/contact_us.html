@@ -1,0 +1,231 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+  @media (max-width: 768px) {
+    .card-header, .card-body {
+      padding: 1rem !important;
+    }
+    
+    .mb-4, .mb-3, .mb-2 {
+      margin-bottom: 0.6rem !important;
+    }
+    
+    .col-lg-7, .col-lg-5 {
+      width: 100% !important;
+    }
+  }
+  
+  /* Ensure sidebar stays on the right on desktop */
+  @media (min-width: 992px) {
+    .col-lg-7 {
+      max-width: 58.333333% !important;
+    }
+    
+    .col-lg-5 {
+      max-width: 41.666667% !important;
+    }
+    
+    /* Make sidebar sticky on desktop */
+    .sidebar-sticky {
+      position: sticky;
+      top: 20px;
+    }
+  }
+  
+  /* Form styling improvements */
+  .form-control, .form-select {
+    border-color: #ecf0f1;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+  }
+</style>
+
+<div class="container-fluid py-4" style="background-color: #f0f2f5; min-height: 100vh;">
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header border-0 rounded-top-4" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+          <div class="py-4">
+            <h1 class="text-white mb-2" style="font-size: 2.5rem;">
+              <i class="fas fa-envelope"></i> Contact Us
+            </h1>
+            <p class="text-white mb-0" style="opacity: 0.9;">Get in touch with our support team</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Contact Form -->
+    <div class="col-lg-7 mb-4">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-light border-0 rounded-top-3">
+          <h5 class="mb-0" style="color: #2c3e50;">
+            <i class="fas fa-comment-dots" style="color: #3498db;"></i> Send us a Message
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <form method="post">
+            {% csrf_token %}
+            
+            <!-- Name -->
+            <div class="mb-3">
+              <label for="name" class="form-label fw-bold" style="color: #2c3e50;">Name</label>
+              <input type="text" class="form-control" id="name" name="name" placeholder="Your full name" required>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+              <label for="email" class="form-label fw-bold" style="color: #2c3e50;">Email Address</label>
+              <input type="email" class="form-control" id="email" name="email" placeholder="your@email.com" required>
+            </div>
+
+            <!-- Phone (Optional) -->
+            <div class="mb-3">
+              <label for="phone" class="form-label fw-bold" style="color: #2c3e50;">Phone Number (Optional)</label>
+              <input type="tel" class="form-control" id="phone" name="phone" placeholder="+255 7XX XXX XXX">
+            </div>
+
+            <!-- Category -->
+            <div class="mb-3">
+              <label for="category" class="form-label fw-bold" style="color: #2c3e50;">Category</label>
+              <select class="form-select" id="category" name="category" required>
+                <option selected disabled>Select a category...</option>
+                <option value="technical">Technical Support</option>
+                <option value="billing">Billing & Payments</option>
+                <option value="course">Course Related</option>
+                <option value="account">Account & Profile</option>
+                <option value="general">General Inquiry</option>
+                <option value="feedback">Feedback & Suggestions</option>
+              </select>
+            </div>
+
+            <!-- Subject -->
+            <div class="mb-3">
+              <label for="subject" class="form-label fw-bold" style="color: #2c3e50;">Subject</label>
+              <input type="text" class="form-control" id="subject" name="subject" placeholder="Brief subject of your inquiry" required>
+            </div>
+
+            <!-- Message -->
+            <div class="mb-3">
+              <label for="message" class="form-label fw-bold" style="color: #2c3e50;">Message</label>
+              <textarea class="form-control" id="message" name="message" rows="5" placeholder="Please describe your inquiry in detail..." required></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+              <i class="fas fa-paper-plane"></i> Send Message
+            </button>
+
+            <p class="text-muted small mt-3">
+              <i class="fas fa-info-circle"></i> We typically respond within 24 hours during business days.
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="col-lg-5">
+      <div class="sidebar-sticky">
+      <!-- Email -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-envelope" style="color: #3498db;"></i> Email
+          </h5>
+          <p class="mb-1">
+            <a href="mailto:radokistatisticssolutions@gmail.com" style="color: #3498db; text-decoration: none; font-weight: 500;">
+              radokistatisticssolutions@gmail.com
+            </a>
+          </p>
+          <p class="small text-muted mb-0">Response time: Usually within 24 hours</p>
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-phone" style="color: #27ae60;"></i> Phone
+          </h5>
+          <p class="mb-1">
+            <a href="tel:+255753093786" style="color: #3498db; text-decoration: none; font-weight: 500;">
+              +255753093786
+            </a>
+          </p>
+          <p class="small text-muted mb-0">Mon - Fri: 9:00 AM - 6:00 PM EAT</p>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-map-marker-alt" style="color: #e74c3c;"></i> Location
+          </h5>
+          <p class="mb-1" style="color: #2c3e50; font-weight: 500;">
+            6624+Q5 Nelson Mandela Road
+          </p>
+          <p style="color: #2c3e50; font-weight: 500; margin: 0;">
+            Ubungo Riverside, Dar es Salaam
+          </p>
+          <p class="small text-muted mb-0">Tanzania</p>
+        </div>
+      </div>
+
+      <!-- Business Hours -->
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <h5 class="mb-3" style="color: #2c3e50;">
+            <i class="fas fa-clock" style="color: #f39c12;"></i> Business Hours
+          </h5>
+          <ul class="list-unstyled small mb-0">
+            <li class="mb-2">
+              <strong style="color: #2c3e50;">Monday - Friday</strong><br>
+              <span class="text-muted">9:00 AM - 6:00 PM EAT</span>
+            </li>
+            <li class="mb-2">
+              <strong style="color: #2c3e50;">Saturday</strong><br>
+              <span class="text-muted">10:00 AM - 2:00 PM EAT</span>
+            </li>
+            <li>
+              <strong style="color: #2c3e50;">Sunday</strong><br>
+              <span class="text-muted">Closed</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Section -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-light border-0 rounded-top-3">
+          <h5 class="mb-0" style="color: #2c3e50;">
+            <i class="fas fa-question-circle" style="color: #8e44ad;"></i> Frequently Asked Questions
+          </h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-4">Can't find what you need? Check out our <a href="{% url 'core:help_support' %}" style="color: #3498db;">Help & Support page</a> for detailed answers to common questions.</p>
+          <a href="{% url 'core:help_support' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-right"></i> View FAQ
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

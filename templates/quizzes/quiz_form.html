@@ -1,0 +1,123 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.qf-layout { max-width:680px; margin:32px auto; padding:0 16px 60px; }
+.qf-card { background:#fff; border-radius:16px; padding:36px 40px; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+.qf-card h2 { font-size:1.4rem; font-weight:800; color:#2c3e50; margin-bottom:6px; }
+.qf-card .subtitle { font-size:.85rem; color:#7f8c8d; margin-bottom:28px; }
+.field-group { margin-bottom:22px; }
+.field-group label { display:block; font-size:.82rem; font-weight:700; color:#2c3e50; margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em; }
+.field-group input[type=text], .field-group input[type=number], .field-group textarea, .field-group select {
+  width:100%; border:2px solid #e2e8f0; border-radius:10px; padding:10px 14px;
+  font-size:.9rem; color:#2c3e50; outline:none; transition:border .15s;
+}
+.field-group input:focus, .field-group textarea:focus, .field-group select:focus { border-color:#2980b9; }
+.field-group .hint { font-size:.75rem; color:#95a5a6; margin-top:4px; }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-radius:10px; background:#f8fbff; border:2px solid #e8f4fd; margin-bottom:12px; }
+.toggle-row .toggle-label { font-size:.88rem; font-weight:600; color:#2c3e50; }
+.toggle-row .toggle-desc { font-size:.75rem; color:#7f8c8d; margin-top:2px; }
+.form-check-input { width:44px; height:22px; cursor:pointer; }
+.form-check-input:checked { background-color:#2980b9; border-color:#2980b9; }
+.section-divider { border:none; border-top:2px solid #f0f4f8; margin:28px 0; }
+</style>
+
+<div class="qf-layout">
+  <nav aria-label="breadcrumb" style="margin-bottom:16px;">
+    <ol class="breadcrumb" style="font-size:.8rem;">
+      <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.pk %}">{{ course.title }}</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'quizzes:quiz_list' course.pk %}">Quizzes</a></li>
+      <li class="breadcrumb-item active">{% if quiz %}Edit Quiz{% else %}New Quiz{% endif %}</li>
+    </ol>
+  </nav>
+
+  <div class="qf-card">
+    <h2><i class="fas fa-tasks me-2" style="color:#2980b9;"></i>{% if quiz %}Edit Quiz{% else %}Create New Quiz{% endif %}</h2>
+    <p class="subtitle">{{ course.title }}</p>
+
+    <form method="post" action="{% if quiz %}{% url 'quizzes:edit_quiz' quiz.pk %}{% else %}{% url 'quizzes:create_quiz' course.pk %}{% endif %}">
+      {% csrf_token %}
+
+      <!-- Title -->
+      <div class="field-group">
+        <label for="title">Quiz Title <span style="color:#e74c3c;">*</span></label>
+        <input type="text" id="title" name="title" value="{{ quiz.title|default:'' }}"
+               placeholder="e.g., Module 1 Assessment" required>
+      </div>
+
+      <!-- Description -->
+      <div class="field-group">
+        <label for="description">Description <span style="color:#95a5a6; font-weight:400;">(optional)</span></label>
+        <textarea id="description" name="description" rows="3"
+                  placeholder="Brief description or instructions for students…">{{ quiz.description|default:'' }}</textarea>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- Pass mark & time limit side by side -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="field-group">
+          <label for="pass_mark">Pass Mark (%)</label>
+          <input type="number" id="pass_mark" name="pass_mark"
+                 value="{{ quiz.pass_mark|default:70 }}" min="1" max="100">
+          <div class="hint">Minimum score to pass</div>
+        </div>
+        <div class="field-group">
+          <label for="time_limit_minutes">Time Limit (minutes)</label>
+          <input type="number" id="time_limit_minutes" name="time_limit_minutes"
+                 value="{{ quiz.time_limit_minutes|default:'' }}" min="1"
+                 placeholder="Leave blank for no limit">
+          <div class="hint">Leave blank for unlimited time</div>
+        </div>
+      </div>
+
+      <!-- Max attempts -->
+      <div class="field-group">
+        <label for="max_attempts">Max Attempts per Student</label>
+        <input type="number" id="max_attempts" name="max_attempts"
+               value="{{ quiz.max_attempts|default:0 }}" min="0">
+        <div class="hint">Set to 0 for unlimited attempts</div>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- Published toggle -->
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label"><i class="fas fa-eye me-2 text-primary"></i>Publish Quiz</div>
+          <div class="toggle-desc">When published, enrolled students can see and take this quiz.</div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="is_published" id="is_published"
+                 {% if quiz and quiz.is_published %}checked{% endif %}>
+        </div>
+      </div>
+
+      <!-- Completion gate toggle -->
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label"><i class="fas fa-lock me-2" style="color:#e67e22;"></i>Require Pass for Course Completion</div>
+          <div class="toggle-desc">Student must pass this quiz before the course can be marked complete and a certificate issued.</div>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="require_pass_for_completion"
+                 id="require_pass_for_completion"
+                 {% if quiz and quiz.require_pass_for_completion %}checked{% endif %}>
+        </div>
+      </div>
+
+      <div class="d-flex gap-3 mt-4 pt-3" style="border-top:2px solid #f0f4f8;">
+        <a href="{% url 'quizzes:quiz_list' course.pk %}"
+           class="btn btn-outline-secondary" style="border-radius:10px; padding:10px 22px;">
+          Cancel
+        </a>
+        <button type="submit" class="btn"
+                style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:10px;padding:10px 28px;font-weight:700;">
+          {% if quiz %}<i class="fas fa-save me-2"></i>Save Changes{% else %}<i class="fas fa-arrow-right me-2"></i>Create & Add Questions{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

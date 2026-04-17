@@ -1,0 +1,1702 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- ============================================================
+     RADOKI IMS — Redesigned Homepage
+     Requires: Bootstrap 5, Font Awesome 6, Swiper.js (CDN)
+     ============================================================ -->
+
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+
+<style>
+  /* ── Typography ── */
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --blue-deep:  #1a3a5c;
+    --blue-mid:   #2980b9;
+    --blue-light: #5dade2;
+    --accent:     #f39c12;
+    --bg-soft:    #f4f7fb;
+    --text-dark:  #1c2b3a;
+    --text-muted: #637383;
+    --white:      #ffffff;
+    --radius-lg:  18px;
+    --radius-md:  12px;
+    --shadow-sm:  0 2px 12px rgba(26,58,92,.08);
+    --shadow-md:  0 8px 32px rgba(26,58,92,.14);
+    --shadow-lg:  0 20px 60px rgba(26,58,92,.18);
+  }
+
+  * { box-sizing: border-box; }
+
+  body { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text-dark); background: var(--bg-soft); }
+
+  /* Ensure containers are properly centered */
+  .container {
+    width: 100% !important;
+    padding-right: 15px !important;
+    padding-left: 15px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    display: block !important;
+    box-sizing: border-box !important;
+  }
+  @media (min-width: 576px) {
+    .container { max-width: 540px !important; }
+  }
+  @media (min-width: 768px) {
+    .container { max-width: 720px !important; }
+  }
+  @media (min-width: 992px) {
+    .container { max-width: 960px !important; }
+  }
+  @media (min-width: 1200px) {
+    .container { max-width: 1140px !important; }
+  }
+  @media (min-width: 1400px) {
+    .container { max-width: 1320px !important; }
+  }
+  @media (min-width: 1920px) {
+    .container { max-width: 1500px !important; padding-right: 30px !important; padding-left: 30px !important; }
+  }
+  @media (min-width: 2560px) {
+    .container { max-width: 1680px !important; padding-right: 40px !important; padding-left: 40px !important; }
+  }
+
+  /* ── SECTION CENTERING ── */
+  section {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  section > .container {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* ── ROW CENTERING (Bootstrap Grid) ── */
+  .row {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* ── HERO CAROUSEL ── */
+  .hero-swiper { width: 100%; }
+  @media(max-width:768px) { .hero-swiper { margin-top: 66px; } }
+
+  .hero-slide {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 600px;
+    overflow: hidden;
+  }
+  @media(max-width:991px){ .hero-slide { min-height: 500px; } }
+  @media(max-width:768px){ .hero-slide { min-height: 520px; } }
+
+  /* Full-bleed background image layer */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: transform 8s ease;
+    transform: scale(1.05);
+  }
+  .swiper-slide-active .hero-bg { transform: scale(1); }
+
+  /* Dark gradient overlay — strong enough that text is ALWAYS readable */
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      105deg,
+      rgba(5,15,35,.90) 0%,
+      rgba(5,15,35,.82) 38%,
+      rgba(5,15,35,.55) 62%,
+      rgba(5,15,35,.18) 100%
+    ) !important;
+  }
+  /* Mobile: no right-side image so darken the whole slide uniformly */
+  @media(max-width:991px){
+    .hero-overlay {
+      background: rgba(5,15,35,.80) !important;
+    }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 3;
+    color: #fff;
+    width: 100% !important;
+    padding: 80px 20px;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    max-width: 1320px !important;
+  }
+  @media (max-width: 1400px) {
+    .hero-content { max-width: 1140px !important; }
+  }
+  @media (max-width: 1200px) {
+    .hero-content { max-width: 960px !important; }
+  }
+  @media (max-width: 992px) {
+    .hero-content { max-width: 720px !important; }
+  }
+  @media (max-width: 768px) {
+    .hero-content { max-width: 540px !important; padding: 52px 20px; }
+  }
+  @media (max-width: 576px) {
+    .hero-content { max-width: 100% !important; }
+  }
+
+  /* Right-side floating image card */
+  .hero-img-card {
+    position: relative;
+    z-index: 3;
+  }
+  .hero-img-card img {
+    width: 100%;
+    max-width: 440px;
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.45);
+    display: block;
+    margin: 0 auto;
+    object-fit: cover;
+    height: 320px;
+    border: 4px solid rgba(255,255,255,.18);
+  }
+  @media(max-width:991px){ .hero-img-card { display: none; } }
+
+  /* Floating stat chips on the image */
+  .hero-float-chip {
+    position: absolute;
+    background: rgba(255,255,255,.95);
+    backdrop-filter: blur(12px);
+    border-radius: 14px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    z-index: 4;
+    animation: floatChip 3s ease-in-out infinite;
+  }
+  .hero-float-chip:nth-child(2) { animation-delay: 1.5s; }
+
+  @keyframes floatChip {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  .hero-float-chip .chip-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .hero-float-chip .chip-num {
+    font-weight: 800;
+    font-size: .95rem;
+    color: #1c2b3a;
+    line-height: 1;
+  }
+  .hero-float-chip .chip-lbl {
+    font-size: .68rem;
+    color: #637383;
+    font-weight: 500;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.35);
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    padding: 7px 17px;
+    border-radius: 50px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(8px);
+  }
+
+  .hero-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    line-height: 1.2;
+    margin-bottom: 18px;
+    color: #ffffff !important;
+    text-shadow: 0 2px 10px rgba(0,0,0,.5), 0 4px 20px rgba(0,0,0,.4);
+  }
+
+  .hero-sub {
+    font-size: clamp(.92rem, 1.8vw, 1.08rem);
+    opacity: 1;
+    line-height: 1.75;
+    max-width: 500px;
+    margin-bottom: 32px;
+    color: rgba(255, 255, 255, .95) !important;
+    text-shadow: 0 1px 6px rgba(0,0,0,.4), 0 2px 12px rgba(0,0,0,.3);
+  }
+
+  .hero-btn-primary {
+    background: #fff;
+    color: var(--blue-deep);
+    border: none;
+    padding: 13px 30px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: .93rem;
+    cursor: pointer;
+    transition: transform .25s, box-shadow .25s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  }
+  .hero-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.22); color: var(--blue-deep); }
+
+  .hero-btn-outline {
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border: 2px solid rgba(255,255,255,.65);
+    padding: 11px 26px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: .93rem;
+    cursor: pointer;
+    transition: all .25s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(6px);
+  }
+  .hero-btn-outline:hover { background: rgba(255,255,255,.22); border-color: #fff; color: #fff; }
+
+  /* Slide counter */
+  .hero-slide-counter {
+    position: absolute;
+    bottom: 28px;
+    right: 28px;
+    z-index: 10;
+    color: rgba(255,255,255,.7);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    background: rgba(0,0,0,.25);
+    padding: 6px 14px;
+    border-radius: 50px;
+    backdrop-filter: blur(6px);
+  }
+
+  /* Swiper pagination bullets */
+  .hero-pagination {
+    bottom: 24px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .hero-pagination .swiper-pagination-bullet {
+    width: 8px; height: 8px;
+    background: rgba(255,255,255,.5);
+    opacity: 1;
+    transition: all .35s;
+    border-radius: 50px;
+    margin: 0 !important;
+  }
+  .hero-pagination .swiper-pagination-bullet-active {
+    width: 32px;
+    border-radius: 50px;
+    background: #fff;
+  }
+
+  /* Swiper nav arrows */
+  .swiper-button-next, .swiper-button-prev {
+    color: #fff !important;
+    background: rgba(255,255,255,.18) !important;
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 50%;
+    backdrop-filter: blur(8px);
+    transition: background .2s, transform .2s;
+    border: 1.5px solid rgba(255,255,255,.25);
+  }
+  .swiper-button-next:hover, .swiper-button-prev:hover {
+    background: rgba(255,255,255,.32) !important;
+    transform: scale(1.08);
+  }
+  .swiper-button-next::after, .swiper-button-prev::after { font-size: 15px !important; font-weight: 800; }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    background: rgba(41,128,185,.1);
+    padding: 5px 14px;
+    border-radius: 50px;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(1.7rem, 3.5vw, 2.5rem);
+    color: var(--text-dark);
+    line-height: 1.25;
+  }
+
+  /* ── FEATURE CARDS ── */
+  .feature-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    border: 1px solid rgba(26,58,92,.07);
+    box-shadow: var(--shadow-sm);
+    transition: transform .3s, box-shadow .3s;
+    height: 100%;
+  }
+  .feature-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); }
+
+  .feature-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+
+  /* ── COURSE CARDS ── */
+  .course-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(26,58,92,.07);
+    transition: transform .3s, box-shadow .3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .course-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
+
+  /* Real image thumbnail */
+  .course-card-thumb {
+    width: 100%;
+    height: 185px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .course-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .5s ease;
+  }
+  .course-card:hover .course-card-thumb img { transform: scale(1.06); }
+
+  /* Dark gradient scrim at bottom of image */
+  .course-card-thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,.05) 40%, rgba(0,0,0,.45) 100%);
+    pointer-events: none;
+  }
+
+  /* Rating badge on top of image */
+  .course-img-rating {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    z-index: 2;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .course-img-rating i { color: var(--accent); font-size: .7rem; }
+
+  .course-card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+
+  .course-badge {
+    display: inline-block;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 50px;
+    margin-bottom: 10px;
+  }
+
+  .course-title {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+
+  .course-desc {
+    font-size: .85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    flex: 1;
+    margin-bottom: 16px;
+  }
+
+  .course-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    border-top: 1px solid rgba(26,58,92,.07);
+  }
+
+  .course-price {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--blue-mid);
+  }
+
+  .course-rating {
+    font-size: .8rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .course-enroll-btn {
+    display: block;
+    text-align: center;
+    background: var(--blue-mid);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: .85rem;
+    margin-top: 14px;
+    text-decoration: none;
+    transition: background .25s, transform .2s;
+  }
+  .course-enroll-btn:hover { background: var(--blue-deep); transform: translateY(-1px); color: #fff; }
+
+  /* ── COURSE SWIPER ── */
+  .course-swiper { padding: 10px 4px 40px !important; }
+  .course-swiper .swiper-slide { height: auto; }
+
+  /* ── SERVICES GRID ── */
+  .service-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 28px 22px;
+    text-align: center;
+    border: 1px solid rgba(26,58,92,.07);
+    box-shadow: var(--shadow-sm);
+    transition: transform .3s, box-shadow .3s;
+    height: 100%;
+  }
+  .service-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); }
+
+  .service-icon-wrap {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem;
+    margin: 0 auto 16px;
+  }
+
+  /* ── IMPACT NUMBERS ── */
+  .impact-section { background: var(--blue-deep); color: #fff; padding: 80px 20px; }
+
+  .impact-number {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2.8rem, 6vw, 4.5rem);
+    font-weight: 400;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .impact-label {
+    font-size: .9rem;
+    color: rgba(255,255,255,.65);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-top: 6px;
+  }
+
+  .impact-divider {
+    width: 1px;
+    background: rgba(255,255,255,.15);
+    align-self: stretch;
+  }
+  @media(max-width:576px){ .impact-divider { display: none; } }
+
+  /* ── TESTIMONIAL CAROUSEL ── */
+  .testimonial-swiper { padding-bottom: 50px !important; }
+
+  .testimonial-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 32px 28px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(26,58,92,.07);
+    position: relative;
+  }
+
+  .testimonial-card::before {
+    content: '\201C';
+    font-family: Georgia, serif;
+    font-size: 5rem;
+    line-height: 1;
+    color: var(--blue-light);
+    opacity: .25;
+    position: absolute;
+    top: 10px; left: 20px;
+  }
+
+  .testimonial-text {
+    font-size: .98rem;
+    line-height: 1.75;
+    color: var(--text-dark);
+    margin-bottom: 24px;
+    padding-top: 20px;
+    font-style: italic;
+  }
+
+  .testimonial-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--blue-light);
+    font-size: 1.4rem;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-soft);
+  }
+
+  .testimonial-name { font-weight: 700; font-size: .95rem; color: var(--text-dark); }
+  .testimonial-role { font-size: .8rem; color: var(--text-muted); }
+
+  .testimonial-stars { color: var(--accent); font-size: .85rem; margin-bottom: 16px; }
+
+  /* ── NEWSLETTER ── */
+  .newsletter-section {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2471a3 100%);
+    padding: 80px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .newsletter-section::after {
+    content: '';
+    position: absolute;
+    right: -80px; top: -80px;
+    width: 350px; height: 350px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.04);
+    pointer-events: none;
+  }
+
+  .newsletter-input-wrap {
+    background: rgba(255,255,255,.12);
+    border: 1.5px solid rgba(255,255,255,.25);
+    border-radius: 50px;
+    display: flex;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  @media(max-width:480px){
+    .newsletter-input-wrap { flex-direction: column; border-radius: 14px; }
+    .newsletter-input-wrap input { border-radius: 14px 14px 0 0 !important; }
+    .newsletter-submit { border-radius: 0 0 14px 14px !important; }
+  }
+
+  .newsletter-input-wrap input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    padding: 14px 22px;
+    flex: 1;
+    font-size: .95rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .newsletter-input-wrap input::placeholder { color: rgba(255,255,255,.55); }
+
+  .newsletter-submit {
+    background: #fff;
+    color: var(--blue-deep);
+    border: none;
+    padding: 12px 28px;
+    font-weight: 700;
+    font-size: .9rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+    white-space: nowrap;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .newsletter-submit:hover { transform: scale(1.03); box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+
+  /* ── CTA BAND ── */
+  .cta-section { background: var(--bg-soft); padding: 80px 20px; }
+
+  .cta-card {
+    background: linear-gradient(135deg, #2980b9 0%, #1a3a5c 100%);
+    border-radius: 24px;
+    padding: 56px 48px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  @media(max-width:768px){ .cta-card { padding: 40px 24px; } }
+  .cta-card::before {
+    content: '';
+    position: absolute;
+    right: -40px; bottom: -40px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.05);
+  }
+
+  .cta-btn-white {
+    background: #fff;
+    color: var(--blue-deep);
+    padding: 13px 32px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: .95rem;
+    text-decoration: none;
+    transition: transform .25s, box-shadow .25s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cta-btn-white:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.18); color: var(--blue-deep); }
+
+  .cta-btn-ghost {
+    color: #fff;
+    border: 2px solid rgba(255,255,255,.5);
+    padding: 11px 30px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: .95rem;
+    text-decoration: none;
+    transition: all .25s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .cta-btn-ghost:hover { border-color: #fff; background: rgba(255,255,255,.1); color: #fff; }
+
+  /* ── FOOTER ── */
+  footer { 
+    background: #0f2236; 
+    color: rgba(255,255,255,.85); 
+    padding: 60px 20px 40px; 
+  }
+  @media(max-width:768px) { 
+    footer { 
+      padding: 40px 16px 30px; 
+    } 
+  }
+  @media(max-width:576px) { 
+    footer { 
+      padding: 32px 12px 24px; 
+    } 
+  }
+  footer h5 {
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+  }
+  @media(max-width:576px) { 
+    footer h5 { 
+      font-size: 0.85rem; 
+      margin-bottom: 12px;
+    } 
+  }
+  footer a { 
+    color: rgba(255,255,255,.65); 
+    text-decoration: none; 
+    transition: color .2s; 
+  }
+  footer a:hover { 
+    color: #5dade2; 
+  }
+  .footer-divider { 
+    border-color: rgba(255,255,255,.08); 
+    margin: 28px 0 24px; 
+  }
+  @media(max-width:576px) { 
+    .footer-divider { 
+      margin: 20px 0 16px; 
+    } 
+  }
+  .footer-bottom {
+    text-align: center;
+  }
+  .social-btn {
+    width: 38px; 
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.08);
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center;
+    color: rgba(255,255,255,.75);
+    font-size: 0.95rem;
+    line-height: 1;
+    transition: background .2s, color .2s;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .social-btn:hover { 
+    background: #2980b9; 
+    color: #fff; 
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .anim-fade-up  { animation: fadeInUp .7s ease forwards; opacity: 0; }
+  .anim-fade-up:nth-child(1){ animation-delay:.1s }
+  .anim-fade-up:nth-child(2){ animation-delay:.2s }
+  .anim-fade-up:nth-child(3){ animation-delay:.3s }
+  .anim-fade-up:nth-child(4){ animation-delay:.4s }
+  .anim-fade-up:nth-child(5){ animation-delay:.5s }
+  .anim-fade-up:nth-child(6){ animation-delay:.6s }
+
+  /* ── UTILS ── */
+  .btn-view-all {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--blue-deep);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-weight: 700;
+    font-size: .92rem;
+    text-decoration: none;
+    transition: background .25s, transform .2s;
+    cursor: pointer;
+  }
+  .btn-view-all:hover { background: var(--blue-mid); transform: translateY(-2px); color: #fff; }
+
+  .icon-bounce { animation: iconBounce 2.2s ease-in-out infinite; }
+  @keyframes iconBounce {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+</style>
+
+
+<!-- ════════════════════════════════════════
+     1. HERO CAROUSEL  (6 slides with images)
+     ════════════════════════════════════════ -->
+<div class="swiper hero-swiper" id="heroSwiper">
+  <div class="swiper-wrapper">
+
+    <!-- ─── Slide 1: Welcome / Platform Overview ─── -->
+    <div class="swiper-slide hero-slide">
+      <!-- Background image: students studying -->
+      <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&q=80');"></div>
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="hero-badge"><i class="fas fa-star"></i> Top-Rated Learning Platform</div>
+            <h1 class="hero-title">Learn, Grow &amp; Succeed with RADOKI IMS</h1>
+            <p class="hero-sub">Your complete platform for courses, professional training, and expert services — all in one place, designed for ambitious learners.</p>
+            <div class="d-flex flex-wrap gap-3">
+              <a href="{% url 'accounts:register' %}" class="hero-btn-primary"><i class="fas fa-user-plus"></i> Get Started Free</a>
+              <a href="{% url 'courses:course_list' %}" class="hero-btn-outline"><i class="fas fa-book"></i> Browse Courses</a>
+            </div>
+          </div>
+          <div class="col-lg-6 hero-img-card">
+            <div style="position:relative; display:inline-block; width:100%; max-width:440px; margin:0 auto; display:block;">
+              <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&q=80" alt="Students learning together" />
+              <!-- Floating chip 1 -->
+              <div class="hero-float-chip" style="bottom:-18px; left:-18px;">
+                <div class="chip-icon" style="background:rgba(41,128,185,.12); color:#2980b9;"><i class="fas fa-users"></i></div>
+                <div><div class="chip-num">500+</div><div class="chip-lbl">Active Students</div></div>
+              </div>
+              <!-- Floating chip 2 -->
+              <div class="hero-float-chip" style="top:-16px; right:-16px;">
+                <div class="chip-icon" style="background:rgba(243,156,18,.12); color:#f39c12;"><i class="fas fa-star"></i></div>
+                <div><div class="chip-num">4.9 / 5</div><div class="chip-lbl">Avg. Rating</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Slide 2: Course Catalogue ─── -->
+    <div class="swiper-slide hero-slide">
+      <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1600&q=80');"></div>
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="hero-badge"><i class="fas fa-book-open"></i> Rich Course Catalogue</div>
+            <h1 class="hero-title">50+ Courses Across Every Discipline</h1>
+            <p class="hero-sub">From statistics and programming to graphic design and web development — find the exact course that matches your goals and schedule.</p>
+            <div class="d-flex flex-wrap gap-3">
+              <a href="{% url 'courses:course_list' %}" class="hero-btn-primary"><i class="fas fa-search"></i> Explore Courses</a>
+              <a href="{% url 'accounts:register' %}" class="hero-btn-outline"><i class="fas fa-arrow-right"></i> Enroll Today</a>
+            </div>
+          </div>
+          <div class="col-lg-6 hero-img-card">
+            <div style="position:relative; display:block; max-width:440px; margin:0 auto;">
+              <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=800&q=80" alt="Student studying course materials" />
+              <div class="hero-float-chip" style="bottom:-18px; left:-18px;">
+                <div class="chip-icon" style="background:rgba(39,174,96,.12); color:#27ae60;"><i class="fas fa-book"></i></div>
+                <div><div class="chip-num">50+</div><div class="chip-lbl">Courses Available</div></div>
+              </div>
+              <div class="hero-float-chip" style="top:-16px; right:-16px;">
+                <div class="chip-icon" style="background:rgba(142,68,173,.12); color:#8e44ad;"><i class="fas fa-certificate"></i></div>
+                <div><div class="chip-num">Certified</div><div class="chip-lbl">Completion</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Slide 3: Data Analysis & SPSS/STATA/R/Python ─── -->
+    <div class="swiper-slide hero-slide">
+      <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&q=80');"></div>
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="hero-badge" style="background:rgba(39,174,96,.25); border-color:rgba(39,174,96,.5);"><i class="fas fa-flask"></i> Data & Research Services</div>
+            <h1 class="hero-title">Expert Data Analysis &amp; Research Consulting</h1>
+            <p class="hero-sub">SPSS, STATA, R, Python — we help you collect, clean, analyse, and interpret your data so you can publish with confidence.</p>
+            <div class="d-flex flex-wrap gap-3">
+              <a href="{% url 'core:services' %}" class="hero-btn-primary" style="color:#145a32;"><i class="fas fa-arrow-right"></i> View Services</a>
+              <a href="{% url 'core:contact_us' %}" class="hero-btn-outline"><i class="fas fa-envelope"></i> Contact Us</a>
+            </div>
+          </div>
+          <div class="col-lg-6 hero-img-card">
+            <div style="position:relative; display:block; max-width:440px; margin:0 auto;">
+              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80" alt="Data analysis charts on screen" />
+              <div class="hero-float-chip" style="bottom:-18px; left:-18px;">
+                <div class="chip-icon" style="background:rgba(39,174,96,.12); color:#27ae60;"><i class="fas fa-chart-line"></i></div>
+                <div><div class="chip-num">SPSS · R</div><div class="chip-lbl">STATA · Python</div></div>
+              </div>
+              <div class="hero-float-chip" style="top:-16px; right:-16px;">
+                <div class="chip-icon" style="background:rgba(243,156,18,.12); color:#f39c12;"><i class="fas fa-clock"></i></div>
+                <div><div class="chip-num">48 hrs</div><div class="chip-lbl">Fast Turnaround</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Slide 4: Graphic Design & 3D / Creative Services ─── -->
+    <div class="swiper-slide hero-slide">
+      <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1600&q=80');"></div>
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="hero-badge" style="background:rgba(142,68,173,.25); border-color:rgba(142,68,173,.5);"><i class="fas fa-paint-brush"></i> Design & Development</div>
+            <h1 class="hero-title">Stunning Designs &amp; Web Solutions Built for You</h1>
+            <p class="hero-sub">From logo design and 3D visualisations to full-stack web development and CVs — we bring your vision to life, pixel by pixel.</p>
+            <div class="d-flex flex-wrap gap-3">
+              <a href="{% url 'core:services' %}" class="hero-btn-primary" style="color:#4a235a;"><i class="fas fa-briefcase"></i> Our Portfolio</a>
+              <a href="{% url 'core:contact_us' %}" class="hero-btn-outline"><i class="fas fa-phone"></i> Talk to Us</a>
+            </div>
+          </div>
+          <div class="col-lg-6 hero-img-card">
+            <div style="position:relative; display:block; max-width:440px; margin:0 auto;">
+              <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=800&q=80" alt="Graphic designer working on colorful project" />
+              <div class="hero-float-chip" style="bottom:-18px; left:-18px;">
+                <div class="chip-icon" style="background:rgba(142,68,173,.12); color:#8e44ad;"><i class="fas fa-palette"></i></div>
+                <div><div class="chip-num">Graphics</div><div class="chip-lbl">Web · 3D · CV</div></div>
+              </div>
+              <div class="hero-float-chip" style="top:-16px; right:-16px;">
+                <div class="chip-icon" style="background:rgba(243,156,18,.12); color:#f39c12;"><i class="fas fa-award"></i></div>
+                <div><div class="chip-num">Pro Quality</div><div class="chip-lbl">Every Project</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Slide 5: Instructor / Teach on RADOKI ─── -->
+    <div class="swiper-slide hero-slide">
+      <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1600&q=80');"></div>
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="hero-badge"><i class="fas fa-chalkboard-teacher"></i> For Instructors</div>
+            <h1 class="hero-title">Share Your Expertise &amp; Build Your Income</h1>
+            <p class="hero-sub">Create and sell courses on RADOKI IMS. Upload materials, manage enrollments, and track your revenue — all from a clean instructor dashboard.</p>
+            <div class="d-flex flex-wrap gap-3">
+              <a href="{% url 'accounts:register' %}" class="hero-btn-primary"><i class="fas fa-chalkboard"></i> Start Teaching</a>
+              <a href="{% url 'core:contact_us' %}" class="hero-btn-outline"><i class="fas fa-info-circle"></i> Learn More</a>
+            </div>
+          </div>
+          <div class="col-lg-6 hero-img-card">
+            <div style="position:relative; display:block; max-width:440px; margin:0 auto;">
+              <img src="https://images.unsplash.com/photo-1544531585-9847b68c8c86?w=800&q=80" alt="Instructor teaching a class" />
+              <div class="hero-float-chip" style="bottom:-18px; left:-18px;">
+                <div class="chip-icon" style="background:rgba(41,128,185,.12); color:#2980b9;"><i class="fas fa-dollar-sign"></i></div>
+                <div><div class="chip-num">Earn More</div><div class="chip-lbl">Your Schedule</div></div>
+              </div>
+              <div class="hero-float-chip" style="top:-16px; right:-16px;">
+                <div class="chip-icon" style="background:rgba(39,174,96,.12); color:#27ae60;"><i class="fas fa-users"></i></div>
+                <div><div class="chip-num">Growing</div><div class="chip-lbl">Student Base</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Slide 6: Community & Success Stories ─── -->
+    <div class="swiper-slide hero-slide">
+      <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1600&q=80');"></div>
+      <div class="hero-overlay"></div>
+
+      <div class="container hero-content">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="hero-badge"><i class="fas fa-trophy"></i> Join Our Community</div>
+            <h1 class="hero-title">Thousands of Learners Already Transforming Their Careers</h1>
+            <p class="hero-sub">From university students to working professionals — the RADOKI community is growing fast. Your success story starts here.</p>
+            <div class="d-flex flex-wrap gap-3">
+              <a href="{% url 'accounts:register' %}" class="hero-btn-primary"><i class="fas fa-user-plus"></i> Join Free Today</a>
+              <a href="{% url 'courses:course_list' %}" class="hero-btn-outline"><i class="fas fa-book"></i> See All Courses</a>
+            </div>
+          </div>
+          <div class="col-lg-6 hero-img-card">
+            <div style="position:relative; display:block; max-width:440px; margin:0 auto;">
+              <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80" alt="Happy diverse group of learners" />
+              <div class="hero-float-chip" style="bottom:-18px; left:-18px;">
+                <div class="chip-icon" style="background:rgba(243,156,18,.12); color:#f39c12;"><i class="fas fa-heart"></i></div>
+                <div><div class="chip-num">98%</div><div class="chip-lbl">Satisfaction Rate</div></div>
+              </div>
+              <div class="hero-float-chip" style="top:-16px; right:-16px;">
+                <div class="chip-icon" style="background:rgba(41,128,185,.12); color:#2980b9;"><i class="fas fa-globe"></i></div>
+                <div><div class="chip-num">Tanzania</div><div class="chip-lbl">&amp; Beyond</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /swiper-wrapper -->
+
+  <!-- Slide counter -->
+  <div class="hero-slide-counter" id="heroCounter">1 / 6</div>
+
+  <!-- Pagination only — no nav arrows -->
+  <div class="swiper-pagination hero-pagination"></div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     2. FEATURES GRID
+     ════════════════════════════════════════ -->
+<section style="padding: 80px 20px; background: var(--bg-soft);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-label">Why RADOKI</span>
+      <h2 class="section-title mt-2">Everything You Need to Learn &amp; Grow</h2>
+    </div>
+    <div class="row g-3 g-md-4">
+      <div class="col-12 col-sm-6 col-lg-4 anim-fade-up">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(52,152,219,.12); color:#3498db;"><i class="fas fa-search"></i></div>
+          <h5 style="font-weight:700; margin-bottom:8px;">Discover Courses</h5>
+          <p class="mb-0" style="color:var(--text-muted); font-size:.9rem; line-height:1.65;">Browse hundreds of courses from expert instructors with easy search and filters.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 anim-fade-up">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(243,156,18,.12); color:#f39c12;"><i class="fas fa-bolt"></i></div>
+          <h5 style="font-weight:700; margin-bottom:8px;">Quick Enrollment</h5>
+          <p class="mb-0" style="color:var(--text-muted); font-size:.9rem; line-height:1.65;">Enroll in minutes with secure payments and transparent receipt verification.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 anim-fade-up">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(39,174,96,.12); color:#27ae60;"><i class="fas fa-mobile-alt"></i></div>
+          <h5 style="font-weight:700; margin-bottom:8px;">Learn Anywhere</h5>
+          <p class="mb-0" style="color:var(--text-muted); font-size:.9rem; line-height:1.65;">Mobile-optimised platform lets you study on the go at your own pace.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 anim-fade-up">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(142,68,173,.12); color:#8e44ad;"><i class="fas fa-chalkboard-teacher"></i></div>
+          <h5 style="font-weight:700; margin-bottom:8px;">Create &amp; Teach</h5>
+          <p class="mb-0" style="color:var(--text-muted); font-size:.9rem; line-height:1.65;">Build and manage courses, upload resources, and track enrollments effortlessly.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 anim-fade-up">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(231,76,60,.12); color:#e74c3c;"><i class="fas fa-credit-card"></i></div>
+          <h5 style="font-weight:700; margin-bottom:8px;">Smart Payments</h5>
+          <p class="mb-0" style="color:var(--text-muted); font-size:.9rem; line-height:1.65;">Instant approval system with automatic access granting after verification.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-4 anim-fade-up">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(22,160,133,.12); color:#16a085;"><i class="fas fa-cogs"></i></div>
+          <h5 style="font-weight:700; margin-bottom:8px;">Built for Success</h5>
+          <p class="mb-0" style="color:var(--text-muted); font-size:.9rem; line-height:1.65;">Professional tools designed for education — profiles, progress, and organisation.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     3. COURSE CAROUSEL
+     ════════════════════════════════════════ -->
+<section style="padding: 80px 20px; background: var(--white);">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-end justify-content-between mb-5 gap-3">
+      <div>
+        <span class="section-label">Featured Courses</span>
+        <h2 class="section-title mt-2">Courses Handpicked for You</h2>
+      </div>
+      <a href="{% url 'courses:course_list' %}" class="btn-view-all"><i class="fas fa-grid-2"></i> View All Courses</a>
+    </div>
+
+    <div class="swiper course-swiper" id="courseSwiper">
+      <div class="swiper-wrapper">
+
+        <!-- Course Card 1 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80" alt="SPSS Data Analysis">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.9 (120)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(52,152,219,.12); color:#2980b9;">Data Analysis</span>
+              <h6 class="course-title">SPSS for Beginners: Master Data Analysis</h6>
+              <p class="course-desc">Start with SPSS basics and advance to regression, ANOVA, and reporting with real datasets. Ideal for researchers and students.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 80,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 2 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=600&q=80" alt="Python Programming">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.8 (87)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(39,174,96,.12); color:#27ae60;">Programming</span>
+              <h6 class="course-title">Python for Data Science &amp; Research</h6>
+              <p class="course-desc">Project-based Python training for data science: pandas, NumPy, plotting, automation, and analysis pipelines.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 480,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 3 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1543286386-713bdd548da4?w=600&q=80" alt="R Programming Statistics">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.9 (64)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(142,68,173,.12); color:#8e44ad;">Statistics</span>
+              <h6 class="course-title">R Programming for Statistical Analysis</h6>
+              <p class="course-desc">Practical R programming for statisticians: tidyverse, advanced modelling, and reproducible report generation.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 400,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 4 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80" alt="STATA Research Data">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.7 (53)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(230,126,34,.12); color:#e67e22;">Data Tools</span>
+              <h6 class="course-title">STATA: From Zero to Research Ready</h6>
+              <p class="course-desc">STATA workflow for research: data management, survey analysis, time-series, and clear output for publications.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 330,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 5 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80" alt="Graphic Design Adobe">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.8 (98)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(22,160,133,.12); color:#16a085;">Design</span>
+              <h6 class="course-title">Graphic Design Essentials with Adobe Tools</h6>
+              <p class="course-desc">Essential graphic design with Adobe tools & Canva, focusing on branding, social media, and marketing collateral.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 50,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 6 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=600&q=80" alt="Web Development Coding">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.9 (145)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(41,128,185,.12); color:#2980b9;">Web Dev</span>
+              <h6 class="course-title">Full-Stack Web Development Bootcamp</h6>
+              <p class="course-desc">End-to-end Full-Stack program: frontend, backend, REST APIs, database design, and deployment on cloud platforms.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 850,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 7 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80" alt="Excel Training">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.7 (52)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(52,152,219,.12); color:#2980b9;">Data Tools</span>
+              <h6 class="course-title">MICROSOFT EXCEL</h6>
+              <p class="course-desc">Comprehensive Excel course: formulas, pivot tables, dashboards, automation with macros, and data modeling.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 70,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 8 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&q=80" alt="ODK Kobo Toolbox">
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.8 (44)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(39,174,96,.12); color:#27ae60;">Field Tools</span>
+              <h6 class="course-title">ODK/Kobo Toolbox</h6>
+              <p class="course-desc">Field data collection made easy with ODK/Kobo: form design, survey publishing, offline data capture and sync.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 80,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Card 9 -->
+        <div class="swiper-slide">
+          <div class="course-card">
+            <div class="course-card-thumb">
+              <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=600&q=80" alt="NVivo Training" loading="lazy" style="object-fit:cover;" />
+              <span class="course-img-rating"><i class="fas fa-star"></i> 4.6 (38)</span>
+            </div>
+            <div class="course-card-body">
+              <span class="course-badge" style="background:rgba(142,68,173,.12); color:#8e44ad;">Qualitative</span>
+              <h6 class="course-title">NVivo</h6>
+              <p class="course-desc">NVivo qualitative analysis: import data, code transcripts, query themes and create visual evidence for reports.</p>
+              <div class="course-meta">
+                <span class="course-price">TZS 150,000</span>
+              </div>
+              <a href="{% url 'courses:course_list' %}" class="course-enroll-btn">Enroll Now <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="swiper-pagination" style="bottom:0;"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     4. SERVICES SECTION
+     ════════════════════════════════════════ -->
+<section style="padding: 80px 20px; background: var(--bg-soft);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-label">Professional Services</span>
+      <h2 class="section-title mt-2">Beyond Education — We Do More</h2>
+      <p class="mt-3" style="color:var(--text-muted); max-width:540px; margin: 12px auto 0; font-size:.97rem;">Tailored professional services to support your academic and career goals.</p>
+    </div>
+    <div class="row g-3 g-md-4">
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="service-card">
+          <div class="service-icon-wrap" style="background:rgba(52,152,219,.12); color:#3498db;"><i class="fas fa-book-open"></i></div>
+          <h6 style="font-weight:700; color:var(--text-dark); margin-bottom:8px;">Research &amp; Writing</h6>
+          <p style="font-size:.83rem; color:var(--text-muted); margin:0;">Proposals, dissertations, concept notes, and academic papers.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="service-card">
+          <div class="service-icon-wrap" style="background:rgba(39,174,96,.12); color:#27ae60;"><i class="fas fa-database"></i></div>
+          <h6 style="font-weight:700; color:var(--text-dark); margin-bottom:8px;">Data Services</h6>
+          <p style="font-size:.83rem; color:var(--text-muted); margin:0;">Collection, cleaning, analysis, and management of research data.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="service-card">
+          <div class="service-icon-wrap" style="background:rgba(230,126,34,.12); color:#e67e22;"><i class="fas fa-graduation-cap"></i></div>
+          <h6 style="font-weight:700; color:var(--text-dark); margin-bottom:8px;">Training Programs</h6>
+          <p style="font-size:.83rem; color:var(--text-muted); margin:0;">SPSS, STATA, R, Python, Excel, Power BI and more.</p>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="service-card">
+          <div class="service-icon-wrap" style="background:rgba(142,68,173,.12); color:#8e44ad;"><i class="fas fa-palette"></i></div>
+          <h6 style="font-weight:700; color:var(--text-dark); margin-bottom:8px;">Design &amp; Dev</h6>
+          <p style="font-size:.83rem; color:var(--text-muted); margin:0;">Graphics, web design, 3D visualisations, CVs and branding.</p>
+        </div>
+      </div>
+    </div>
+    <div class="text-center mt-5">
+      <a href="{% url 'core:services' %}" class="btn-view-all"><i class="fas fa-arrow-right"></i> View All Services</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     5. OUR IMPACT — Full-bleed numbers
+     ════════════════════════════════════════ -->
+<section class="impact-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span style="display:inline-block; font-size:.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.5); background:rgba(255,255,255,.08); padding:5px 14px; border-radius:50px; margin-bottom:12px;">Our Impact</span>
+      <h2 style="font-family:'Instrument Serif',serif; font-size:clamp(1.7rem,3.5vw,2.5rem); color:#fff; line-height:1.25;">Numbers That Speak for Themselves</h2>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 gap-md-0">
+
+      <div class="text-center px-4 py-3 flex-fill" style="min-width:160px;">
+        <div class="impact-number">500<span style="color:var(--accent);">+</span></div>
+        <div class="impact-label">Active Users</div>
+      </div>
+
+      <div class="impact-divider d-none d-md-block"></div>
+
+      <div class="text-center px-4 py-3 flex-fill" style="min-width:160px;">
+        <div class="impact-number">50<span style="color:var(--accent);">+</span></div>
+        <div class="impact-label">Courses Available</div>
+      </div>
+
+      <div class="impact-divider d-none d-md-block"></div>
+
+      <div class="text-center px-4 py-3 flex-fill" style="min-width:160px;">
+        <div class="impact-number">4.9<span style="color:var(--accent);">/5</span></div>
+        <div class="impact-label">Average Rating</div>
+      </div>
+
+      <div class="impact-divider d-none d-md-block"></div>
+
+      <div class="text-center px-4 py-3 flex-fill" style="min-width:160px;">
+        <div class="impact-number">12<span style="color:var(--accent);">+</span></div>
+        <div class="impact-label">Expert Instructors</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     6. TESTIMONIALS CAROUSEL
+     ════════════════════════════════════════ -->
+<section style="padding: 80px 20px; background: var(--white);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-label">Testimonials</span>
+      <h2 class="section-title mt-2">Hear From Our Community</h2>
+    </div>
+
+    <div class="swiper testimonial-swiper" id="testimonialSwiper">
+      <div class="swiper-wrapper">
+
+        <!-- T1 -->
+        <div class="swiper-slide">
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-text">"The SPSS course completely changed how I approach my research. The instructor broke down complex concepts so clearly that within a week I was running regressions confidently. Best investment in my academic career."</p>
+            <div class="d-flex align-items-center gap-3">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#2980b9,#1a3a5c); color:#fff; font-weight:700;">AK</div>
+              <div>
+                <div class="testimonial-name">Amina Khalid</div>
+                <div class="testimonial-role">PhD Student, University of Dar es Salaam</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T2 -->
+        <div class="swiper-slide">
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-text">"RADOKI's data analysis service saved my dissertation. The team cleaned my dataset, ran the analysis, and even helped me interpret the results for my supervisor. Professional, fast, and affordable."</p>
+            <div class="d-flex align-items-center gap-3">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#145a32,#27ae60); color:#fff; font-weight:700;">JM</div>
+              <div>
+                <div class="testimonial-name">John Mwangi</div>
+                <div class="testimonial-role">MSc Student, Muhimbili University</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T3 -->
+        <div class="swiper-slide">
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-text">"I enrolled in the Python course as a complete beginner. The structured curriculum and supportive instructor made all the difference. I now automate my data workflows every single day at work!"</p>
+            <div class="d-flex align-items-center gap-3">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#6c3483,#a569bd); color:#fff; font-weight:700;">FN</div>
+              <div>
+                <div class="testimonial-name">Fatuma Njau</div>
+                <div class="testimonial-role">Data Analyst, Regional Analytics Firm</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T4 -->
+        <div class="swiper-slide">
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-text">"The web development course is outstanding. Raymond is a patient and highly skilled instructor. Within two months I had my first freelance client. RADOKI truly delivers on its promise."</p>
+            <div class="d-flex align-items-center gap-3">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#7d3c00,#e67e22); color:#fff; font-weight:700;">DM</div>
+              <div>
+                <div class="testimonial-name">David Mwamba</div>
+                <div class="testimonial-role">Freelance Web Developer, Mwanza</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T5 -->
+        <div class="swiper-slide">
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★☆</div>
+            <p class="testimonial-text">"As an instructor on the platform, I appreciate how easy it is to upload materials and track student progress. The payment system is transparent and payouts are always on time. Highly recommended for fellow educators."</p>
+            <div class="d-flex align-items-center gap-3">
+              <div class="testimonial-avatar" style="background:linear-gradient(135deg,#0e3d5e,#1abc9c); color:#fff; font-weight:700;">PS</div>
+              <div>
+                <div class="testimonial-name">Prof. Salima Pendo</div>
+                <div class="testimonial-role">Instructor &amp; Statistician, Dodoma</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="swiper-pagination" style="bottom:0;"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     7. NEWSLETTER
+     ════════════════════════════════════════ -->
+<section class="newsletter-section">
+  <div class="container text-center" style="position:relative; z-index:2;">
+    <span style="display:inline-block; font-size:.75rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.55); background:rgba(255,255,255,.1); padding:5px 14px; border-radius:50px; margin-bottom:16px;">Newsletter</span>
+    <h2 style="font-family:'Instrument Serif',serif; font-size:clamp(1.8rem,4vw,2.6rem); color:#fff; margin-bottom:14px;">Stay in the Loop</h2>
+    <p style="color:rgba(255,255,255,.75); font-size:1rem; max-width:460px; margin:0 auto 32px; line-height:1.7;">Get new course launches, expert tips, and exclusive offers delivered straight to your inbox — no spam, ever.</p>
+
+    <form id="newsletterForm" style="max-width:480px; margin:0 auto 16px;">
+      {% csrf_token %}
+      <div class="newsletter-input-wrap">
+        <input type="email" id="newsletterEmail" placeholder="Enter your email address" required autocomplete="email"/>
+        <button type="submit" class="newsletter-submit"><i class="fas fa-paper-plane"></i> Subscribe</button>
+      </div>
+    </form>
+
+    <div id="newsletterSuccess" style="display:none; color:#2ecc71; font-size:.9rem; margin-top:12px;">
+      <i class="fas fa-check-circle"></i> <span id="successMessage">Thank you! You're now subscribed.</span>
+    </div>
+
+    <div id="newsletterError" style="display:none; color:#e74c3c; font-size:.9rem; margin-top:12px;">
+      <i class="fas fa-exclamation-circle"></i> <span id="errorMessage">An error occurred. Please try again.</span>
+    </div>
+
+    <p style="color:rgba(255,255,255,.45); font-size:.78rem; margin-top:14px;"><i class="fas fa-lock"></i> We respect your privacy. Unsubscribe at any time.</p>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     8. CTA BAND
+     ════════════════════════════════════════ -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card">
+      <div class="row align-items-center">
+        <div class="col-lg-7 mb-4 mb-lg-0" style="position:relative; z-index:2;">
+          <h2 style="font-family:'Instrument Serif',serif; font-size:clamp(1.8rem,4vw,2.8rem); margin-bottom:14px;">Ready to Get Started?</h2>
+          <p style="opacity:.88; font-size:1.05rem; margin:0; max-width:480px;">Join thousands of learners and instructors already using RADOKI IMS to achieve their goals.</p>
+        </div>
+        <div class="col-lg-5 d-flex flex-wrap gap-3 justify-content-lg-end" style="position:relative; z-index:2;">
+          <a href="{% url 'accounts:register' %}" class="cta-btn-white"><i class="fas fa-user-plus"></i> Create Free Account</a>
+          <a href="{% url 'courses:course_list' %}" class="cta-btn-ghost"><i class="fas fa-book"></i> Browse Courses</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     9. FOOTER
+     ════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="row g-4 mb-4">
+      <!-- Column 1: About -->
+      <div class="col-12 col-md-4">
+        <h5 class="footer-heading"><i class="fas fa-graduation-cap"></i> RADOKI IMS</h5>
+        <p style="font-size: 0.875rem; color: rgba(255,255,255,.6); line-height: 1.7; margin-bottom: 16px;">Your complete learning management system for the modern world.</p>
+        <div style="font-size: 0.875rem; color: rgba(255,255,255,.6); line-height: 1.8;">
+          <p style="margin-bottom: 8px;"><i class="fas fa-map-marker-alt me-2"></i>6624+Q5 Nelson Mandela Road, Ubungo Riverside</p>
+          <p style="margin-bottom: 8px;"><i class="fas fa-phone me-2"></i>+255 753 093 786</p>
+          <p style="margin-bottom: 0;"><i class="fas fa-envelope me-2"></i><a href="mailto:radokistatisticssolutions@gmail.com" style="color: rgba(255,255,255,.8);">radokistatisticssolutions@gmail.com</a></p>
+        </div>
+      </div>
+
+      <!-- Column 2: Quick Links -->
+      <div class="col-12 col-sm-6 col-md-4">
+        <h5 class="footer-heading">Quick Links</h5>
+        <ul class="list-unstyled" style="font-size: 0.875rem; line-height: 2;">
+          <li><a href="{% url 'courses:course_list' %}"><i class="fas fa-chevron-right fa-xs me-2"></i>Browse Courses</a></li>
+          <li><a href="{% url 'accounts:login' %}"><i class="fas fa-chevron-right fa-xs me-2"></i>Sign In</a></li>
+          <li><a href="{% url 'accounts:register' %}"><i class="fas fa-chevron-right fa-xs me-2"></i>Get Started</a></li>
+          <li><a href="{% url 'core:services' %}"><i class="fas fa-chevron-right fa-xs me-2"></i>Our Services</a></li>
+          <li><a href="{% url 'core:help_support' %}"><i class="fas fa-chevron-right fa-xs me-2"></i>Help &amp; Support</a></li>
+          <li><a href="{% url 'core:terms_privacy' %}"><i class="fas fa-chevron-right fa-xs me-2"></i>Terms &amp; Privacy</a></li>
+          <li><a href="{% url 'core:contact_us' %}"><i class="fas fa-chevron-right fa-xs me-2"></i>Contact Us</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Social & Hours -->
+      <div class="col-12 col-sm-6 col-md-4">
+        <h5 class="footer-heading">Follow Us</h5>
+        <p style="font-size: 0.875rem; color: rgba(255,255,255,.6); margin-bottom: 14px;">Stay connected for updates and announcements.</p>
+        <div class="d-flex gap-2 mb-4 align-items-center">
+          <a href="https://www.facebook.com/share/18JCmwuZEg/" target="_blank" rel="noopener" class="social-btn" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://www.instagram.com/invites/contact/?utm_source=ig_contact_invite&utm_medium=copy_link&utm_content=k09mh1t" target="_blank" rel="noopener" class="social-btn" title="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.linkedin.com/in/raymond-kishiwa-bb254a275" target="_blank" rel="noopener" class="social-btn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://www.youtube.com/@radoki.statistics" target="_blank" rel="noopener" class="social-btn" title="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+        <div style="font-size: 0.875rem; color: rgba(255,255,255,.6);">
+          <p style="margin-bottom: 8px; font-weight: 600;">Business Hours</p>
+          <div style="line-height: 1.6;">
+            <p style="margin-bottom: 4px;">Mon – Fri: 9:00 AM – 6:00 PM</p>
+            <p style="margin-bottom: 0;">Sat – Sun: Closed</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="footer-divider">
+
+    <!-- Bottom Section -->
+    <div class="footer-bottom">
+      <p style="margin-bottom: 0; text-align: center; font-size: 0.8rem; color: rgba(255,255,255,.5);">&copy; 2026 RADOKI IMS. All rights reserved.</p>
+      <div class="d-flex justify-content-center gap-3 mt-3 flex-wrap" style="font-size: 0.8rem;">
+        <a href="{% url 'core:terms_privacy' %}" style="color: rgba(255,255,255,.6);">Privacy Policy</a>
+        <a href="{% url 'core:terms_privacy' %}" style="color: rgba(255,255,255,.6);">Terms of Service</a>
+        <a href="{% url 'core:contact_us' %}" style="color: rgba(255,255,255,.6);">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+<script>
+  // Hero Swiper
+  const heroSwiper = new Swiper('#heroSwiper', {
+    loop: true,
+    autoplay: { delay: 5500, disableOnInteraction: false, pauseOnMouseEnter: true },
+    speed: 900,
+    effect: 'fade',
+    fadeEffect: { crossFade: true },
+    pagination: { el: '.hero-pagination', clickable: true },
+    on: {
+      slideChange: function () {
+        const real = this.realIndex + 1;
+        document.getElementById('heroCounter').textContent = real + ' / 6';
+      }
+    }
+  });
+
+  // Course Swiper
+  const courseSwiper = new Swiper('#courseSwiper', {
+    loop: true,
+    autoplay: { delay: 3500, disableOnInteraction: false },
+    speed: 600,
+    slidesPerView: 1,
+    spaceBetween: 20,
+    pagination: { el: '#courseSwiper .swiper-pagination', clickable: true },
+    breakpoints: {
+      576:  { slidesPerView: 2 },
+      992:  { slidesPerView: 3 },
+      1200: { slidesPerView: 3.2 },
+    }
+  });
+
+  // Testimonial Swiper
+  const testimonialSwiper = new Swiper('#testimonialSwiper', {
+    loop: true,
+    autoplay: { delay: 4500, disableOnInteraction: false },
+    speed: 700,
+    slidesPerView: 1,
+    spaceBetween: 24,
+    pagination: { el: '#testimonialSwiper .swiper-pagination', clickable: true },
+    breakpoints: {
+      768:  { slidesPerView: 2 },
+      1100: { slidesPerView: 3 },
+    }
+  });
+
+  // Newsletter subscription handler
+  document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('newsletterEmail').value.trim();
+    const form = document.getElementById('newsletterForm');
+    const csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+    
+    // Disable button during submission
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
+    
+    // Send AJAX request
+    fetch('{% url "core:subscribe_newsletter" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Hide form and show success message
+        form.style.display = 'none';
+        document.getElementById('newsletterSuccess').style.display = 'block';
+        document.getElementById('successMessage').textContent = data.message;
+      } else {
+        // Show error message
+        document.getElementById('newsletterError').style.display = 'block';
+        document.getElementById('errorMessage').textContent = data.message;
+        // Reset form
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      document.getElementById('newsletterError').style.display = 'block';
+      document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
+      // Reset form
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    });
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,334 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────── */
+.cp-wrap    { max-width:1050px; margin:28px auto; padding:0 16px 80px; }
+.cp-header  { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:26px; }
+.cp-header h1 { font-size:1.5rem; font-weight:800; color:#2c3e50; margin:0; }
+
+/* ── Summary strip ───────────────────────────────────────────────────── */
+.cp-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:14px; margin-bottom:28px; }
+.cp-stat  { background:#fff; border-radius:14px; padding:18px 14px; text-align:center;
+            box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.cp-stat-val { font-size:1.8rem; font-weight:800; line-height:1; }
+.cp-stat-lbl { font-size:.7rem; color:#7f8c8d; text-transform:uppercase; letter-spacing:.05em; margin-top:5px; }
+
+/* ── Overall bar ─────────────────────────────────────────────────────── */
+.overall-bar-wrap { background:#fff; border-radius:14px; padding:20px 22px; margin-bottom:24px;
+                    box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.overall-bar-header { display:flex; justify-content:space-between; margin-bottom:10px; font-size:.85rem; font-weight:700; color:#2c3e50; }
+.bar-track { background:#eaf0f6; border-radius:999px; height:14px; overflow:hidden; }
+.bar-fill  { height:100%; border-radius:999px; transition:width .8s ease; }
+.bar-fill.blue   { background:linear-gradient(90deg,#1a5276,#2980b9); }
+.bar-fill.green  { background:linear-gradient(90deg,#1e8449,#27ae60); }
+.bar-fill.purple { background:linear-gradient(90deg,#6c3483,#8e44ad); }
+
+/* ── Module cards ────────────────────────────────────────────────────── */
+.module-card { background:#fff; border-radius:14px; margin-bottom:14px;
+               box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; }
+.mc-header   { padding:14px 20px; display:flex; align-items:center; justify-content:space-between;
+               gap:12px; cursor:pointer; background:#f8fbff; border-bottom:2px solid #eaf0f8; user-select:none; }
+.mc-title    { font-weight:700; color:#1a5276; font-size:.92rem; display:flex; align-items:center; gap:10px; }
+.mc-meta     { font-size:.75rem; color:#7f8c8d; white-space:nowrap; }
+.mc-toggle   { color:#2980b9; font-size:.85rem; transition:transform .25s; }
+.mc-header.open .mc-toggle { transform:rotate(180deg); }
+.mc-body     { overflow:hidden; transition:max-height .3s ease; }
+
+/* ── Lesson rows ─────────────────────────────────────────────────────── */
+.lesson-table { width:100%; border-collapse:collapse; }
+.lesson-table th { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;
+                   color:#95a5a6; padding:10px 18px; background:#fafcff; border-bottom:1px solid #eaf0f8; }
+.lesson-table td { padding:11px 18px; border-bottom:1px solid #f0f4f8; font-size:.85rem; vertical-align:middle; }
+.lesson-table tr:last-child td { border-bottom:none; }
+.lesson-table tr:hover td { background:#f8fbff; }
+
+.done-badge { display:inline-flex; align-items:center; gap:5px; background:#d5f5e3; color:#1e8449;
+              border-radius:20px; padding:3px 10px; font-size:.72rem; font-weight:700; }
+.pend-badge { display:inline-flex; align-items:center; gap:5px; background:#fdf2f8; color:#a93226;
+              border-radius:20px; padding:3px 10px; font-size:.72rem; font-weight:700; }
+
+/* ── Quiz / Assignment sections ──────────────────────────────────────── */
+.section-box { background:#fff; border-radius:14px; padding:20px 22px; margin-bottom:14px;
+               box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.section-title { font-size:.9rem; font-weight:800; color:#2c3e50; margin-bottom:14px;
+                 display:flex; align-items:center; gap:8px; }
+.row-item { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+            padding:10px 0; border-bottom:1px solid #f0f4f8; }
+.row-item:last-child { border-bottom:none; }
+.row-name { font-size:.88rem; font-weight:600; color:#2c3e50; flex:1; }
+.score-pill { display:inline-block; border-radius:20px; padding:3px 12px; font-size:.75rem; font-weight:700; }
+.score-pass  { background:#d5f5e3; color:#1e8449; }
+.score-fail  { background:#fadbd8; color:#c0392b; }
+.score-pend  { background:#fdf5e6; color:#d68910; }
+.score-none  { background:#eaf0f6; color:#7f8c8d; }
+</style>
+
+<div class="cp-wrap">
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <div class="cp-header">
+    <div>
+      <nav aria-label="breadcrumb" style="margin-bottom:5px;">
+        <ol class="breadcrumb" style="font-size:.78rem; margin:0;">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' course.pk %}">{{ course.title|truncatechars:30 }}</a></li>
+          <li class="breadcrumb-item active">My Progress</li>
+        </ol>
+      </nav>
+      <h1><i class="fas fa-chart-bar me-2" style="color:#2980b9;"></i>My Progress</h1>
+      <div style="font-size:.82rem; color:#7f8c8d; margin-top:3px;">{{ course.title }}</div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a href="{% url 'courses:course_detail' course.pk %}" class="btn btn-outline-primary"
+         style="border-radius:10px; font-size:.82rem; font-weight:600; padding:8px 16px;">
+        <i class="fas fa-arrow-left me-1"></i>Course Page
+      </a>
+      {% if enrollment.completed %}
+      <a href="{% url 'courses:generate_certificate' enrollment.pk %}" class="btn"
+         style="background:linear-gradient(135deg,#d4ac0d,#f39c12);color:#fff;border-radius:10px;font-size:.82rem;font-weight:700;padding:8px 16px;">
+        <i class="fas fa-certificate me-1"></i>Certificate
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Summary strip ───────────────────────────────────────────────── -->
+  <div class="cp-strip">
+    <div class="cp-stat">
+      <div class="cp-stat-val" style="color:#2980b9;">{{ overall_pct }}%</div>
+      <div class="cp-stat-lbl">Overall</div>
+    </div>
+    <div class="cp-stat">
+      <div class="cp-stat-val" style="color:#27ae60;">{{ done_lessons }}</div>
+      <div class="cp-stat-lbl">Lessons Done</div>
+    </div>
+    <div class="cp-stat">
+      <div class="cp-stat-val" style="color:#2c3e50;">{{ total_lessons }}</div>
+      <div class="cp-stat-lbl">Total Lessons</div>
+    </div>
+    <div class="cp-stat">
+      <div class="cp-stat-val" style="color:#8e44ad;">
+        {% if last_activity %}
+          {{ last_activity|timesince|truncatechars:8 }} ago
+        {% else %}—{% endif %}
+      </div>
+      <div class="cp-stat-lbl">Last Active</div>
+    </div>
+    <div class="cp-stat">
+      <div class="cp-stat-val" style="color:#e67e22;">
+        {% if total_time_seconds %}
+          {% with h=total_time_seconds|divisibleby:3600 %}
+            {% widthratio total_time_seconds 3600 1 %}h
+          {% endwith %}
+        {% else %}0h{% endif %}
+      </div>
+      <div class="cp-stat-lbl">Time Spent</div>
+    </div>
+  </div>
+
+  <!-- ── Overall progress bar ────────────────────────────────────────── -->
+  <div class="overall-bar-wrap">
+    <div class="overall-bar-header">
+      <span><i class="fas fa-graduation-cap me-2" style="color:#2980b9;"></i>Course Completion</span>
+      <span style="color:#2980b9;">{{ done_lessons }} / {{ total_lessons }} lessons</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill blue" style="width:{{ overall_pct }}%;"></div>
+    </div>
+    <div style="margin-top:8px; font-size:.75rem; color:#7f8c8d;">
+      {% if enrollment.completed %}
+        <i class="fas fa-check-circle text-success me-1"></i>Course marked complete
+        {% if enrollment.completed_at %} on {{ enrollment.completed_at|date:"d M Y" }}{% endif %}
+      {% else %}
+        {{ overall_pct }}% complete — keep going!
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Module breakdown ────────────────────────────────────────────── -->
+  <div style="font-size:.9rem; font-weight:800; color:#2c3e50; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+    <i class="fas fa-layer-group" style="color:#2980b9;"></i> Modules &amp; Lessons
+  </div>
+
+  {% for item in module_data %}
+  <div class="module-card">
+    <div class="mc-header" onclick="toggleModule(this)" data-target="mod-{{ forloop.counter }}">
+      <div class="mc-title">
+        <span style="background:#e8f4fd; color:#2980b9; border-radius:50%; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800;">{{ forloop.counter }}</span>
+        {{ item.module.title }}
+        <!-- mini progress bar inside header -->
+        <div style="width:80px; background:#dce0e3; border-radius:999px; height:6px; margin-left:4px;">
+          <div style="width:{{ item.pct }}%; background:#2980b9; height:6px; border-radius:999px;"></div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span class="mc-meta">{{ item.done_count }}/{{ item.total_count }} done</span>
+        <i class="fas fa-chevron-down mc-toggle"></i>
+      </div>
+    </div>
+    <div class="mc-body" id="mod-{{ forloop.counter }}" style="max-height:0;">
+      {% if item.lesson_rows %}
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Lesson</th>
+            <th>Status</th>
+            <th>Last Accessed</th>
+            <th>Time Spent</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in item.lesson_rows %}
+          <tr>
+            <td style="color:#95a5a6; font-size:.8rem;">{{ forloop.counter }}</td>
+            <td style="font-weight:600; color:#2c3e50;">{{ row.lesson.title }}</td>
+            <td>
+              {% if row.is_completed %}
+                <span class="done-badge"><i class="fas fa-check-circle"></i>Done</span>
+              {% else %}
+                <span class="pend-badge"><i class="fas fa-circle"></i>Pending</span>
+              {% endif %}
+            </td>
+            <td style="color:#7f8c8d; font-size:.8rem;">
+              {% if row.last_accessed %}{{ row.last_accessed|date:"d M Y, H:i" }}{% else %}—{% endif %}
+            </td>
+            <td style="color:#7f8c8d; font-size:.8rem;">
+              {% if row.time_spent_display %}{{ row.time_spent_display }}{% else %}—{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'courses:lesson_detail' row.lesson.pk %}"
+                 class="btn btn-sm btn-outline-primary"
+                 style="border-radius:8px; font-size:.75rem; padding:4px 10px;">
+                {% if row.is_completed %}Review{% else %}Start{% endif %}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div style="padding:20px; text-align:center; color:#bdc3c7; font-size:.85rem;">No published lessons in this module yet.</div>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div style="text-align:center; padding:40px; color:#bdc3c7;">
+    <i class="fas fa-inbox" style="font-size:2.5rem; display:block; margin-bottom:10px;"></i>
+    No modules published yet.
+  </div>
+  {% endfor %}
+
+  <!-- ── Quizzes ──────────────────────────────────────────────────────── -->
+  {% if quiz_rows %}
+  <div class="section-box" style="margin-top:18px;">
+    <div class="section-title">
+      <i class="fas fa-clipboard-check" style="color:#8e44ad;"></i> Quizzes
+    </div>
+    {% for item in quiz_rows %}
+    <div class="row-item">
+      <span class="row-name">{{ item.quiz.title }}</span>
+      {% if item.best_attempt %}
+        {% if item.passed %}
+          <span class="score-pill score-pass"><i class="fas fa-check me-1"></i>Passed — {{ item.best_attempt.score|floatformat:0 }}%</span>
+        {% else %}
+          <span class="score-pill score-fail"><i class="fas fa-times me-1"></i>Failed — {{ item.best_attempt.score|floatformat:0 }}%</span>
+        {% endif %}
+      {% else %}
+        <span class="score-pill score-none">Not attempted</span>
+      {% endif %}
+      <a href="{% url 'quizzes:take_quiz' item.quiz.pk %}" class="btn btn-sm btn-outline-primary"
+         style="border-radius:8px; font-size:.75rem; padding:4px 10px;">
+        {% if item.best_attempt %}Retry{% else %}Start{% endif %}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Assignments ──────────────────────────────────────────────────── -->
+  {% if assignment_rows %}
+  <div class="section-box">
+    <div class="section-title">
+      <i class="fas fa-file-alt" style="color:#27ae60;"></i> Assignments
+    </div>
+    {% for item in assignment_rows %}
+    <div class="row-item">
+      <span class="row-name">{{ item.assignment.title }}</span>
+      {% if item.submission %}
+        {% if item.submission.status == 'graded' %}
+          <span class="score-pill score-pass"><i class="fas fa-star me-1"></i>Graded — {{ item.submission.grade|default:"—" }}</span>
+        {% elif item.submission.status == 'reviewed' %}
+          <span class="score-pill score-pend"><i class="fas fa-eye me-1"></i>Reviewed</span>
+        {% elif item.submission.status == 'resubmit' %}
+          <span class="score-pill score-fail"><i class="fas fa-redo me-1"></i>Resubmit Required</span>
+        {% else %}
+          <span class="score-pill score-pend"><i class="fas fa-clock me-1"></i>Submitted</span>
+        {% endif %}
+      {% else %}
+        <span class="score-pill score-none">Not submitted</span>
+        {% if item.assignment.due_date %}
+          <span style="font-size:.75rem; color:#e67e22;"><i class="fas fa-calendar me-1"></i>Due {{ item.assignment.due_date|date:"d M Y" }}</span>
+        {% endif %}
+      {% endif %}
+      <a href="{% url 'assignments:submit_assignment' item.assignment.pk %}" class="btn btn-sm btn-outline-success"
+         style="border-radius:8px; font-size:.75rem; padding:4px 10px;">
+        {% if item.submission %}View{% else %}Submit{% endif %}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── Attendance link (offline/hybrid courses) ─────────────────────── -->
+  {% if course.mode == 'OFFLINE' or course.mode == 'HYBRID' %}
+  <div class="section-box" style="margin-top:4px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+    <div>
+      <div class="section-title" style="margin-bottom:4px;">
+        <i class="fas fa-clipboard-user" style="color:#27ae60;"></i> Attendance
+      </div>
+      <div style="font-size:.8rem; color:#7f8c8d;">View your session-by-session attendance record for this course.</div>
+    </div>
+    <a href="{% url 'attendance:my_attendance' course.pk %}" class="btn btn-sm"
+       style="background:linear-gradient(135deg,#1e8449,#27ae60);color:#fff;border-radius:8px;font-size:.82rem;font-weight:700;padding:8px 18px;white-space:nowrap;">
+      <i class="fas fa-clipboard-user me-1"></i>View My Attendance
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+// ── Module accordion ─────────────────────────────────────────────────────────
+function toggleModule(header) {
+  var id = header.getAttribute('data-target');
+  var body = document.getElementById(id);
+  var isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+  if (isOpen) {
+    body.style.maxHeight = '0';
+    header.classList.remove('open');
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    header.classList.add('open');
+  }
+}
+
+// Open first module by default
+document.addEventListener('DOMContentLoaded', function () {
+  var first = document.querySelector('.mc-header');
+  if (first) toggleModule(first);
+});
+
+// ── Time tracking ping ───────────────────────────────────────────────────────
+{% for item in module_data %}
+{% for row in item.lesson_rows %}
+{% if row.last_accessed %}
+// Only ping for the lesson the student is currently on — handled per lesson_detail page
+{% endif %}
+{% endfor %}
+{% endfor %}
+</script>
+{% endblock %}

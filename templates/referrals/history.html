@@ -1,0 +1,276 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Referral History - Radoki{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    .status-pending        { background:#FEF3C7; color:#92400E; }
+    .status-enrolled       { background:#DBEAFE; color:#1E40AF; }
+    .status-paid           { background:#D1FAE5; color:#065F46; }
+    .status-reward-pending { background:#EDE9FE; color:#4C1D95; }
+    .status-reward-claimed { background:#D1FAE5; color:#065F46; }
+
+    /* Make table horizontally scrollable on small screens */
+    .referral-table-wrap {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+<div style="max-width: 1200px; margin: 0 auto;">
+
+    <!-- Header -->
+    <div class="row mb-4 align-items-center g-3">
+        <div class="col-12 col-md-8">
+            <h2 class="mb-1">
+                <i class="fas fa-history me-2" style="color:#6366F1;"></i>
+                Referral History
+            </h2>
+            <p class="text-muted mb-0">Detailed view of all your referrals</p>
+        </div>
+        <div class="col-12 col-md-4 text-md-end">
+            <a href="{% url 'referrals:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Row — one card per status, all counts come from the full unfiltered set -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-4 mb-1">{{ total_referrals }}</div>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-4 mb-1 text-warning">{{ referrals_by_status.PENDING }}</div>
+                <small class="text-muted">Pending</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-4 mb-1 text-info">{{ referrals_by_status.ENROLLED }}</div>
+                <small class="text-muted">Enrolled</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-4 mb-1 text-success">{{ referrals_by_status.PAID }}</div>
+                <small class="text-muted">Paid</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-4 mb-1" style="color:#8B5CF6;">{{ referrals_by_status.REWARD_PENDING }}</div>
+                <small class="text-muted">Reward Pending</small>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-2">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fw-bold fs-4 mb-1" style="color:#6366F1;">{{ referrals_by_status.REWARD_CLAIMED }}</div>
+                <small class="text-muted">Completed</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-sm-6 col-md-4">
+                    <label for="statusFilter" class="form-label small fw-semibold">Filter by Status</label>
+                    <select name="status" id="statusFilter" class="form-select form-select-sm">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label for="dateFrom" class="form-label small fw-semibold">From Date</label>
+                    <input type="date" name="date_from" id="dateFrom" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label for="dateTo" class="form-label small fw-semibold">To Date</label>
+                    <input type="date" name="date_to" id="dateTo" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-sm-6 col-md-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-search me-1"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Referrals Table -->
+    {% if page_obj.object_list %}
+    <div class="referral-table-wrap">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2"
+             style="background:#f8f9fa; border-bottom:1px solid #e9ecef;">
+            <small class="text-muted">
+                Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+                of {{ filtered_count }} referral{{ filtered_count|pluralize }}
+            </small>
+            <span class="badge bg-secondary">{{ filtered_count }} of {{ total_referrals }} total</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 bg-white">
+                <thead style="background:#6366F1; color:#fff;">
+                    <tr>
+                        <th class="px-4 py-3">Name / Email</th>
+                        <th class="py-3">Signed Up</th>
+                        <th class="py-3">Enrolled</th>
+                        <th class="py-3">Paid</th>
+                        <th class="py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for referral in page_obj %}
+                    <tr>
+                        <td class="px-4 py-3">
+                            <div class="fw-semibold">
+                                {{ referral.referred_user.get_full_name|default:referral.referred_user.username }}
+                            </div>
+                            <small class="text-muted">{{ referral.referred_user.email }}</small>
+                        </td>
+                        <td class="py-3">
+                            <small>{{ referral.signup_date|date:"M d, Y" }}</small>
+                        </td>
+                        <td class="py-3">
+                            {% if referral.enrollment_date %}
+                                <small>{{ referral.enrollment_date|date:"M d, Y" }}</small>
+                            {% else %}
+                                <small class="text-muted">—</small>
+                            {% endif %}
+                        </td>
+                        <td class="py-3">
+                            {% if referral.payment_date %}
+                                <small>{{ referral.payment_date|date:"M d, Y" }}</small>
+                            {% else %}
+                                <small class="text-muted">—</small>
+                            {% endif %}
+                        </td>
+                        <td class="py-3">
+                            {% if referral.status == "PENDING" %}
+                                <span class="status-badge status-pending">Pending</span>
+                            {% elif referral.status == "ENROLLED" %}
+                                <span class="status-badge status-enrolled">Enrolled</span>
+                            {% elif referral.status == "PAID" %}
+                                <span class="status-badge status-paid">Paid ✓</span>
+                            {% elif referral.status == "REWARD_PENDING" %}
+                                <span class="status-badge status-reward-pending">Reward Pending</span>
+                            {% elif referral.status == "REWARD_CLAIMED" %}
+                                <span class="status-badge status-reward-claimed">Completed ✓</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if paginator.num_pages > 1 %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+        <small class="text-muted">Page {{ page_obj.number }} of {{ paginator.num_pages }}</small>
+        <nav aria-label="Referral history pagination">
+            <ul class="pagination pagination-sm mb-0 flex-wrap">
+                <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                    {% if page_obj.has_previous %}
+                    <a class="page-link"
+                       href="?status={{ selected_status }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ page_obj.previous_page_number }}"
+                       aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+                    {% else %}
+                    <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                    {% endif %}
+                </li>
+                {% for item in page_window %}
+                    {% if not item %}
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    {% elif item == page_obj.number %}
+                    <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?status={{ selected_status }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ item }}">{{ item }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                    {% if page_obj.has_next %}
+                    <a class="page-link"
+                       href="?status={{ selected_status }}&date_from={{ date_from }}&date_to={{ date_to }}&page={{ page_obj.next_page_number }}"
+                       aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+                    {% else %}
+                    <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="card border-0 shadow-sm text-center py-5 text-muted">
+        <i class="fas fa-share-alt fa-3x mb-3 opacity-50 d-block mx-auto"></i>
+        <h5>No referrals found</h5>
+        <p class="mb-4">Start sharing your referral link to see referrals here.</p>
+        <div>
+            <a href="{% url 'referrals:dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Status Legend -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="fas fa-info-circle me-2 text-muted"></i>Status Legend
+            </h6>
+            <div class="d-flex flex-wrap gap-3">
+                <div class="text-center">
+                    <span class="status-badge status-pending d-block mb-1">Pending</span>
+                    <small class="text-muted">Just signed up</small>
+                </div>
+                <div class="text-center">
+                    <span class="status-badge status-enrolled d-block mb-1">Enrolled</span>
+                    <small class="text-muted">In a course</small>
+                </div>
+                <div class="text-center">
+                    <span class="status-badge status-paid d-block mb-1">Paid ✓</span>
+                    <small class="text-muted">Payment received</small>
+                </div>
+                <div class="text-center">
+                    <span class="status-badge status-reward-pending d-block mb-1">Reward Pending</span>
+                    <small class="text-muted">Reward created</small>
+                </div>
+                <div class="text-center">
+                    <span class="status-badge status-reward-claimed d-block mb-1">Completed ✓</span>
+                    <small class="text-muted">Reward claimed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /max-width wrapper -->
+</div><!-- /container-fluid -->
+{% endblock %}

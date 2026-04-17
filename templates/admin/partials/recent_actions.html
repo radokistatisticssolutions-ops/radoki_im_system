@@ -1,0 +1,53 @@
+{% if log_page.object_list %}
+  {% for entry in log_page %}
+  <div class="ci-ra-item">
+    <div class="ci-ra-icon {% if entry.is_addition %}add{% elif entry.is_change %}change{% else %}delete{% endif %}">
+      <i class="fas {% if entry.is_addition %}fa-plus{% elif entry.is_change %}fa-pencil-alt{% else %}fa-trash{% endif %}"></i>
+    </div>
+    <div class="ci-ra-body">
+      {% if entry.is_deletion or not entry.get_admin_url %}
+        <span class="ci-ra-obj deleted">{{ entry.object_repr }}</span>
+      {% else %}
+        <a class="ci-ra-obj" href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+      {% endif %}
+      <div class="ci-ra-meta">
+        <strong>{{ entry.user.get_full_name|default:entry.user.username }}</strong>
+        &mdash; {{ entry.content_type.name|capfirst }}
+        &mdash; {{ entry.action_time|timesince }} ago
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="ci-ra-empty"><i class="fas fa-inbox"></i><br>No actions recorded yet</div>
+{% endif %}
+
+<div class="ci-ra-pagination" id="ci-ra-pager">
+  {% if log_page.paginator.num_pages > 1 %}
+    {% if log_page.has_previous %}
+      <button class="ci-ra-pg-btn" onclick="loadRA({{ log_page.previous_page_number }})">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+    {% else %}
+      <button class="ci-ra-pg-btn disabled" disabled><i class="fas fa-chevron-left"></i></button>
+    {% endif %}
+
+    {% for num in log_page.paginator.page_range %}
+      {% if num == log_page.number %}
+        <button class="ci-ra-pg-btn active" disabled>{{ num }}</button>
+      {% elif num >= log_page.number|add:"-2" and num <= log_page.number|add:"2" %}
+        <button class="ci-ra-pg-btn" onclick="loadRA({{ num }})">{{ num }}</button>
+      {% endif %}
+    {% endfor %}
+
+    {% if log_page.has_next %}
+      <button class="ci-ra-pg-btn" onclick="loadRA({{ log_page.next_page_number }})">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    {% else %}
+      <button class="ci-ra-pg-btn disabled" disabled><i class="fas fa-chevron-right"></i></button>
+    {% endif %}
+
+    <span class="ci-ra-pg-info">{{ log_page.number }} / {{ log_page.paginator.num_pages }}</span>
+  {% endif %}
+</div>

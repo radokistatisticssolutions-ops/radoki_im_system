@@ -1,0 +1,143 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="h3 mb-0" style="color:#2c3e50;"><i class="fas fa-upload"></i> Submit Assignment</h1>
+      <p class="text-muted mt-1">Upload your work for grading</p>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'assignments:student_assignments' %}" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+        <i class="fas fa-arrow-left"></i> Back to Assignments
+      </a>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <!-- Assignment Info Card -->
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:12px; border-left:4px solid #2980b9 !important;">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start gap-3">
+            <div style="width:44px;height:44px;background:#d6eaf8;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-file-alt" style="color:#1a5276;font-size:1.1rem;"></i>
+            </div>
+            <div>
+              <span class="badge mb-1" style="background:#d6eaf8;color:#1a5276;font-size:.75rem;border-radius:6px;">
+                {{ assignment.course.title }}
+              </span>
+              <h5 class="fw-bold mb-1" style="color:#2c3e50;">{{ assignment.title }}</h5>
+              {% if assignment.description %}
+              <p class="text-muted mb-1" style="font-size:.88rem;">{{ assignment.description }}</p>
+              {% endif %}
+              {% if assignment.due_date %}
+              <div style="font-size:.8rem; color:#e67e22;">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Due: <strong>{{ assignment.due_date|date:"d M Y, H:i" }}</strong>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submission Form -->
+      <div class="card border-0 shadow-sm" style="border-radius:12px;">
+        <div class="card-body p-4">
+
+          {% if existing %}
+          <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" style="border-radius:10px;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+              You have already submitted this assignment on
+              <strong>{{ existing.submitted_at|date:"d M Y, H:i" }}</strong>.
+              Submitting again will replace your previous file.
+            </div>
+          </div>
+          {% endif %}
+
+          {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} mb-3" style="border-radius:10px;">{{ message }}</div>
+          {% endfor %}
+          {% endif %}
+
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- File upload -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                Assignment File <span class="text-danger">*</span>
+              </label>
+              <div class="border-2 border-dashed rounded p-4 text-center"
+                   style="border:2px dashed #aed6f1; border-radius:10px !important; background:#f8fbff; cursor:pointer;"
+                   id="drop-zone">
+                <input type="file" name="file" id="file-input" required class="d-none"
+                       accept=".pdf,.doc,.docx,.zip,.rar,.txt,.xlsx,.pptx,.png,.jpg,.jpeg">
+                <i class="fas fa-cloud-upload-alt fa-2x mb-2" style="color:#2980b9;"></i>
+                <p class="mb-1 fw-semibold" style="color:#2c3e50;">
+                  Drag & drop your file here or <span style="color:#2980b9; cursor:pointer;" onclick="document.getElementById('file-input').click()">browse</span>
+                </p>
+                <p class="text-muted mb-0" style="font-size:.8rem;">
+                  Accepted: PDF, Word, Excel, PowerPoint, ZIP, TXT, Images
+                </p>
+                <div id="file-name" class="mt-2 fw-semibold" style="color:#1a5276; display:none;"></div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+              <textarea name="notes" class="form-control" rows="3"
+                        placeholder="Add any notes or comments for your instructor…"
+                        style="border-radius:8px;">{% if existing %}{{ existing.notes }}{% endif %}</textarea>
+            </div>
+
+            <button type="submit" class="btn w-100"
+                    style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;">
+              <i class="fas fa-paper-plane me-1"></i>
+              {% if existing %}Resubmit Assignment{% else %}Submit Assignment{% endif %}
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('file-input');
+  const zone  = document.getElementById('drop-zone');
+  const label = document.getElementById('file-name');
+
+  function showName(name){
+    label.textContent = '📎 ' + name;
+    label.style.display = 'block';
+  }
+
+  input.addEventListener('change', function(){
+    if(this.files.length) showName(this.files[0].name);
+  });
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.background='#eaf4fb'; });
+  zone.addEventListener('dragleave', ()=> { zone.style.background='#f8fbff'; });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.background = '#f8fbff';
+    const files = e.dataTransfer.files;
+    if(files.length){
+      input.files = files;
+      showName(files[0].name);
+    }
+  });
+}());
+</script>
+{% endblock %}

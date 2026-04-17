@@ -1,0 +1,232 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Referrals List - Radoki Training{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <a href="{% url 'referrals:instructor_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-list me-2" style="color: #6366F1;"></i>
+                        All Referrals
+                    </h2>
+                    <p class="text-muted mb-0">View and manage all referrals in the system</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-12 col-md-6">
+                            <label for="search" class="form-label small fw-semibold">Search</label>
+                            <input type="text" class="form-control" name="search"
+                                   placeholder="Search by referrer or referred user..." id="search"
+                                   value="{{ search_query }}">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="status" class="form-label small fw-semibold">Status</label>
+                            <select class="form-select" name="status" id="status">
+                                <option value="">All Status</option>
+                                {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <button type="submit" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-search me-1"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="row text-center g-2">
+                        <div class="col-6 col-md-2">
+                            <h5 class="mb-0">{{ total_referrals }}</h5>
+                            <small class="text-muted">Total</small>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <h5 class="mb-0 text-warning">{{ status_counts.PENDING }}</h5>
+                            <small class="text-muted">Pending</small>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <h5 class="mb-0 text-info">{{ status_counts.ENROLLED }}</h5>
+                            <small class="text-muted">Enrolled</small>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <h5 class="mb-0 text-success">{{ status_counts.PAID }}</h5>
+                            <small class="text-muted">Paid</small>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <h5 class="mb-0 text-warning">{{ status_counts.REWARD_PENDING }}</h5>
+                            <small class="text-muted">Reward Pending</small>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <h5 class="mb-0 text-success">{{ status_counts.REWARD_CLAIMED }}</h5>
+                            <small class="text-muted">Claimed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referrals Table -->
+    <div class="row">
+        <div class="col-12">
+            {% if page_obj %}
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4 py-3 fw-semibold">Referrer</th>
+                                <th class="py-3 fw-semibold">Referred User</th>
+                                <th class="py-3 fw-semibold">Status</th>
+                                <th class="py-3 fw-semibold">Course</th>
+                                <th class="py-3 fw-semibold">Signup Date</th>
+                                <th class="py-3 fw-semibold">Enrollment Date</th>
+                                <th class="py-3 fw-semibold">Payment Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referral in page_obj %}
+                            <tr>
+                                <!-- Referrer -->
+                                <td class="px-4 py-3">
+                                    <p class="mb-0 fw-bold">{{ referral.referral_link.student.get_full_name|default:referral.referral_link.student.username }}</p>
+                                    <small class="text-muted">{{ referral.referral_link.student.email }}</small><br>
+                                    <small class="badge bg-secondary">{{ referral.referral_link.code }}</small>
+                                </td>
+
+                                <!-- Referred User -->
+                                <td class="py-3">
+                                    <p class="mb-0">{{ referral.referred_user.get_full_name|default:referral.referred_user.username }}</p>
+                                    <small class="text-muted">{{ referral.referred_user.email }}</small>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="py-3">
+                                    {% if referral.status == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif referral.status == 'ENROLLED' %}
+                                        <span class="badge bg-info">Enrolled</span>
+                                    {% elif referral.status == 'PAID' %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif referral.status == 'REWARD_PENDING' %}
+                                        <span class="badge bg-warning text-dark">Reward Pending</span>
+                                    {% elif referral.status == 'REWARD_CLAIMED' %}
+                                        <span class="badge bg-success">Claimed</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Course -->
+                                <td class="py-3">
+                                    {% if referral.first_enrollment %}
+                                        {{ referral.first_enrollment.course.title|truncatewords:3 }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- Signup Date -->
+                                <td class="py-3">
+                                    <small>{{ referral.signup_date|date:"M d, Y H:i" }}</small>
+                                </td>
+
+                                <!-- Enrollment Date -->
+                                <td class="py-3">
+                                    <small>
+                                        {% if referral.enrollment_date %}
+                                            {{ referral.enrollment_date|date:"M d, Y H:i" }}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </small>
+                                </td>
+
+                                <!-- Payment Date -->
+                                <td class="py-3">
+                                    <small>
+                                        {% if referral.payment_date %}
+                                            {{ referral.payment_date|date:"M d, Y H:i" }}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if paginator.num_pages > 1 %}
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 px-1">
+                <small class="text-muted">
+                    Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+                    of {{ filtered_count }} referral{{ filtered_count|pluralize }}
+                </small>
+                <nav aria-label="Referrals pagination">
+                    <ul class="pagination pagination-sm mb-0 flex-wrap">
+                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                            {% if page_obj.has_previous %}
+                            <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&page={{ page_obj.previous_page_number }}" aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+                            {% else %}
+                            <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                            {% endif %}
+                        </li>
+                        {% for item in page_window %}
+                            {% if not item %}
+                            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                            {% elif item == page_obj.number %}
+                            <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&page={{ item }}">{{ item }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                            {% if page_obj.has_next %}
+                            <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&page={{ page_obj.next_page_number }}" aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+                            {% else %}
+                            <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info text-center py-4" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                No referrals found matching your criteria.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

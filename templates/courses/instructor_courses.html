@@ -1,0 +1,321 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* Banner */
+  .mc-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .mc-banner h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin: 0; }
+  .mc-banner p  { color: rgba(255,255,255,.78); margin: 3px 0 0; font-size: .85rem; }
+  .mc-banner-btn {
+    background: #fff; color: #1a5276;
+    border-radius: 10px; padding: 9px 20px;
+    font-size: .88rem; font-weight: 700;
+    text-decoration: none; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .mc-banner-btn:hover { opacity: .9; color: #1a5276; }
+
+  /* Card */
+  .mc-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+
+  /* Table */
+  .mc-table { width: 100%; border-collapse: collapse; margin: 0; }
+
+  .mc-table thead th {
+    background: #f7fafc;
+    border-bottom: 2px solid #e8edf2;
+    padding: 10px 12px;
+    font-size: .68rem;
+    font-weight: 700;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    white-space: nowrap;
+  }
+
+  .mc-table tbody tr {
+    border-bottom: 1px solid #f0f4f8;
+    transition: background .12s;
+  }
+  .mc-table tbody tr:last-child { border-bottom: none; }
+  .mc-table tbody tr:hover { background: #f8fbff; }
+
+  /* Compact cell padding so rows stay one-line-tall */
+  .mc-table td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  /* Only the title cell can wrap */
+  .mc-table td.title-cell {
+    white-space: normal;
+    min-width: 160px;
+  }
+
+  /* Students cell */
+  .stu-num { font-size: 1.1rem; font-weight: 800; color: #2980b9; line-height: 1; }
+  .stu-lbl { font-size: .62rem; color: #95a5a6; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* Action buttons — one per column */
+  .ac-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    font-size: .75rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    white-space: nowrap;
+    transition: opacity .15s;
+  }
+  .ac-btn:hover { opacity: .82; }
+  .ac-view    { background: #e8f4fd; color: #1a5276; }
+  .ac-edit    { background: #fef9e7; color: #9a7d0a; }
+  .ac-session { background: #f0eafb; color: #6c3483; }
+  .ac-res     { background: #eafaf1; color: #1e8449; }
+  .ac-del     { background: #fdf2f2; color: #c0392b; }
+
+  /* Pagination bar */
+  .mc-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #edf2f7;
+    background: #fafcff;
+  }
+  .mc-pagination .pg-info { font-size: .8rem; color: #7f8c8d; }
+  .pg-controls { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pg-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 34px; height: 34px; padding: 0 8px;
+    border-radius: 8px; font-size: .8rem; font-weight: 600;
+    text-decoration: none; border: 1px solid #dce6f0;
+    background: #fff; color: #2c3e50;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .pg-link:hover  { background: #2980b9; color: #fff; border-color: #2980b9; }
+  .pg-link.active { background: #2980b9; color: #fff; border-color: #2980b9; pointer-events: none; }
+  .pg-link.disabled { opacity: .38; pointer-events: none; }
+
+  /* Empty */
+  .mc-empty { text-align: center; padding: 56px 24px; color: #b2bec3; }
+  .mc-empty i { font-size: 2.8rem; display: block; margin-bottom: 14px; }
+
+  /* Responsive: hide label text on smaller screens to keep buttons compact */
+  @media (max-width: 1024px) {
+    .ac-btn span { display: none; }
+    .ac-btn { padding: 6px 8px; }
+  }
+  /* Hide Session & Resources columns on phones, keep scroll */
+  @media (max-width: 600px) {
+    .mc-banner { flex-direction: column; align-items: flex-start; }
+    .col-session, .col-res { display: none; }
+    .mc-pagination { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+<div style="max-width:1100px; margin:0 auto; padding:0 16px;">
+
+  <!-- Banner -->
+  <div class="mc-banner">
+    <div>
+      <h1><i class="fas fa-chalkboard-teacher me-2"></i>My Courses</h1>
+      <p>Manage your teaching portfolio</p>
+    </div>
+    <a href="{% url 'courses:create_course' %}" class="mc-banner-btn">
+      <i class="fas fa-plus-circle"></i> New Course
+    </a>
+  </div>
+
+  <!-- Search toolbar -->
+  <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+    <form method="get" class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+      <div class="input-group" style="max-width:380px; min-width:200px;">
+        <span class="input-group-text bg-white border-end-0"
+              style="border-radius:10px 0 0 10px;">
+          <i class="fas fa-search text-secondary" style="font-size:.85rem;"></i>
+        </span>
+        <input type="text" name="q" value="{{ query }}"
+               class="form-control border-start-0"
+               style="border-left:none;"
+               placeholder="Search courses…" aria-label="Search courses">
+        <button type="submit" class="btn btn-primary"
+                style="border-radius:0 10px 10px 0; font-size:.85rem; font-weight:600; padding:0 16px;">
+          Search
+        </button>
+      </div>
+      {% if query %}
+        <a href="{% url 'courses:instructor_courses' %}"
+           class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+          <i class="fas fa-times me-1"></i>Clear
+        </a>
+      {% endif %}
+    </form>
+    <span class="text-muted ms-auto" style="font-size:.82rem; white-space:nowrap;">
+      {% if query %}
+        <strong>{{ total_courses }}</strong> result{{ total_courses|pluralize }}
+        for &ldquo;{{ query }}&rdquo;
+      {% else %}
+        <strong>{{ total_courses }}</strong> course{{ total_courses|pluralize }}
+      {% endif %}
+    </span>
+  </div>
+
+  <!-- Table card -->
+  <div class="mc-card">
+
+    {% if page_obj.object_list %}
+
+      <div class="table-responsive">
+        <table class="mc-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">#</th>
+              <th>Course Title</th>
+              <th style="text-align:center; width:90px;">Students</th>
+              <th style="text-align:center; width:80px;">View</th>
+              <th style="text-align:center; width:80px;">Edit</th>
+              <th class="col-session" style="text-align:center; width:90px;">Session</th>
+              <th class="col-res"     style="text-align:center; width:100px;">Resources</th>
+              <th style="text-align:center; width:60px;">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for stat in page_obj %}
+            <tr>
+              <td style="color:#b2bec3; font-size:.8rem;">
+                {{ page_obj.start_index|add:forloop.counter0 }}
+              </td>
+              <td class="title-cell">
+                <span style="font-weight:700; color:#2c3e50; font-size:.9rem;">
+                  {{ stat.course.title }}
+                </span>
+              </td>
+              <td style="text-align:center;">
+                <a href="{% url 'courses:course_students' stat.course.id %}"
+                   style="text-decoration:none; color:inherit; display:inline-block;"
+                   title="View students for {{ stat.course.title }}">
+                  <div class="stu-num" style="transition:color .18s;">{{ stat.total_students }}</div>
+                  <div class="stu-lbl">students</div>
+                </a>
+              </td>
+              <td style="text-align:center;">
+                <a href="{% url 'courses:course_detail' stat.course.id %}"
+                   class="ac-btn ac-view">
+                  <i class="fas fa-eye"></i><span> View</span>
+                </a>
+              </td>
+              <td style="text-align:center;">
+                <a href="{% url 'courses:edit_course' stat.course.id %}"
+                   class="ac-btn ac-edit">
+                  <i class="fas fa-edit"></i><span> Edit</span>
+                </a>
+              </td>
+              <td class="col-session" style="text-align:center;">
+                <a href="{% url 'courses:add_session' stat.course.id %}"
+                   class="ac-btn ac-session">
+                  <i class="fas fa-video"></i><span> Session</span>
+                </a>
+              </td>
+              <td class="col-res" style="text-align:center;">
+                <a href="{% url 'courses:upload_resource' stat.course.id %}"
+                   class="ac-btn ac-res">
+                  <i class="fas fa-file-upload"></i><span> Resources</span>
+                </a>
+              </td>
+              <td style="text-align:center;">
+                <a href="{% url 'courses:delete_course' stat.course.id %}"
+                   class="ac-btn ac-del" title="Delete course">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if paginator.num_pages > 1 %}
+      <div class="mc-pagination">
+        <span class="pg-info">
+          Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+          of {{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }}
+        </span>
+        <div class="pg-controls">
+          {% if page_obj.has_previous %}
+            <a href="?q={{ query|urlencode }}&page={{ page_obj.previous_page_number }}" class="pg-link">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          {% else %}
+            <span class="pg-link disabled"><i class="fas fa-angle-left"></i></span>
+          {% endif %}
+
+          {% for item in page_window %}
+            {% if not item %}
+              <span class="pg-link disabled">&hellip;</span>
+            {% elif item == page_obj.number %}
+              <span class="pg-link active">{{ item }}</span>
+            {% else %}
+              <a href="?q={{ query|urlencode }}&page={{ item }}" class="pg-link">{{ item }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a href="?q={{ query|urlencode }}&page={{ page_obj.next_page_number }}" class="pg-link">
+              <i class="fas fa-angle-right"></i>
+            </a>
+          {% else %}
+            <span class="pg-link disabled"><i class="fas fa-angle-right"></i></span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <div class="mc-empty">
+        <i class="fas fa-{% if query %}search{% else %}chalkboard{% endif %}"></i>
+        {% if query %}
+          <p class="fw-semibold" style="color:#636e72;">
+            No courses match &ldquo;{{ query }}&rdquo;
+          </p>
+          <a href="{% url 'courses:instructor_courses' %}"
+             class="btn btn-outline-secondary btn-sm mt-2">
+            <i class="fas fa-times me-1"></i>Clear search
+          </a>
+        {% else %}
+          <p class="fw-semibold" style="color:#636e72;">No courses yet.</p>
+          <a href="{% url 'courses:create_course' %}" class="btn btn-primary mt-2">
+            <i class="fas fa-plus-circle me-1"></i>Create First Course
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div><!-- /mc-card -->
+
+</div>
+</div>
+{% endblock %}

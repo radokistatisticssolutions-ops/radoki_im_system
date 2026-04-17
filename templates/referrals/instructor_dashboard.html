@@ -1,0 +1,370 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Referral Management - Radoki Training{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-link me-2" style="color: #6366F1;"></i>
+                        Referral Management
+                    </h2>
+                    <p class="text-muted mb-0">Monitor and manage the referral system</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="row mb-4 g-2">
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'referrals:instructor_dashboard' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-chart-pie me-2"></i>Dashboard
+                </a>
+                <a href="{% url 'referrals:instructor_referrals' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-list me-2"></i>All Referrals
+                </a>
+                <a href="{% url 'referrals:instructor_rewards' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-gift me-2"></i>Rewards
+                </a>
+                <a href="{% url 'referrals:instructor_settings' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h5 class="card-title mb-0">System Status</h5>
+                            <small class="text-muted">Referral System</small>
+                        </div>
+                        <div>
+                            {% if settings.is_active %}
+                                <span class="badge bg-success" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                                    <i class="fas fa-toggle-on me-2"></i>Active
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                                    <i class="fas fa-toggle-off me-2"></i>Inactive
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <!-- Total Referrals -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Total Referrals</p>
+                            <h3 class="mb-0">{{ total_referrals }}</h3>
+                        </div>
+                        <div class="bg-info-light rounded p-2">
+                            <i class="fas fa-users" style="color: #3B82F6; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Pending</p>
+                            <h3 class="mb-0">{{ referrals_pending }}</h3>
+                        </div>
+                        <div class="bg-warning-light rounded p-2">
+                            <i class="fas fa-hourglass-half" style="color: #F59E0B; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrolled -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Enrolled</p>
+                            <h3 class="mb-0">{{ referrals_enrolled }}</h3>
+                        </div>
+                        <div class="bg-info-light rounded p-2">
+                            <i class="fas fa-book" style="color: #3B82F6; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paid -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Paid</p>
+                            <h3 class="mb-0">{{ referrals_paid }}</h3>
+                        </div>
+                        <div class="bg-success-light rounded p-2">
+                            <i class="fas fa-check-circle" style="color: #10B981; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rewards Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Rewards Issued</p>
+                            <h3 class="mb-0">{{ total_rewards_issued }}</h3>
+                        </div>
+                        <div class="bg-success-light rounded p-2">
+                            <i class="fas fa-gift" style="color: #10B981; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Rewards -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Available</p>
+                            <h3 class="mb-0">{{ rewards_available }}</h3>
+                        </div>
+                        <div class="bg-info-light rounded p-2">
+                            <i class="fas fa-unlock" style="color: #3B82F6; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Claimed Rewards -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Claimed</p>
+                            <h3 class="mb-0">{{ rewards_claimed }}</h3>
+                        </div>
+                        <div class="bg-success-light rounded p-2">
+                            <i class="fas fa-check" style="color: #10B981; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expired Rewards -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Expired</p>
+                            <h3 class="mb-0">{{ rewards_expired }}</h3>
+                        </div>
+                        <div class="bg-danger-light rounded p-2">
+                            <i class="fas fa-times-circle" style="color: #EF4444; font-size: 1.2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reward Status Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-chart-bar me-2" style="color: #6366F1;"></i>
+                        Referral Status Distribution
+                    </h5>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span>Pending</span>
+                            <span class="badge bg-warning">{{ referrals_pending }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span>Enrolled</span>
+                            <span class="badge bg-info">{{ referrals_enrolled }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span>Paid</span>
+                            <span class="badge bg-success">{{ referrals_paid }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span>Reward Pending</span>
+                            <span class="badge bg-warning">{{ referrals_reward_pending }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span>Reward Claimed</span>
+                            <span class="badge bg-success">{{ referrals_reward_claimed }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Settings Info -->
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-sliders-h me-2" style="color: #6366F1;"></i>
+                        Current Settings
+                    </h5>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item px-0 py-2">
+                            <small class="text-muted">Reward Type</small>
+                            <p class="mb-0">{{ settings.get_reward_type_display }}</p>
+                        </div>
+                        <div class="list-group-item px-0 py-2">
+                            <small class="text-muted">Reward Amount</small>
+                            <p class="mb-0">{{ settings.reward_per_successful_referral }}</p>
+                        </div>
+                        <div class="list-group-item px-0 py-2">
+                            <small class="text-muted">Min Course Price</small>
+                            <p class="mb-0">TZS {{ settings.min_course_price|floatformat:2 }}</p>
+                        </div>
+                        <div class="list-group-item px-0 py-2">
+                            <small class="text-muted">Reward Validity</small>
+                            <p class="mb-0">{{ settings.reward_validity_days }} days</p>
+                        </div>
+                        <div class="list-group-item px-0 py-2">
+                            <small class="text-muted">Max Rewards/Student</small>
+                            <p class="mb-0">{% if settings.max_rewards_per_student == 0 %}Unlimited{% else %}{{ settings.max_rewards_per_student }}{% endif %}</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'referrals:instructor_settings' %}" class="btn btn-sm btn-outline-primary mt-3 w-100">
+                        <i class="fas fa-edit me-2"></i>Edit Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-link me-2" style="color: #6366F1;"></i>
+                        Quick Links
+                    </h5>
+                    <a href="{% url 'referrals:instructor_referrals' %}" class="btn btn-sm btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-list me-2"></i>View All Referrals
+                    </a>
+                    <a href="{% url 'referrals:instructor_rewards' %}" class="btn btn-sm btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-gift me-2"></i>Manage Rewards
+                    </a>
+                    <a href="{% url 'referrals:instructor_settings' %}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fas fa-cog me-2"></i>Configure System
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Referrals -->
+    {% if recent_referrals %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2" style="color: #6366F1;"></i>
+                        Recent Referrals
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3">Referrer</th>
+                                <th class="py-3">Referred User</th>
+                                <th class="py-3">Status</th>
+                                <th class="py-3">Course</th>
+                                <th class="py-3">Signup Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referral in recent_referrals %}
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <small class="fw-bold">{{ referral.referral_link.student.get_full_name|default:referral.referral_link.student.username }}</small><br>
+                                    <small class="text-muted">{{ referral.referral_link.code }}</small>
+                                </td>
+                                <td class="py-3">
+                                    {{ referral.referred_user.get_full_name|default:referral.referred_user.username }}
+                                </td>
+                                <td class="py-3">
+                                    {% if referral.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif referral.status == 'ENROLLED' %}
+                                        <span class="badge bg-info">Enrolled</span>
+                                    {% elif referral.status == 'PAID' %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif referral.status == 'REWARD_PENDING' %}
+                                        <span class="badge bg-warning">Reward Pending</span>
+                                    {% elif referral.status == 'REWARD_CLAIMED' %}
+                                        <span class="badge bg-success">Reward Claimed</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    {% if referral.first_enrollment %}
+                                        {{ referral.first_enrollment.course.title|truncatewords:3 }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    <small>{{ referral.signup_date|date:"M d, Y H:i" }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

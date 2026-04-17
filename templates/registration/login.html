@@ -1,0 +1,245 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+    }
+    
+    .login-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        width: 100%;
+        max-width: 450px;
+    }
+    
+    .login-header {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 40px 20px;
+        text-align: center;
+    }
+    
+    .login-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .login-header p {
+        font-size: 14px;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .login-body {
+        padding: 40px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="password"] {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #ecf0f1;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+    
+    .form-group input[type="text"]:focus,
+    .form-group input[type="password"]:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
+    .form-group input::placeholder {
+        color: #95a5a6;
+    }
+    
+    .btn-login {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+    
+    .btn-login:hover {
+        box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .btn-login:active {
+        transform: translateY(0);
+    }
+    
+    .error-message {
+        background-color: #fdeaea;
+        color: #c53030;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        border-left: 4px solid #c53030;
+    }
+    
+    .success-message {
+        background-color: #eafaf1;
+        color: #22863a;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        border-left: 4px solid #22863a;
+    }
+    
+    .footer-text {
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 13px;
+        margin-top: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .login-header {
+            padding: 20px 15px;
+        }
+        
+        .login-header h1 {
+            font-size: 20px;
+        }
+        
+        .login-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+        
+        .btn-login {
+            padding: 10px;
+            font-size: 13px;
+        }
+        
+        .error-message,
+        .success-message {
+            padding: 8px;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <h1>
+                <i class="fas fa-graduation-cap"></i> RADOKI IMS
+            </h1>
+            <p>Administration Panel</p>
+        </div>
+        
+        <!-- Body -->
+        <div class="login-body">
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <div class="error-message">
+                        <strong>Login Failed:</strong> {{ error }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="success-message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Welcome Message -->
+                <div style="background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(52, 152, 219, 0.05) 100%); padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #3498db;">
+                    <p style="color: #2c3e50; margin: 0; font-size: 13px;">
+                        <i class="fas fa-info-circle" style="color: #3498db; margin-right: 8px;"></i>
+                        <strong>Welcome to RADOKI IMS Administration.</strong><br>
+                        Please log in with your admin credentials to access the dashboard.
+                    </p>
+                </div>
+                
+                <!-- Username Field -->
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">
+                        <i class="fas fa-user" style="color: #3498db; margin-right: 6px;"></i>
+                        {{ form.username.label }}
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <small style="color: #e74c3c; display: block; margin-top: 4px;">{{ form.username.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">
+                        <i class="fas fa-lock" style="color: #3498db; margin-right: 6px;"></i>
+                        {{ form.password.label }}
+                    </label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <small style="color: #e74c3c; display: block; margin-top: 4px;">{{ form.password.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <!-- Login Button -->
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Sign In to Dashboard
+                </button>
+            </form>
+            
+            <!-- Footer -->
+            <div class="footer-text">
+                <i class="fas fa-shield-alt"></i> Your data is secure and encrypted
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

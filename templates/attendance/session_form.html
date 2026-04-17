@@ -1,0 +1,81 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+.sf-wrap  { max-width:600px; margin:36px auto; padding:0 16px 80px; }
+.sf-card  { background:#fff; border-radius:16px; padding:32px; box-shadow:0 2px 20px rgba(0,0,0,.07); }
+.sf-title { font-size:1.2rem; font-weight:800; color:#2c3e50; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+.form-label { font-size:.82rem; font-weight:700; color:#5d6d7e; }
+.form-control, .form-select {
+  border-radius:10px; border:1.5px solid #dce0e3; padding:10px 14px; font-size:.88rem;
+  transition:border-color .2s;
+}
+.form-control:focus, .form-select:focus { border-color:#2980b9; box-shadow:0 0 0 3px rgba(41,128,185,.12); }
+.btn-save { background:linear-gradient(135deg,#1a5276,#2980b9); color:#fff; border:none;
+            border-radius:10px; padding:11px 30px; font-weight:700; font-size:.9rem; }
+</style>
+
+<div class="sf-wrap">
+  <nav aria-label="breadcrumb" style="margin-bottom:16px;">
+    <ol class="breadcrumb" style="font-size:.78rem;">
+      <li class="breadcrumb-item"><a href="{% url 'courses:instructor_courses' %}">My Courses</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'attendance:session_list' course.pk %}">Attendance</a></li>
+      <li class="breadcrumb-item active">{% if session %}Edit{% else %}New{% endif %} Session</li>
+    </ol>
+  </nav>
+
+  <div class="sf-card">
+    <div class="sf-title">
+      <i class="fas fa-calendar-plus" style="color:#2980b9;"></i>
+      {% if session %}Edit Session{% else %}New Session{% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Session Title *</label>
+        <input type="text" name="title" class="form-control" required
+               placeholder="e.g. Week 1 – Introduction"
+               value="{{ session.title|default:'' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Date *</label>
+        <input type="date" name="date" class="form-control" required
+               value="{{ session.date|date:'Y-m-d'|default:'' }}">
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="form-label">Start Time</label>
+          <input type="time" name="start_time" class="form-control"
+                 value="{{ session.start_time|time:'H:i'|default:'' }}">
+        </div>
+        <div class="col-6">
+          <label class="form-label">End Time</label>
+          <input type="time" name="end_time" class="form-control"
+                 value="{{ session.end_time|time:'H:i'|default:'' }}">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Venue / Location</label>
+        <input type="text" name="venue" class="form-control"
+               placeholder="Physical address or meeting link"
+               value="{{ session.venue|default:'' }}">
+      </div>
+      <div class="mb-4">
+        <label class="form-label">Notes</label>
+        <textarea name="notes" class="form-control" rows="3"
+                  placeholder="Optional notes for this session">{{ session.notes|default:'' }}</textarea>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn-save btn">
+          <i class="fas fa-save me-1"></i>{% if session %}Update{% else %}Create{% endif %} Session
+        </button>
+        <a href="{% url 'attendance:session_list' course.pk %}" class="btn btn-outline-secondary"
+           style="border-radius:10px; padding:11px 20px; font-weight:600; font-size:.9rem;">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

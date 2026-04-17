@@ -1,0 +1,277 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* Banner */
+  .ao-banner {
+    background: linear-gradient(135deg, #1a3a4a 0%, #1f618d 100%);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .ao-banner h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin: 0; }
+  .ao-banner p  { color: rgba(255,255,255,.78); margin: 3px 0 0; font-size: .85rem; }
+
+  /* Table card */
+  .ao-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+
+  /* Table */
+  .ao-table { width: 100%; border-collapse: collapse; margin: 0; }
+  .ao-table thead th {
+    background: #f7fafc;
+    border-bottom: 2px solid #e8edf2;
+    padding: 11px 16px;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    white-space: nowrap;
+  }
+  .ao-table tbody tr {
+    border-bottom: 1px solid #f0f4f8;
+    transition: background .12s;
+  }
+  .ao-table tbody tr:last-child { border-bottom: none; }
+  .ao-table tbody tr:hover { background: #f8fbff; }
+  .ao-table td { padding: 14px 16px; vertical-align: middle; }
+
+  /* Stat cells */
+  .stat-num { font-size: 1.2rem; font-weight: 800; line-height: 1; }
+  .stat-lbl { font-size: .65rem; color: #95a5a6; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* Analytics button */
+  .ao-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: .78rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: linear-gradient(135deg, #1f618d, #2980b9);
+    color: #fff;
+    white-space: nowrap;
+    transition: opacity .15s;
+  }
+  .ao-btn:hover { opacity: .88; color: #fff; }
+
+  /* Pagination bar */
+  .ao-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #edf2f7;
+    background: #fafcff;
+  }
+  .ao-pagination .pg-info { font-size: .8rem; color: #7f8c8d; }
+  .pg-controls { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pg-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 34px; height: 34px; padding: 0 8px;
+    border-radius: 8px;
+    font-size: .8rem; font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #dce6f0;
+    background: #fff; color: #2c3e50;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .pg-link:hover  { background: #1f618d; color: #fff; border-color: #1f618d; }
+  .pg-link.active { background: #1f618d; color: #fff; border-color: #1f618d; pointer-events: none; }
+  .pg-link.disabled { opacity: .38; pointer-events: none; }
+
+  /* Empty */
+  .ao-empty { text-align: center; padding: 56px 24px; color: #b2bec3; }
+  .ao-empty i { font-size: 2.8rem; display: block; margin-bottom: 14px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .ao-banner { flex-direction: column; align-items: flex-start; }
+    .ao-table thead th:nth-child(4),
+    .ao-table td:nth-child(4) { display: none; } /* hide revenue column on tablet */
+  }
+  @media (max-width: 480px) {
+    .ao-pagination { flex-direction: column; align-items: flex-start; }
+    .ao-table thead th:nth-child(3),
+    .ao-table td:nth-child(3) { display: none; } /* hide approved column on phone */
+  }
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+<div style="max-width:1000px; margin:0 auto; padding:0 16px;">
+
+  <!-- Banner -->
+  <div class="ao-banner">
+    <div>
+      <h1><i class="fas fa-chart-line me-2"></i>Analytics</h1>
+      <p>Select a course to view its detailed analytics</p>
+    </div>
+  </div>
+
+  <!-- Search + count toolbar -->
+  <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+    <form method="get" class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+      <div class="input-group" style="max-width:380px; min-width:200px;">
+        <span class="input-group-text bg-white border-end-0" style="border-radius:10px 0 0 10px;">
+          <i class="fas fa-search text-secondary" style="font-size:.85rem;"></i>
+        </span>
+        <input type="text" name="q" value="{{ query }}"
+               class="form-control border-start-0"
+               style="border-radius:0; border-left:none;"
+               placeholder="Search courses…" aria-label="Search courses">
+        <button type="submit" class="btn btn-primary"
+                style="border-radius:0 10px 10px 0; font-size:.85rem; font-weight:600; padding:0 16px;">
+          Search
+        </button>
+      </div>
+      {% if query %}
+        <a href="{% url 'courses:analytics_overview' %}"
+           class="btn btn-outline-secondary btn-sm"
+           style="border-radius:8px; font-size:.8rem;">
+          <i class="fas fa-times me-1"></i>Clear
+        </a>
+      {% endif %}
+    </form>
+    <span class="text-muted ms-auto" style="font-size:.82rem; white-space:nowrap;">
+      {% if query %}
+        <strong>{{ total_courses }}</strong> result{{ total_courses|pluralize }} for
+        &ldquo;{{ query }}&rdquo;
+      {% else %}
+        <strong>{{ total_courses }}</strong> course{{ total_courses|pluralize }}
+      {% endif %}
+    </span>
+  </div>
+
+  <!-- Table card -->
+  <div class="ao-card">
+
+    {% if page_obj.object_list %}
+
+      <div class="table-responsive">
+        <table class="ao-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Course Title</th>
+              <th style="text-align:center;">Enrolled</th>
+              <th style="text-align:center;">Approved</th>
+              <th style="text-align:center;">Revenue (TZS)</th>
+              <th style="text-align:center;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in page_obj %}
+            <tr>
+              <td style="color:#b2bec3; font-size:.8rem; width:40px;">
+                {{ page_obj.start_index|add:forloop.counter0 }}
+              </td>
+              <td>
+                <span style="font-weight:700; color:#2c3e50; font-size:.92rem;">
+                  {{ row.course.title }}
+                </span>
+              </td>
+              <td style="text-align:center; width:100px;">
+                <div class="stat-num" style="color:#2980b9;">{{ row.total_enrollments }}</div>
+                <div class="stat-lbl">Enrolled</div>
+              </td>
+              <td style="text-align:center; width:100px;">
+                <div class="stat-num" style="color:#27ae60;">{{ row.approved }}</div>
+                <div class="stat-lbl">Approved</div>
+              </td>
+              <td style="text-align:center; width:140px;">
+                <div class="stat-num" style="color:#8e44ad; font-size:1rem;">{{ row.revenue|floatformat:0 }}</div>
+                <div class="stat-lbl">Revenue</div>
+              </td>
+              <td style="text-align:center; width:160px;">
+                <a href="{% url 'courses:instructor_analytics' row.course.id %}" class="ao-btn">
+                  <i class="fas fa-chart-bar"></i> View Analytics
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination — always shown -->
+      <div class="ao-pagination">
+        <span class="pg-info">
+          Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+          of {{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }}
+        </span>
+
+        <div class="pg-controls">
+          {% if page_obj.has_previous %}
+            <a href="?q={{ query }}&page=1" class="pg-link" title="First page">
+              <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}" class="pg-link">
+              <i class="fas fa-angle-left"></i>
+            </a>
+          {% else %}
+            <span class="pg-link disabled"><i class="fas fa-angle-double-left"></i></span>
+            <span class="pg-link disabled"><i class="fas fa-angle-left"></i></span>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <span class="pg-link active">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+              <a href="?q={{ query }}&page={{ num }}" class="pg-link">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a href="?q={{ query }}&page={{ page_obj.next_page_number }}" class="pg-link">
+              <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}" class="pg-link" title="Last page">
+              <i class="fas fa-angle-double-right"></i>
+            </a>
+          {% else %}
+            <span class="pg-link disabled"><i class="fas fa-angle-right"></i></span>
+            <span class="pg-link disabled"><i class="fas fa-angle-double-right"></i></span>
+          {% endif %}
+        </div>
+      </div>
+
+    {% else %}
+      <div class="ao-empty">
+        <i class="fas fa-{% if query %}search{% else %}chart-line{% endif %}"></i>
+        {% if query %}
+          <p class="fw-semibold" style="color:#636e72;">
+            No courses match &ldquo;{{ query }}&rdquo;
+          </p>
+          <a href="{% url 'courses:analytics_overview' %}"
+             class="btn btn-outline-secondary btn-sm mt-2">
+            <i class="fas fa-times me-1"></i>Clear search
+          </a>
+        {% else %}
+          <p class="fw-semibold" style="color:#636e72;">No courses yet.</p>
+          <a href="{% url 'courses:create_course' %}" class="btn btn-primary mt-2">
+            <i class="fas fa-plus-circle me-1"></i>Create First Course
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div><!-- /ao-card -->
+
+</div>
+</div>
+{% endblock %}

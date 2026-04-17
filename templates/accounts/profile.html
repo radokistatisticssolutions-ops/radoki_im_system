@@ -1,0 +1,523 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  body.authenticated { background: #f0f4f8 !important; }
+
+  /* ── Page wrapper ── */
+  .profile-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 28px 16px 48px;
+  }
+
+  /* ── Banner ── */
+  .profile-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 14px;
+    padding: 22px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(41,128,185,.22);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .profile-banner-left h1 {
+    color: #fff;
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .profile-banner-left p {
+    color: rgba(255,255,255,.75);
+    margin: 5px 0 0;
+    font-size: 0.84rem;
+  }
+  .profile-banner-right a {
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .2s;
+  }
+  .profile-banner-right a:hover { background: rgba(255,255,255,.28); }
+
+  /* ── Layout grid ── */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 768px) {
+    .profile-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Left panel (avatar + account info) ── */
+  .left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .avatar-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    border: 1px solid #e8edf2;
+    text-align: center;
+  }
+  .avatar-ring {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    border: 3px solid #2980b9;
+    padding: 3px;
+    background: #fff;
+    position: relative;
+  }
+  .avatar-ring img,
+  .avatar-ring .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+  .avatar-placeholder {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+    color: #2980b9;
+  }
+  .avatar-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 2px;
+  }
+  .avatar-role {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 14px;
+  }
+  .role-instructor { background: #fef3c7; color: #92400e; }
+  .role-student    { background: #dbeafe; color: #1d4ed8; }
+
+  /* Upload trigger */
+  .upload-zone {
+    border: 2px dashed #bfdbfe;
+    border-radius: 10px;
+    padding: 14px 10px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  .upload-zone:hover { border-color: #2980b9; background: #f0f7ff; }
+  .upload-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-zone-label {
+    font-size: 0.78rem;
+    color: #7f8c8d;
+    pointer-events: none;
+  }
+  .upload-zone-label i { font-size: 1.3rem; color: #2980b9; display: block; margin-bottom: 4px; }
+  .upload-zone-label span { color: #2980b9; font-weight: 600; }
+
+  /* Account info card */
+  .info-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    border: 1px solid #e8edf2;
+  }
+  .info-card-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: .07em;
+    margin-bottom: 12px;
+  }
+  .info-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.84rem;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row i { width: 18px; color: #2980b9; text-align: center; flex-shrink: 0; }
+  .info-row-label { color: #94a3b8; font-size: 0.74rem; }
+  .info-row-value { color: #1e293b; font-weight: 600; }
+
+  /* ── Right panel (form sections) ── */
+  .right-panel { display: flex; flex-direction: column; gap: 16px; }
+
+  .form-section {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    border: 1px solid #e8edf2;
+  }
+  .section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #64748b;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title i { color: #2980b9; }
+
+  /* Fields */
+  .pf-field { margin-bottom: 14px; }
+  .pf-field:last-child { margin-bottom: 0; }
+  .pf-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .pf-label .req { color: #e74c3c; margin-left: 2px; }
+  .pf-field .form-control,
+  .pf-field .form-select {
+    border-radius: 8px;
+    border: 1.5px solid #d1d5db;
+    font-size: 0.88rem;
+    background: #fafafa;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .pf-field .form-control:focus,
+  .pf-field .form-select:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 0 3px rgba(41,128,185,.12);
+    background: #fff;
+  }
+  .pf-field textarea.form-control { resize: vertical; min-height: 100px; }
+  .pf-error { color: #dc3545; font-size: 0.76rem; margin-top: 4px; }
+  .pf-hint  { color: #94a3b8; font-size: 0.76rem; margin-top: 4px; }
+
+  .field-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 480px) {
+    .field-row-2 { grid-template-columns: 1fr; }
+  }
+
+  /* ── Submit card ── */
+  .submit-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    border: 1px solid #e8edf2;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn-save {
+    flex: 1;
+    min-width: 140px;
+    background: linear-gradient(135deg, #1a5276, #2980b9);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: opacity .2s, transform .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-save:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-cancel {
+    flex: 1;
+    min-width: 140px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 11px 20px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background .2s;
+  }
+  .btn-cancel:hover { background: #e2e8f0; color: #475569; }
+
+  /* Error alert */
+  .error-alert {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #991b1b;
+    font-size: 0.86rem;
+    margin-bottom: 4px;
+  }
+</style>
+
+<div class="profile-wrap">
+
+  <!-- Banner -->
+  <div class="profile-banner">
+    <div class="profile-banner-left">
+      <h1><i class="fas fa-user-edit"></i> Update Profile</h1>
+      <p>Keep your information accurate and up to date</p>
+    </div>
+    <div class="profile-banner-right">
+      <a href="{% url 'dashboard:index' %}"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <div class="profile-grid">
+
+      <!-- ── Left Panel ── -->
+      <div class="left-panel">
+
+        <!-- Avatar card -->
+        <div class="avatar-card">
+          <div class="avatar-ring">
+            {% if user.profile_picture %}
+              <img src="{{ user.profile_picture.url }}" alt="Profile picture" id="avatar-preview">
+            {% else %}
+              <div class="avatar-placeholder" id="avatar-preview-placeholder">
+                <i class="fas fa-user"></i>
+              </div>
+              <img src="" alt="" id="avatar-preview" style="display:none;">
+            {% endif %}
+          </div>
+
+          <div class="avatar-name">
+            {{ user.get_full_name|default:user.username }}
+          </div>
+          <div>
+            {% if user.is_instructor %}
+              <span class="avatar-role role-instructor"><i class="fas fa-chalkboard-teacher me-1"></i>Instructor</span>
+            {% else %}
+              <span class="avatar-role role-student"><i class="fas fa-graduation-cap me-1"></i>Student</span>
+            {% endif %}
+          </div>
+
+          <!-- Upload zone -->
+          <div class="upload-zone" id="upload-zone">
+            {{ form.profile_picture }}
+            <div class="upload-zone-label">
+              <i class="fas fa-camera"></i>
+              <span>Click to change photo</span>
+              <div style="margin-top:3px; font-size:0.72rem;">JPG, PNG · max 5 MB</div>
+            </div>
+          </div>
+          {% if form.profile_picture.errors %}
+          <div class="pf-error mt-2">{{ form.profile_picture.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Account info card -->
+        <div class="info-card">
+          <div class="info-card-title"><i class="fas fa-info-circle me-1"></i> Account Info</div>
+          <div class="info-row">
+            <i class="fas fa-user"></i>
+            <div>
+              <div class="info-row-label">Username</div>
+              <div class="info-row-value">{{ user.username }}</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <i class="fas fa-envelope"></i>
+            <div>
+              <div class="info-row-label">Email</div>
+              <div class="info-row-value" style="word-break:break-all;">{{ user.email|default:"—" }}</div>
+            </div>
+          </div>
+          <div class="info-row">
+            <i class="fas fa-calendar-alt"></i>
+            <div>
+              <div class="info-row-label">Member Since</div>
+              <div class="info-row-value">{{ user.date_joined|date:"M Y" }}</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /left-panel -->
+
+      <!-- ── Right Panel ── -->
+      <div class="right-panel">
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div class="error-alert">
+          <i class="fas fa-exclamation-circle me-2"></i><strong>Please fix the errors below:</strong>
+          {% for error in form.non_field_errors %}<div class="mt-1">{{ error }}</div>{% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Section 1: Personal -->
+        <div class="form-section">
+          <div class="section-title"><i class="fas fa-id-card"></i> Personal Information</div>
+
+          <div class="field-row-2">
+            <div class="pf-field">
+              <label class="pf-label" for="{{ form.first_name.id_for_label }}">First Name <span class="req">*</span></label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="pf-error">{{ form.first_name.errors }}</div>{% endif %}
+            </div>
+            <div class="pf-field">
+              <label class="pf-label" for="{{ form.last_name.id_for_label }}">Last Name <span class="req">*</span></label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="pf-error">{{ form.last_name.errors }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="pf-field">
+            <label class="pf-label" for="{{ form.email.id_for_label }}">Email Address <span class="req">*</span></label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="pf-error">{{ form.email.errors }}</div>{% endif %}
+          </div>
+
+          <div class="field-row-2">
+            <div class="pf-field">
+              <label class="pf-label" for="{{ form.age.id_for_label }}">Age</label>
+              {{ form.age }}
+              {% if form.age.errors %}<div class="pf-error">{{ form.age.errors }}</div>{% endif %}
+            </div>
+            <div class="pf-field">
+              <label class="pf-label" for="{{ form.sex.id_for_label }}">Gender</label>
+              {{ form.sex }}
+              {% if form.sex.errors %}<div class="pf-error">{{ form.sex.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Contact -->
+        <div class="form-section">
+          <div class="section-title"><i class="fas fa-phone-alt"></i> Contact Information</div>
+
+          <div class="pf-field">
+            <label class="pf-label" for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+            {{ form.phone_number }}
+            {% if form.phone_number.errors %}<div class="pf-error">{{ form.phone_number.errors }}</div>{% endif %}
+          </div>
+
+          <div class="field-row-2">
+            <div class="pf-field">
+              <label class="pf-label" for="{{ form.region.id_for_label }}">Region / State</label>
+              {{ form.region }}
+              {% if form.region.errors %}<div class="pf-error">{{ form.region.errors }}</div>{% endif %}
+            </div>
+            <div class="pf-field">
+              <label class="pf-label" for="{{ form.country.id_for_label }}">Country</label>
+              {{ form.country }}
+              {% if form.country.errors %}<div class="pf-error">{{ form.country.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Professional -->
+        <div class="form-section">
+          <div class="section-title"><i class="fas fa-briefcase"></i> Professional Information</div>
+
+          <div class="pf-field">
+            <label class="pf-label" for="{{ form.professional_qualification.id_for_label }}">Professional Qualification</label>
+            {{ form.professional_qualification }}
+            {% if form.professional_qualification.errors %}<div class="pf-error">{{ form.professional_qualification.errors }}</div>{% endif %}
+          </div>
+
+          <div class="pf-field">
+            <label class="pf-label" for="{{ form.bio.id_for_label }}">About You</label>
+            {{ form.bio }}
+            <div class="pf-hint"><i class="fas fa-info-circle me-1"></i>Max 500 characters</div>
+            {% if form.bio.errors %}<div class="pf-error">{{ form.bio.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-card">
+          <button type="submit" class="btn-save">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+          <a href="{% url 'dashboard:index' %}" class="btn-cancel">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+        </div>
+
+      </div><!-- /right-panel -->
+    </div><!-- /profile-grid -->
+  </form>
+</div>
+
+<script>
+/* Live avatar preview when user picks a new photo */
+document.addEventListener('DOMContentLoaded', function () {
+  var input = document.querySelector('input[type=file][name=profile_picture]');
+  var preview = document.getElementById('avatar-preview');
+  var placeholder = document.getElementById('avatar-preview-placeholder');
+
+  if (input) {
+    input.addEventListener('change', function () {
+      var file = this.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+</script>
+
+{% endblock %}

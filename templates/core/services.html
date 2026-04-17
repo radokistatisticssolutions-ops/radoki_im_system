@@ -1,0 +1,836 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --blue-deep:  #1a3a5c;
+    --blue-mid:   #2980b9;
+    --blue-light: #5dade2;
+    --accent:     #f39c12;
+    --green:      #27ae60;
+    --red:        #e74c3c;
+    --bg-soft:    #f4f7fb;
+    --white:      #ffffff;
+    --text-dark:  #1c2b3a;
+    --text-muted: #637383;
+    --card-radius: 20px;
+    --ease: .3s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── PAGE WRAPPER ── */
+  .svc-page { background: var(--bg-soft); font-family: 'Plus Jakarta Sans', sans-serif; }
+
+  /* ══════════════════════
+     HERO
+     ══════════════════════ */
+  .svc-hero {
+    position: relative;
+    background: linear-gradient(135deg, var(--blue-deep) 0%, #0d2137 60%, #163352 100%);
+    padding: 100px 0 80px;
+    overflow: hidden;
+  }
+  .svc-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%235dade2' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  /* Glowing orbs */
+  .svc-hero::after {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(41,128,185,.15) 0%, transparent 70%);
+    top: -200px; right: -100px;
+    pointer-events: none;
+  }
+  .hero-orb2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(243,156,18,.08) 0%, transparent 70%);
+    bottom: -150px; left: -50px;
+    pointer-events: none;
+  }
+  .svc-hero .container { position: relative; z-index: 2; }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 50px; padding: 6px 16px;
+    font-size: .75rem; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--blue-light); margin-bottom: 20px;
+  }
+  .hero-title {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    color: #fff; line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  .hero-title em { font-style: italic; color: var(--blue-light); }
+  .hero-sub {
+    font-size: 1.1rem; color: rgba(255,255,255,.7);
+    max-width: 520px; line-height: 1.75; margin-bottom: 36px;
+  }
+  .hero-stats {
+    display: flex; gap: 32px; flex-wrap: wrap;
+  }
+  .hero-stat-item { text-align: left; }
+  .hero-stat-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem; color: #fff; line-height: 1;
+    display: block;
+  }
+  .hero-stat-label {
+    font-size: .72rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+  }
+  .hero-stat-sep { width: 1px; background: rgba(255,255,255,.15); align-self: stretch; }
+
+  /* Floating icon grid on right */
+  .hero-icon-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; max-width: 320px; margin-left: auto;
+  }
+  .hero-icon-card {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px; padding: 20px;
+    text-align: center;
+    transition: transform var(--ease), background var(--ease);
+    animation: floatCard 4s ease-in-out infinite;
+  }
+  .hero-icon-card:nth-child(2) { animation-delay: 1s; }
+  .hero-icon-card:nth-child(3) { animation-delay: 2s; }
+  .hero-icon-card:nth-child(4) { animation-delay: 3s; }
+  .hero-icon-card:hover { transform: translateY(-4px); background: rgba(255,255,255,.1); }
+  .hero-icon-card i { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+  .hero-icon-card span { font-size: .72rem; font-weight: 600; color: rgba(255,255,255,.6); }
+  @keyframes floatCard {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  /* ══════════════════════
+     SECTION HEADERS
+     ══════════════════════ */
+  .section-eyebrow {
+    display: inline-block;
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--blue-mid);
+    background: rgba(41,128,185,.08);
+    border: 1px solid rgba(41,128,185,.15);
+    border-radius: 50px; padding: 5px 14px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    color: var(--text-dark); line-height: 1.2;
+  }
+  .section-title em { font-style: italic; color: var(--blue-mid); }
+
+  /* ══════════════════════
+     SERVICE CARDS
+     ══════════════════════ */
+  .services-section { padding: 90px 0; }
+
+  .svc-card {
+    background: var(--white);
+    border-radius: var(--card-radius);
+    padding: 36px;
+    border: 1px solid rgba(26,58,92,.07);
+    box-shadow: 0 4px 20px rgba(26,58,92,.05);
+    transition: transform var(--ease), box-shadow var(--ease), border-color var(--ease);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .svc-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--card-accent, linear-gradient(90deg, var(--blue-mid), var(--blue-light)));
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--ease);
+  }
+  .svc-card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(26,58,92,.12); border-color: rgba(41,128,185,.2); }
+  .svc-card:hover::before { transform: scaleX(1); }
+
+  .svc-card-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 20px;
+    transition: transform var(--ease);
+  }
+  .svc-card:hover .svc-card-icon { transform: scale(1.1) rotate(5deg); }
+
+  .svc-card-title {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--text-dark); margin-bottom: 16px;
+  }
+
+  .svc-check-list { list-style: none; padding: 0; margin: 0; }
+  .svc-check-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 7px 0;
+    font-size: .875rem; color: var(--text-muted);
+    border-bottom: 1px solid rgba(26,58,92,.05);
+    transition: color var(--ease);
+  }
+  .svc-check-list li:last-child { border-bottom: none; }
+  .svc-card:hover .svc-check-list li { color: var(--text-dark); }
+  .svc-check-list li i { flex-shrink: 0; margin-top: 2px; font-size: .8rem; }
+
+  /* Card colour themes */
+  .svc-card-blue  { --card-accent: linear-gradient(90deg,#2980b9,#5dade2); }
+  .svc-card-blue  .svc-card-icon { background: rgba(41,128,185,.1); color: #2980b9; }
+  .svc-card-blue  .svc-check-list li i { color: #2980b9; }
+
+  .svc-card-green { --card-accent: linear-gradient(90deg,#27ae60,#2ecc71); }
+  .svc-card-green .svc-card-icon { background: rgba(39,174,96,.1); color: #27ae60; }
+  .svc-card-green .svc-check-list li i { color: #27ae60; }
+
+  .svc-card-red   { --card-accent: linear-gradient(90deg,#e74c3c,#ff6b6b); }
+  .svc-card-red   .svc-card-icon { background: rgba(231,76,60,.1); color: #e74c3c; }
+  .svc-card-red   .svc-check-list li i { color: #e74c3c; }
+
+  .svc-card-orange{ --card-accent: linear-gradient(90deg,#f39c12,#f1c40f); }
+  .svc-card-orange .svc-card-icon { background: rgba(243,156,18,.1); color: #f39c12; }
+  .svc-card-orange .svc-check-list li i { color: #f39c12; }
+
+  /* ══════════════════════
+     WHY CHOOSE US BAND
+     ══════════════════════ */
+  .why-band {
+    background: linear-gradient(135deg, var(--blue-deep), #0d2137);
+    padding: 70px 0;
+    position: relative; overflow: hidden;
+  }
+  .why-band::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%235dade2' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .why-band .container { position: relative; z-index: 1; }
+
+  .why-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 20px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    transition: background var(--ease), transform var(--ease);
+    height: 100%;
+  }
+  .why-item:hover { background: rgba(255,255,255,.09); transform: translateY(-4px); }
+  .why-icon {
+    width: 48px; height: 48px; flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(41,128,185,.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: var(--blue-light);
+  }
+  .why-title { font-size: .9rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .why-desc  { font-size: .8rem; color: rgba(255,255,255,.5); line-height: 1.5; }
+
+  /* ══════════════════════
+     REQUEST FORM
+     ══════════════════════ */
+  .form-section { padding: 90px 0; background: var(--bg-soft); }
+
+  .form-card {
+    background: var(--white);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(26,58,92,.1);
+    border: 1px solid rgba(26,58,92,.07);
+  }
+  .form-card-header {
+    background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+    padding: 28px 36px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .form-card-header-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: #fff; flex-shrink: 0;
+  }
+  .form-card-header h4 { color: #fff; font-weight: 700; margin: 0; font-size: 1.1rem; }
+  .form-card-header p  { color: rgba(255,255,255,.65); margin: 0; font-size: .82rem; }
+  .form-card-body { padding: 36px; }
+
+  /* Custom form fields */
+  .field-group { margin-bottom: 20px; }
+  .field-label {
+    display: block; font-size: .82rem; font-weight: 700;
+    color: var(--text-dark); margin-bottom: 7px;
+  }
+  .field-label span { color: #e74c3c; }
+  .field-input {
+    width: 100%; padding: 12px 16px;
+    border: 1.5px solid rgba(26,58,92,.12);
+    border-radius: 12px;
+    font-size: .9rem; font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-dark); background: var(--white);
+    transition: border-color var(--ease), box-shadow var(--ease);
+    outline: none;
+  }
+  .field-input:focus {
+    border-color: var(--blue-mid);
+    box-shadow: 0 0 0 4px rgba(41,128,185,.1);
+  }
+  .field-input::placeholder { color: rgba(99,115,131,.5); }
+  textarea.field-input { resize: vertical; min-height: 120px; }
+  select.field-input { cursor: pointer; }
+
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width: 576px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+  .submit-btn {
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-deep));
+    color: #fff; border: none; border-radius: 12px;
+    font-size: .95rem; font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform var(--ease), box-shadow var(--ease);
+    margin-top: 8px;
+  }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(41,128,185,.35); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* ── SIDEBAR CARDS ── */
+  .info-card {
+    background: var(--white);
+    border-radius: var(--card-radius);
+    border: 1px solid rgba(26,58,92,.07);
+    box-shadow: 0 4px 20px rgba(26,58,92,.05);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .info-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(26,58,92,.07);
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: .9rem; color: var(--text-dark);
+  }
+  .info-card-header i { color: var(--blue-mid); font-size: 1rem; }
+  .info-card-body { padding: 16px 20px; }
+
+  .check-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; font-size: .85rem; color: var(--text-muted);
+    border-bottom: 1px solid rgba(26,58,92,.05);
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-row i { color: var(--green); font-size: .8rem; flex-shrink: 0; }
+
+  .contact-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid rgba(26,58,92,.05);
+  }
+  .contact-row:last-child { border-bottom: none; }
+  .contact-row-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: rgba(41,128,185,.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; color: var(--blue-mid); flex-shrink: 0;
+  }
+  .contact-row-label { font-size: .72rem; color: var(--text-muted); }
+  .contact-row-value { font-size: .82rem; font-weight: 600; color: var(--text-dark); }
+  .contact-row-value a { color: var(--blue-mid); text-decoration: none; }
+  .contact-row-value a:hover { text-decoration: underline; }
+
+  .fact-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(26,58,92,.05); font-size: .84rem; }
+  .fact-row:last-child { border-bottom: none; }
+  .fact-row .fact-label { color: var(--text-muted); }
+  .fact-row .fact-val { font-weight: 700; color: var(--blue-mid); }
+
+  /* Security note */
+  .security-note {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(39,174,96,.06); border: 1px solid rgba(39,174,96,.15);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: .78rem; color: var(--text-muted); margin-top: 16px;
+  }
+  .security-note i { color: var(--green); flex-shrink: 0; }
+
+  /* Animations */
+  .fade-up { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+  .fade-up-d1 { transition-delay: .1s; }
+  .fade-up-d2 { transition-delay: .2s; }
+  .fade-up-d3 { transition-delay: .3s; }
+  .fade-up-d4 { transition-delay: .4s; }
+</style>
+
+<div class="svc-page">
+
+  <!-- ══ HERO ══ -->
+  <section class="svc-hero">
+    <div class="hero-orb2"></div>
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+          <div class="hero-eyebrow">
+            <i class="fas fa-briefcase"></i> Professional Services
+          </div>
+          <h1 class="hero-title">
+            Expert Solutions for <em>Your Growth</em>
+          </h1>
+          <p class="hero-sub">
+            From research and training to design and web development — RADOKI provides tailored expertise to help students, professionals, and organisations succeed.
+          </p>
+          <div class="hero-stats">
+            <div class="hero-stat-item">
+              <span class="hero-stat-num">10+</span>
+              <span class="hero-stat-label">Years Experience</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num">99%</span>
+              <span class="hero-stat-label">Client Satisfaction</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num">24h</span>
+              <span class="hero-stat-label">Response Time</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 d-none d-lg-block">
+          <div class="hero-icon-grid">
+            <div class="hero-icon-card">
+              <i class="fas fa-book-open" style="color:#5dade2;"></i>
+              <span>Research</span>
+            </div>
+            <div class="hero-icon-card">
+              <i class="fas fa-database" style="color:#27ae60;"></i>
+              <span>Data Analysis</span>
+            </div>
+            <div class="hero-icon-card">
+              <i class="fas fa-graduation-cap" style="color:#f39c12;"></i>
+              <span>Training</span>
+            </div>
+            <div class="hero-icon-card">
+              <i class="fas fa-palette" style="color:#e74c3c;"></i>
+              <span>Design & Dev</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SERVICE CARDS ══ -->
+  <section class="services-section">
+    <div class="container">
+      <div class="text-center mb-60 fade-up" style="margin-bottom:56px;">
+        <span class="section-eyebrow">What We Offer</span>
+        <h2 class="section-title">Our <em>Service</em> Categories</h2>
+      </div>
+
+      <div class="row g-4">
+
+        <!-- Research & Writing -->
+        <div class="col-lg-6 fade-up fade-up-d1">
+          <div class="svc-card svc-card-blue">
+            <div class="svc-card-icon"><i class="fas fa-book-open"></i></div>
+            <div class="svc-card-title">Research &amp; Writing Services</div>
+            <ul class="svc-check-list">
+              <li><i class="fas fa-check-circle"></i> Research Proposal Writing</li>
+              <li><i class="fas fa-check-circle"></i> Dissertation Writing</li>
+              <li><i class="fas fa-check-circle"></i> Project Proposal Development</li>
+              <li><i class="fas fa-check-circle"></i> Research Consultancy</li>
+              <li><i class="fas fa-check-circle"></i> Concept Notes</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Data Services -->
+        <div class="col-lg-6 fade-up fade-up-d2">
+          <div class="svc-card svc-card-green">
+            <div class="svc-card-icon"><i class="fas fa-database"></i></div>
+            <div class="svc-card-title">Data Services</div>
+            <ul class="svc-check-list">
+              <li><i class="fas fa-check-circle"></i> Data Collection</li>
+              <li><i class="fas fa-check-circle"></i> Data Analysis &amp; Interpretation</li>
+              <li><i class="fas fa-check-circle"></i> Statistical Consultation</li>
+              <li><i class="fas fa-check-circle"></i> Project Management</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Training -->
+        <div class="col-lg-6 fade-up fade-up-d3">
+          <div class="svc-card svc-card-red">
+            <div class="svc-card-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div class="svc-card-title">Training Programs</div>
+            <ul class="svc-check-list">
+              <li><i class="fas fa-check-circle"></i> SPSS Training</li>
+              <li><i class="fas fa-check-circle"></i> STATA Training</li>
+              <li><i class="fas fa-check-circle"></i> R Programming</li>
+              <li><i class="fas fa-check-circle"></i> Python for Data Science</li>
+              <li><i class="fas fa-check-circle"></i> Excel Advanced Techniques</li>
+              <li><i class="fas fa-check-circle"></i> Power BI &amp; Tableau</li>
+              <li><i class="fas fa-check-circle"></i> Computer Basics &amp; Business Coaching</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Design & Dev -->
+        <div class="col-lg-6 fade-up fade-up-d4">
+          <div class="svc-card svc-card-orange">
+            <div class="svc-card-icon"><i class="fas fa-palette"></i></div>
+            <div class="svc-card-title">Design &amp; Development</div>
+            <ul class="svc-check-list">
+              <li><i class="fas fa-check-circle"></i> Graphic Design</li>
+              <li><i class="fas fa-check-circle"></i> 3D Rendering &amp; Visualization</li>
+              <li><i class="fas fa-check-circle"></i> Web Development</li>
+              <li><i class="fas fa-check-circle"></i> CV &amp; Resume Creation</li>
+              <li><i class="fas fa-check-circle"></i> Business Plans</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ WHY CHOOSE US ══ -->
+  <section class="why-band">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="section-eyebrow" style="background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.15); color:var(--blue-light);">Why RADOKI</span>
+        <h2 class="section-title" style="color:#fff;">Why <em>Choose</em> Us?</h2>
+      </div>
+      <div class="row g-3">
+        <div class="col-sm-6 col-lg-4 fade-up fade-up-d1">
+          <div class="why-item">
+            <div class="why-icon"><i class="fas fa-user-tie"></i></div>
+            <div>
+              <div class="why-title">Expert Professionals</div>
+              <div class="why-desc">Certified specialists with hands-on industry experience across all service areas.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 fade-up fade-up-d2">
+          <div class="why-item">
+            <div class="why-icon"><i class="fas fa-bolt"></i></div>
+            <div>
+              <div class="why-title">Quick Turnaround</div>
+              <div class="why-desc">We respond within 24 hours and deliver projects on time, every time.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 fade-up fade-up-d3">
+          <div class="why-item">
+            <div class="why-icon"><i class="fas fa-tags"></i></div>
+            <div>
+              <div class="why-title">Affordable Pricing</div>
+              <div class="why-desc">Transparent, competitive rates tailored to fit every budget and project scope.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 fade-up fade-up-d1">
+          <div class="why-item">
+            <div class="why-icon"><i class="fas fa-shield-alt"></i></div>
+            <div>
+              <div class="why-title">Quality Assured</div>
+              <div class="why-desc">Every deliverable goes through a rigorous quality review before it reaches you.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 fade-up fade-up-d2">
+          <div class="why-item">
+            <div class="why-icon"><i class="fas fa-headset"></i></div>
+            <div>
+              <div class="why-title">24/7 Support</div>
+              <div class="why-desc">Round-the-clock support so you're never stuck when you need help most.</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-4 fade-up fade-up-d3">
+          <div class="why-item">
+            <div class="why-icon"><i class="fas fa-lock"></i></div>
+            <div>
+              <div class="why-title">100% Confidential</div>
+              <div class="why-desc">Your data and project details are fully secured and never shared.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ FORM SECTION ══ -->
+  <section class="form-section">
+    <div class="container">
+      <div class="text-center mb-5 fade-up">
+        <span class="section-eyebrow">Get Started</span>
+        <h2 class="section-title">Request Our <em>Services</em></h2>
+        <p style="color:var(--text-muted); max-width:480px; margin:12px auto 0; font-size:.95rem;">
+          Fill in the form and we'll get back to you within 24 hours with a tailored quote.
+        </p>
+      </div>
+
+      <div class="row g-4 align-items-start">
+
+        <!-- FORM -->
+        <div class="col-lg-8 fade-up fade-up-d1">
+          <div class="form-card">
+            <div class="form-card-header">
+              <div class="form-card-header-icon"><i class="fas fa-paper-plane"></i></div>
+              <div>
+                <h4>Service Request Form</h4>
+                <p>All fields marked * are required</p>
+              </div>
+            </div>
+            <div class="form-card-body">
+              <div id="serviceFormMessage"></div>
+              <form id="serviceRequestForm" method="post">
+                {% csrf_token %}
+
+                <div class="form-grid-2">
+                  <div class="field-group">
+                    <label class="field-label">Full Name <span>*</span></label>
+                    <input type="text" name="name" class="field-input" placeholder="Your full name" required>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label">Email Address <span>*</span></label>
+                    <input type="email" name="email" class="field-input" placeholder="your@email.com" required>
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="field-group">
+                    <label class="field-label">Phone Number <span>*</span></label>
+                    <input type="tel" name="phone" class="field-input" placeholder="+255 7XX XXX XXX" required>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label">Organisation</label>
+                    <input type="text" name="organization" class="field-input" placeholder="Optional">
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label class="field-label">Select Service <span>*</span></label>
+                  <select name="service" class="field-input" required>
+                    <option value="" disabled selected>Choose a service…</option>
+                    {% for value, label in service_choices %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="field-group">
+                  <label class="field-label">Service Details <span>*</span></label>
+                  <textarea name="description" class="field-input" rows="4" placeholder="Describe your project, requirements, and specific goals…" required></textarea>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="field-group">
+                    <label class="field-label">Budget Range</label>
+                    <input type="text" name="budget" class="field-input" placeholder="e.g. TZS 5,000–10,000 or Open">
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label">Timeline / Deadline</label>
+                    <input type="text" name="timeline" class="field-input" placeholder="e.g. Within 2 weeks">
+                  </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                  <i class="fas fa-paper-plane"></i> Submit Service Request
+                </button>
+
+                <div class="security-note">
+                  <i class="fas fa-lock"></i>
+                  Your information is encrypted and will never be shared with third parties.
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-4 fade-up fade-up-d2">
+
+          <!-- Why choose us -->
+          <div class="info-card">
+            <div class="info-card-header">
+              <i class="fas fa-star"></i> Why Choose Us?
+            </div>
+            <div class="info-card-body">
+              <div class="check-row"><i class="fas fa-check-circle"></i> Expert Professionals</div>
+              <div class="check-row"><i class="fas fa-check-circle"></i> Quick Turnaround</div>
+              <div class="check-row"><i class="fas fa-check-circle"></i> Affordable Pricing</div>
+              <div class="check-row"><i class="fas fa-check-circle"></i> Quality Assured</div>
+              <div class="check-row"><i class="fas fa-check-circle"></i> 24/7 Support</div>
+              <div class="check-row"><i class="fas fa-check-circle"></i> 100% Confidential</div>
+            </div>
+          </div>
+
+          <!-- Contact info -->
+          <div class="info-card">
+            <div class="info-card-header">
+              <i class="fas fa-phone"></i> Contact Us Directly
+            </div>
+            <div class="info-card-body">
+              <div class="contact-row">
+                <div class="contact-row-icon"><i class="fas fa-envelope"></i></div>
+                <div>
+                  <div class="contact-row-label">Email</div>
+                  <div class="contact-row-value">
+                    <a href="mailto:radokistatisticssolutions@gmail.com">radokistatisticssolutions@gmail.com</a>
+                  </div>
+                </div>
+              </div>
+              <div class="contact-row">
+                <div class="contact-row-icon"><i class="fas fa-phone"></i></div>
+                <div>
+                  <div class="contact-row-label">Phone / WhatsApp</div>
+                  <div class="contact-row-value">
+                    <a href="tel:+255753093786">+255 753 093 786</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick facts -->
+          <div class="info-card">
+            <div class="info-card-header">
+              <i class="fas fa-chart-bar"></i> Quick Facts
+            </div>
+            <div class="info-card-body">
+              <div class="fact-row"><span class="fact-label">Response Time</span><span class="fact-val">Within 24h</span></div>
+              <div class="fact-row"><span class="fact-label">Client Satisfaction</span><span class="fact-val">99%</span></div>
+              <div class="fact-row"><span class="fact-label">Experience</span><span class="fact-val">10+ Years</span></div>
+              <div class="fact-row"><span class="fact-label">Projects Completed</span><span class="fact-val">500+</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /svc-page -->
+
+<script>
+  /* Scroll-triggered fade-up animations */
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.fade-up').forEach(function(el) {
+    observer.observe(el);
+  });
+
+  /* Focus/blur enhancements on form inputs */
+  document.querySelectorAll('.field-input').forEach(function(input) {
+    input.addEventListener('focus', function() {
+      this.closest('.field-group').querySelector('.field-label').style.color = '#2980b9';
+    });
+    input.addEventListener('blur', function() {
+      this.closest('.field-group').querySelector('.field-label').style.color = '';
+    });
+  });
+
+  /* Handle service request form submission via AJAX */
+  const serviceForm = document.getElementById('serviceRequestForm');
+  const messageDiv = document.getElementById('serviceFormMessage');
+  const submitBtn = serviceForm.querySelector('.submit-btn');
+
+  if (serviceForm) {
+    serviceForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // Show loading state
+      const originalHTML = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+      submitBtn.disabled = true;
+
+      // Collect form data
+      const formData = {
+        name: serviceForm.querySelector('[name="name"]').value.trim(),
+        email: serviceForm.querySelector('[name="email"]').value.trim(),
+        phone: serviceForm.querySelector('[name="phone"]').value.trim(),
+        organization: serviceForm.querySelector('[name="organization"]').value.trim(),
+        service: serviceForm.querySelector('[name="service"]').value.trim(),
+        description: serviceForm.querySelector('[name="description"]').value.trim(),
+        budget: serviceForm.querySelector('[name="budget"]').value.trim(),
+        timeline: serviceForm.querySelector('[name="timeline"]').value.trim(),
+      };
+
+      // Get CSRF token
+      const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+
+      try {
+        const response = await fetch('/ajax/service-request/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Show success message
+          messageDiv.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius:12px; border:none; background:rgba(39,174,96,.08); color:#1e7e34; border:1px solid rgba(39,174,96,.2) !important;">
+              <i class="fas fa-check-circle me-2"></i>${data.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          `;
+          // Reset form
+          serviceForm.reset();
+          // Scroll to message
+          messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          // Show error message
+          messageDiv.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius:12px; border:none; background:rgba(231,76,60,.08); color:#c0392b; border:1px solid rgba(231,76,60,.2) !important;">
+              <i class="fas fa-exclamation-circle me-2"></i>${data.message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          `;
+        }
+      } catch (error) {
+        messageDiv.innerHTML = `
+          <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius:12px; border:none; background:rgba(231,76,60,.08); color:#c0392b; border:1px solid rgba(231,76,60,.2) !important;">
+            <i class="fas fa-exclamation-circle me-2"></i>An error occurred. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        `;
+      } finally {
+        // Restore button state
+        submitBtn.innerHTML = originalHTML;
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+</script>
+
+{% endblock %}

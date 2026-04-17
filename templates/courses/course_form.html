@@ -1,0 +1,392 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<style>
+/* ── Section cards ─────────────────────────────────── */
+.cf-section {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px 20px 8px;
+  margin-bottom: 20px;
+  background: #fff;
+}
+.cf-section-title {
+  font-size: .8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: #6c757d;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cf-section-title i { color: #2980b9; font-size: .85rem; }
+
+/* ── Field group ───────────────────────────────────── */
+.cf-field { margin-bottom: 16px; }
+.cf-label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.cf-label .req { color: #e74c3c; margin-left: 2px; }
+
+/* ── Form controls ─────────────────────────────────── */
+.cf-field .form-control,
+.cf-field .form-select {
+  border-radius: 8px;
+  border: 1.5px solid #d1d5db;
+  font-size: .9rem;
+  transition: border-color .2s, box-shadow .2s;
+  background-color: #fafafa;
+}
+.cf-field .form-control:focus,
+.cf-field .form-select:focus {
+  border-color: #2980b9;
+  box-shadow: 0 0 0 3px rgba(41,128,185,.15);
+  background-color: #fff;
+}
+.cf-field textarea.form-control { resize: vertical; min-height: 100px; }
+.cf-error { color: #dc3545; font-size: .78rem; margin-top: 4px; }
+.cf-hint  { color: #6c757d; font-size: .78rem; margin-top: 4px; }
+
+/* ── Payment method card ───────────────────────────── */
+.pm-card {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f8fafc;
+  position: relative;
+}
+.pm-card .pm-num {
+  font-size: .7rem; font-weight: 700; color: #2980b9;
+  text-transform: uppercase; letter-spacing: .4px;
+  margin-bottom: 12px;
+}
+.pm-delete-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+.pm-delete-label {
+  font-size: .78rem;
+  color: #dc3545;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* ── Submit footer ─────────────────────────────────── */
+.cf-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.cf-footer .btn { flex: 1; min-width: 140px; border-radius: 10px; font-weight: 600; padding: .65rem 1rem; }
+@media (max-width: 400px) {
+  .cf-footer { flex-direction: column; }
+  .cf-footer .btn { width: 100%; }
+}
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-4" style="max-width: 860px; margin: 0 auto;">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color: #1a1a2e;">
+        <i class="fas {% if form.instance.pk %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"
+           style="color: #2980b9;"></i>
+        {% if form.instance.pk %}Edit Course{% else %}Create New Course{% endif %}
+      </h1>
+      <p class="text-muted small mb-0">
+        {% if form.instance.pk %}Update the details of your course.
+        {% else %}Fill in the details below to publish a new course.{% endif %}
+      </p>
+    </div>
+    <a href="{% url 'courses:instructor_courses' %}"
+       class="btn btn-outline-secondary btn-sm fw-semibold align-self-start">
+      <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Non-field errors -->
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger rounded-3 mb-4" role="alert">
+      <i class="fas fa-exclamation-circle me-2"></i><strong>Please fix the errors below:</strong>
+      {% for error in form.non_field_errors %}
+      <div class="mt-1 small">{{ error }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── Section 1: Basic Information ─────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-title">
+        <i class="fas fa-info-circle"></i> Basic Information
+      </div>
+
+      <!-- Title -->
+      <div class="cf-field">
+        <label for="{{ form.title.id_for_label }}" class="cf-label">
+          {{ form.title.label }}<span class="req">*</span>
+        </label>
+        {{ form.title }}
+        {% if form.title.errors %}
+        <div class="cf-error">{% for e in form.title.errors %}{{ e }}{% endfor %}</div>
+        {% endif %}
+        {% if form.title.help_text %}
+        <div class="cf-hint">{{ form.title.help_text|safe }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Description -->
+      <div class="cf-field">
+        <label for="{{ form.description.id_for_label }}" class="cf-label">
+          {{ form.description.label }}<span class="req">*</span>
+        </label>
+        {{ form.description }}
+        {% if form.description.errors %}
+        <div class="cf-error">{% for e in form.description.errors %}{{ e }}{% endfor %}</div>
+        {% endif %}
+        {% if form.description.help_text %}
+        <div class="cf-hint">{{ form.description.help_text|safe }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Section 2: Course Details ────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-title">
+        <i class="fas fa-cog"></i> Course Details
+      </div>
+
+      <div class="row g-3">
+        <!-- Price -->
+        <div class="col-12 col-sm-6">
+          <div class="cf-field mb-0">
+            <label for="{{ form.price.id_for_label }}" class="cf-label">
+              {{ form.price.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text" style="border-radius: 8px 0 0 8px; border-color: #d1d5db; background:#f0f4f8; font-size:.85rem;">TZS</span>
+              {{ form.price }}
+            </div>
+            {% if form.price.errors %}
+            <div class="cf-error">{% for e in form.price.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Mode -->
+        <div class="col-12 col-sm-6">
+          <div class="cf-field mb-0">
+            <label for="{{ form.mode.id_for_label }}" class="cf-label">
+              {{ form.mode.label }}<span class="req">*</span>
+            </label>
+            {{ form.mode }}
+            {% if form.mode.errors %}
+            <div class="cf-error">{% for e in form.mode.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Duration -->
+        <div class="col-12 col-sm-6">
+          <div class="cf-field mb-0">
+            <label for="{{ form.duration.id_for_label }}" class="cf-label">
+              {{ form.duration.label }}
+            </label>
+            {{ form.duration }}
+            {% if form.duration.errors %}
+            <div class="cf-error">{% for e in form.duration.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+            {% if form.duration.help_text %}
+            <div class="cf-hint">{{ form.duration.help_text|safe }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Total Hours -->
+        <div class="col-12 col-sm-6">
+          <div class="cf-field mb-0">
+            <label for="{{ form.total_hours.id_for_label }}" class="cf-label">
+              {{ form.total_hours.label }}
+            </label>
+            {{ form.total_hours }}
+            {% if form.total_hours.errors %}
+            <div class="cf-error">{% for e in form.total_hours.errors %}{{ e }}{% endfor %}</div>
+            {% endif %}
+            {% if form.total_hours.help_text %}
+            <div class="cf-hint">{{ form.total_hours.help_text|safe }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 3: Curriculum ─────────────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-title">
+        <i class="fas fa-list-ul"></i> Curriculum
+      </div>
+      <div class="cf-field">
+        <label for="{{ form.curriculum.id_for_label }}" class="cf-label">
+          {{ form.curriculum.label }}
+        </label>
+        {{ form.curriculum }}
+        {% if form.curriculum.errors %}
+        <div class="cf-error">{% for e in form.curriculum.errors %}{{ e }}{% endfor %}</div>
+        {% endif %}
+        {% if form.curriculum.help_text %}
+        <div class="cf-hint">{{ form.curriculum.help_text|safe }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Section 4: Payment Methods ───────────────── -->
+    <div class="cf-section">
+      <div class="cf-section-title">
+        <i class="fas fa-credit-card"></i> Payment Methods
+      </div>
+      <p class="text-muted small mb-3" style="font-size: .82rem;">
+        Add the payment options students can use to enroll. Each method needs a Merchant ID and name.
+      </p>
+
+      {{ payment_formset.management_form }}
+
+      <div id="payment-methods">
+        {% for pf in payment_formset %}
+        <div class="pm-card">
+          {{ pf.id }}
+          <div class="pm-num">
+            <i class="fas fa-mobile-alt me-1"></i>Payment Method {{ forloop.counter }}
+          </div>
+          <div class="row g-3">
+            <div class="col-12 col-sm-4">
+              <div class="cf-field mb-0">
+                <label class="cf-label">Method</label>
+                {{ pf.method_type }}
+                {% if pf.method_type.errors %}
+                <div class="cf-error">{{ pf.method_type.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="cf-field mb-0">
+                <label class="cf-label">Merchant ID</label>
+                {{ pf.merchant_id }}
+                {% if pf.merchant_id.errors %}
+                <div class="cf-error">{{ pf.merchant_id.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-12 col-sm-4">
+              <div class="cf-field mb-0">
+                <label class="cf-label">Merchant Name</label>
+                {{ pf.merchant_name }}
+                {% if pf.merchant_name.errors %}
+                <div class="cf-error">{{ pf.merchant_name.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="pm-delete-wrap">
+            <div class="form-check mb-0">
+              {{ pf.DELETE }}
+              <label class="pm-delete-label" for="{{ pf.DELETE.id_for_label }}">
+                <i class="fas fa-trash-alt me-1"></i>Remove this method
+              </label>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <button type="button" id="add-payment-method"
+              class="btn btn-outline-primary btn-sm fw-semibold mt-1">
+        <i class="fas fa-plus me-1"></i>Add Payment Method
+      </button>
+    </div>
+
+    <!-- ── Submit Footer ─────────────────────────────── -->
+    <div class="cf-footer">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save me-1"></i>
+        {% if form.instance.pk %}Save Changes{% else %}Create Course{% endif %}
+      </button>
+      <a href="{% url 'courses:instructor_courses' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-times me-1"></i>Cancel
+      </a>
+    </div>
+
+  </form>
+</div>
+
+<script>
+/* ── Apply Bootstrap classes to all form widgets ── */
+document.querySelectorAll('.cf-field input:not([type=checkbox]):not([type=radio]), .cf-field textarea').forEach(function(el) {
+  el.classList.add('form-control');
+});
+document.querySelectorAll('.cf-field select').forEach(function(el) {
+  el.classList.add('form-select');
+});
+/* Fix input-group price field border-radius */
+var priceInput = document.querySelector('.input-group .form-control');
+if (priceInput) priceInput.style.borderRadius = '0 8px 8px 0';
+
+/* ── Dynamic add payment method ── */
+document.addEventListener('DOMContentLoaded', function() {
+  var addBtn     = document.getElementById('add-payment-method');
+  var container  = document.getElementById('payment-methods');
+  var totalForms = document.querySelector('[name$="-TOTAL_FORMS"]');
+  if (!totalForms || !addBtn) return;
+
+  var prefix = totalForms.name.replace('-TOTAL_FORMS', '');
+
+  addBtn.addEventListener('click', function() {
+    var n = parseInt(totalForms.value);
+    var card = document.createElement('div');
+    card.className = 'pm-card';
+    card.innerHTML =
+      '<div class="pm-num"><i class="fas fa-mobile-alt me-1"></i>Payment Method ' + (n + 1) + '</div>' +
+      '<div class="row g-3">' +
+        '<div class="col-12 col-sm-4"><div class="cf-field mb-0"><label class="cf-label">Method</label>' +
+          '<select name="' + prefix + '-' + n + '-method_type" class="form-select">' +
+            '<option value="">---------</option>' +
+            '<option value="MPESA">M-Pesa</option>' +
+            '<option value="MIXX_BY_YAS">MIXX by YAS</option>' +
+            '<option value="AIRTEL">Airtel Money</option>' +
+            '<option value="AZAMPESA">AzaM Pesa</option>' +
+            '<option value="HALOTEL">Halotel</option>' +
+          '</select></div></div>' +
+        '<div class="col-12 col-sm-4"><div class="cf-field mb-0"><label class="cf-label">Merchant ID</label>' +
+          '<input type="text" name="' + prefix + '-' + n + '-merchant_id" placeholder="e.g., 123456" class="form-control"></div></div>' +
+        '<div class="col-12 col-sm-4"><div class="cf-field mb-0"><label class="cf-label">Merchant Name</label>' +
+          '<input type="text" name="' + prefix + '-' + n + '-merchant_name" placeholder="e.g., Radoki Solutions" class="form-control"></div></div>' +
+      '</div>' +
+      '<div class="pm-delete-wrap">' +
+        '<input type="checkbox" name="' + prefix + '-' + n + '-DELETE" id="id_' + prefix + '-' + n + '-DELETE" class="form-check-input">' +
+        '<label class="pm-delete-label" for="id_' + prefix + '-' + n + '-DELETE"><i class="fas fa-trash-alt me-1"></i>Remove this method</label>' +
+      '</div>';
+    container.appendChild(card);
+    totalForms.value = n + 1;
+  });
+});
+</script>
+
+{% endblock %}

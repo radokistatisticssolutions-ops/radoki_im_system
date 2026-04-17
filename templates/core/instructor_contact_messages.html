@@ -1,0 +1,299 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* ── Banner ── */
+  .cm-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px;
+  }
+  .cm-banner h1 { color: #fff; font-size: 1.4rem; font-weight: 800; margin: 0; }
+  .cm-banner p  { color: rgba(255,255,255,.78); margin: 3px 0 0; font-size: .85rem; }
+
+  /* ── Stat chips ── */
+  .cm-chip {
+    background: rgba(255,255,255,.18); color: #fff;
+    border-radius: 10px; padding: 6px 16px;
+    font-size: .85rem; font-weight: 700;
+  }
+
+  /* ── Filter card ── */
+  .cm-filter {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    padding: 16px 20px; margin-bottom: 20px;
+  }
+
+  /* ── Table card ── */
+  .cm-card {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    overflow: hidden;
+  }
+  .cm-table { width: 100%; border-collapse: collapse; }
+  .cm-table thead th {
+    background: #1e293b; color: #94a3b8;
+    padding: 11px 14px;
+    font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .07em;
+    white-space: nowrap;
+  }
+  .cm-table tbody tr { border-bottom: 1px solid #f0f4f8; transition: background .12s; }
+  .cm-table tbody tr:last-child { border-bottom: none; }
+  .cm-table tbody tr:hover { background: #f8fbff; }
+  .cm-table td { padding: 12px 14px; font-size: .87rem; color: #2c3e50; vertical-align: middle; }
+
+  /* Name link */
+  .cm-name-link {
+    font-weight: 700; color: #1a5276;
+    text-decoration: none;
+  }
+  .cm-name-link:hover { color: #2980b9; text-decoration: underline; }
+
+  /* Status badges */
+  .cm-badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 20px; font-size: .7rem; font-weight: 700;
+  }
+  .badge-new        { background: #fef3c7; color: #92400e; }
+  .badge-read       { background: #dbeafe; color: #1e40af; }
+  .badge-in_progress{ background: #ede9fe; color: #5b21b6; }
+  .badge-resolved   { background: #d1fae5; color: #065f46; }
+  .badge-closed     { background: #f1f5f9; color: #64748b; }
+
+  /* Category pill */
+  .cm-cat { font-size: .72rem; color: #7f8c8d; }
+
+  /* Snippet */
+  .cm-snippet { font-size: .78rem; color: #7f8c8d; max-width: 220px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Action button */
+  .cm-view-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #eaf4fd; color: #1a5276;
+    border-radius: 8px; padding: 5px 12px;
+    font-size: .78rem; font-weight: 600;
+    text-decoration: none; transition: background .12s;
+  }
+  .cm-view-btn:hover { background: #d6eaf8; color: #1a5276; }
+
+  /* Empty */
+  .cm-empty { text-align: center; padding: 60px 24px; color: #b2bec3; }
+  .cm-empty i { font-size: 2.8rem; display: block; margin-bottom: 14px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 767.98px) {
+    .cm-banner { flex-direction: column; align-items: flex-start; padding: 18px; }
+    .cm-banner h1 { font-size: 1.15rem; }
+    .col-phone, .col-msg { display: none; }
+  }
+  @media (max-width: 575.98px) {
+    .col-cat, .col-date { display: none; }
+  }
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+<div style="max-width:1200px; margin:0 auto; padding:0 16px 80px;">
+
+  <!-- Banner -->
+  <div class="cm-banner">
+    <div>
+      <h1><i class="fas fa-envelope-open-text me-2"></i>Contact Messages</h1>
+      <p>Messages submitted via the Contact Us form</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="cm-chip">{{ total_count }} total</span>
+      {% if filtered_count != total_count %}
+      <span class="cm-chip" style="background:rgba(255,255,255,.1);">
+        {{ filtered_count }} filtered
+      </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="cm-filter">
+    <form method="get" class="row g-2 align-items-end">
+      <!-- Search -->
+      <div class="col-12 col-md-4">
+        <label class="form-label mb-1 small fw-semibold text-muted">Search</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0" style="border-radius:10px 0 0 10px;">
+            <i class="fas fa-search text-secondary" style="font-size:.8rem;"></i>
+          </span>
+          <input type="text" name="search" value="{{ search_query }}"
+                 class="form-control border-start-0" style="border-left:none;"
+                 placeholder="Name, email, subject…">
+        </div>
+      </div>
+      <!-- Status filter -->
+      <div class="col-6 col-md-2">
+        <label class="form-label mb-1 small fw-semibold text-muted">Status</label>
+        <select name="status" class="form-select form-select-sm" style="border-radius:8px;">
+          <option value="">All statuses</option>
+          {% for val, label in STATUS_CHOICES %}
+          <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Category filter -->
+      <div class="col-6 col-md-2">
+        <label class="form-label mb-1 small fw-semibold text-muted">Category</label>
+        <select name="category" class="form-select form-select-sm" style="border-radius:8px;">
+          <option value="">All categories</option>
+          {% for val, label in CATEGORY_CHOICES %}
+          <option value="{{ val }}" {% if cat_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Buttons -->
+      <div class="col-12 col-md-3 d-flex gap-2 align-items-end">
+        <button type="submit" class="btn btn-primary btn-sm w-100" style="border-radius:8px; font-weight:600;">
+          <i class="fas fa-filter me-1"></i>Filter
+        </button>
+        {% if search_query or status_filter or cat_filter %}
+        <a href="{% url 'core:instructor_contact_messages' %}"
+           class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">
+          <i class="fas fa-times"></i>
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="cm-card">
+    {% if page_obj.object_list %}
+
+      <!-- Info bar -->
+      <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom"
+           style="background:#fff; flex-wrap:wrap; gap:8px;">
+        <span class="text-muted" style="font-size:.82rem;">
+          Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+          of <strong>{{ filtered_count }}</strong> message{{ filtered_count|pluralize }}
+          {% if filtered_count != total_count %}
+          <span class="badge ms-1" style="background:#eaf4fd; color:#1a5276; border-radius:8px; font-size:.7rem;">
+            Filtered from {{ total_count }} total
+          </span>
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="table-responsive">
+      <table class="cm-table">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Subject</th>
+            <th class="col-cat">Category</th>
+            <th>Status</th>
+            <th class="col-date">Date</th>
+            <th class="col-msg">Message Preview</th>
+            <th style="text-align:center;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for contact in page_obj %}
+          <tr>
+            <td style="color:#b2bec3; font-size:.8rem;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td>
+              <a href="{% url 'core:instructor_contact_detail' contact.pk %}" class="cm-name-link">
+                {{ contact.name|truncatewords:1 }}
+              </a>
+            </td>
+            <td>
+              <a href="{% url 'core:instructor_contact_detail' contact.pk %}" class="cm-name-link">
+                {% with words=contact.name.split %}{% if words|length > 1 %}{{ words|last }}{% else %}—{% endif %}{% endwith %}
+              </a>
+            </td>
+            <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              {{ contact.subject }}
+            </td>
+            <td class="col-cat">
+              <span class="cm-cat">{{ contact.get_category_display }}</span>
+            </td>
+            <td>
+              <span class="cm-badge badge-{{ contact.status }}">
+                {{ contact.get_status_display }}
+              </span>
+            </td>
+            <td class="col-date" style="color:#7f8c8d; font-size:.78rem; white-space:nowrap;">
+              {{ contact.created_at|date:"d M Y" }}
+            </td>
+            <td class="col-msg">
+              <span class="cm-snippet">{{ contact.message|truncatechars:60 }}</span>
+            </td>
+            <td style="text-align:center;">
+              <a href="{% url 'core:instructor_contact_detail' contact.pk %}" class="cm-view-btn">
+                <i class="fas fa-eye"></i> View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if paginator.num_pages > 1 %}
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-4 py-3 border-top">
+        <small class="text-muted">
+          Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        </small>
+        <nav aria-label="Contact messages pagination">
+          <ul class="pagination pagination-sm mb-0 flex-wrap">
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+              {% if page_obj.has_previous %}
+              <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&category={{ cat_filter }}&page={{ page_obj.previous_page_number }}">
+                <i class="fas fa-chevron-left"></i></a>
+              {% else %}<span class="page-link"><i class="fas fa-chevron-left"></i></span>{% endif %}
+            </li>
+            {% for item in page_window %}
+              {% if not item %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+              {% elif item == page_obj.number %}
+              <li class="page-item active"><span class="page-link">{{ item }}</span></li>
+              {% else %}
+              <li class="page-item">
+                <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&category={{ cat_filter }}&page={{ item }}">{{ item }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+              {% if page_obj.has_next %}
+              <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status_filter }}&category={{ cat_filter }}&page={{ page_obj.next_page_number }}">
+                <i class="fas fa-chevron-right"></i></a>
+              {% else %}<span class="page-link"><i class="fas fa-chevron-right"></i></span>{% endif %}
+            </li>
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+
+    {% else %}
+    <div class="cm-empty">
+      <i class="fas fa-{% if search_query or status_filter or cat_filter %}search{% else %}envelope{% endif %}"></i>
+      {% if search_query or status_filter or cat_filter %}
+        <p class="fw-semibold" style="color:#636e72;">No messages match your filters.</p>
+        <a href="{% url 'core:instructor_contact_messages' %}"
+           class="btn btn-outline-secondary btn-sm mt-2" style="border-radius:8px;">
+          <i class="fas fa-times me-1"></i>Clear Filters
+        </a>
+      {% else %}
+        <p class="fw-semibold" style="color:#636e72;">No contact messages yet.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div><!-- /cm-card -->
+
+</div>
+</div>
+{% endblock %}

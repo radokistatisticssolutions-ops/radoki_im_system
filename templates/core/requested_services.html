@@ -1,0 +1,352 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ── Status select ─────────────────────────────────────── */
+.status-select {
+  border: none; border-radius: 20px; padding: 4px 26px 4px 10px;
+  font-size: .78rem; font-weight: 600; cursor: pointer;
+  outline: none; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  transition: box-shadow .2s;
+}
+.status-select:focus { box-shadow: 0 0 0 3px rgba(41,128,185,.25); }
+.status-select[data-current="new"]         { background-color: #cff4fc; color: #055160; }
+.status-select[data-current="contacted"]   { background-color: #fff3cd; color: #664d03; }
+.status-select[data-current="in_progress"] { background-color: #cfe2ff; color: #084298; }
+.status-select[data-current="completed"]   { background-color: #d1e7dd; color: #0a3622; }
+.status-select[data-current="closed"]      { background-color: #e2e3e5; color: #41464b; }
+.status-feedback.ok  { color: #198754; }
+.status-feedback.err { color: #dc3545; }
+
+/* ── Responsive table → card on mobile ─────────────────── */
+@media (max-width: 767.98px) {
+  .svc-table thead          { display: none; }
+  .svc-table,
+  .svc-table tbody,
+  .svc-table tr,
+  .svc-table td             { display: block; width: 100%; box-sizing: border-box; }
+  .svc-table tr {
+    border-radius: 10px; margin-bottom: 14px; overflow: hidden;
+    background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    border: 1px solid #e9ecef;
+  }
+  .svc-table tr.row-new         { border-left: 4px solid #0dcaf0; }
+  .svc-table tr.row-contacted   { border-left: 4px solid #ffc107; }
+  .svc-table tr.row-in_progress { border-left: 4px solid #0d6efd; }
+  .svc-table tr.row-completed   { border-left: 4px solid #198754; }
+  .svc-table tr.row-closed      { border-left: 4px solid #6c757d; }
+  .svc-table td {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 14px; border: none; border-bottom: 1px solid #f4f6f8;
+    font-size: .875rem; min-height: 38px; gap: 8px;
+  }
+  .svc-table td:last-child  { border-bottom: none; }
+  .svc-table td[data-label]::before {
+    content: attr(data-label); font-weight: 700; color: #6c757d;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .5px;
+    min-width: 90px; flex-shrink: 0;
+  }
+  .svc-cell { min-width: 0; flex: 1; text-align: right; word-break: break-word; }
+  .svc-num-col { display: none !important; }
+}
+</style>
+
+<div class="container-fluid px-3 px-md-4 py-4" style="max-width: 1400px; margin: 0 auto;">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color: #1a1a2e;">
+        <i class="fas fa-clipboard-list me-2" style="color: #2980b9;"></i>Requested Services
+      </h1>
+      <p class="text-muted small mb-0">All service requests submitted through the website</p>
+    </div>
+    <span class="badge bg-primary align-self-start" style="font-size: .85rem; padding: .45em .8em;">
+      <i class="fas fa-briefcase me-1"></i>{{ total_count }} total
+    </span>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header border-0 rounded-top-3 py-3"
+         style="background-color: #f8fafc; border-bottom: 2px solid #334155;">
+
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h5 class="mb-0" style="color: #1e293b;">
+          <i class="fas fa-list me-2"></i>Requests
+        </h5>
+        <span class="badge bg-secondary" aria-live="polite">
+          {{ filtered_count }} of {{ total_count }} request{{ total_count|pluralize }}
+        </span>
+      </div>
+
+      <!-- Search & Filter -->
+      <form method="get" action="" role="search" aria-label="Search and filter service requests">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-sm-5 col-md-4">
+            <label for="q" class="form-label small fw-semibold mb-1">Search</label>
+            <input type="text" id="q" name="q"
+                   class="form-control form-control-sm"
+                   value="{{ q }}" placeholder="Name, email, service, org..."
+                   autocomplete="off" aria-label="Search requests">
+          </div>
+          <div class="col-12 col-sm-4 col-md-3">
+            <label for="status-filter" class="form-label small fw-semibold mb-1">Status</label>
+            <select id="status-filter" name="status" class="form-select form-select-sm"
+                    aria-label="Filter by status"
+                    onchange="this.form.submit();">
+              <option value="">All statuses</option>
+              {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-sm" aria-label="Apply filters">
+              <i class="fas fa-filter me-1"></i>Filter
+            </button>
+            {% if q or status %}
+            <a href="{% url 'core:requested_services' %}"
+               class="btn btn-outline-secondary btn-sm" aria-label="Clear filters">
+              <i class="fas fa-times me-1"></i>Clear
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card-body p-0">
+      {% if page_obj.object_list %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 svc-table"
+               aria-label="Service requests">
+          <thead style="background-color: #1e293b; color: white;">
+            <tr>
+              <th scope="col" class="svc-num-col" style="width: 46px;">#</th>
+              <th scope="col">Name</th>
+              <th scope="col" class="d-none d-sm-table-cell">Email</th>
+              <th scope="col" class="d-none d-md-table-cell" style="width: 110px;">Phone</th>
+              <th scope="col">Service</th>
+              <th scope="col" class="d-none d-md-table-cell">Organisation</th>
+              <th scope="col" class="d-none d-lg-table-cell" style="width: 90px;">Budget</th>
+              <th scope="col" class="d-none d-lg-table-cell" style="width: 100px;">Timeline</th>
+              <th scope="col" style="width: 170px;">Status</th>
+              <th scope="col" class="d-none d-sm-table-cell" style="width: 100px;">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in page_obj %}
+            <tr class="row-{{ req.status }}">
+
+              <td class="svc-num-col align-middle text-muted">
+                {{ page_obj.start_index|add:forloop.counter0 }}
+              </td>
+
+              <td data-label="Name" class="align-middle">
+                <div class="svc-cell">
+                  <div class="fw-semibold" style="font-size: .9rem;">{{ req.name }}</div>
+                  <div class="d-sm-none text-muted" style="font-size: .75rem; word-break: break-all;">
+                    <i class="fas fa-envelope fa-xs me-1"></i>{{ req.email }}
+                  </div>
+                  <div class="d-sm-none text-muted" style="font-size: .75rem;">
+                    {{ req.created_at|date:"d M Y" }}
+                  </div>
+                </div>
+              </td>
+
+              <td data-label="Email" class="d-none d-sm-table-cell align-middle"
+                  style="font-size: .82rem; max-width: 180px;">
+                <a href="mailto:{{ req.email }}" class="text-decoration-none text-truncate d-block"
+                   style="color: #2980b9;" title="{{ req.email }}">
+                  {{ req.email }}
+                </a>
+              </td>
+
+              <td data-label="Phone" class="d-none d-md-table-cell align-middle"
+                  style="font-size: .82rem;">{{ req.phone }}</td>
+
+              <td data-label="Service" class="align-middle">
+                <div class="svc-cell">
+                  <span class="badge"
+                        style="background-color: #eaf4fd; color: #1a5276; border: 1px solid #aed6f1;
+                               font-size: .78rem; font-weight: 500; white-space: normal; text-align: right;">
+                    {{ req.get_service_display }}
+                  </span>
+                </div>
+              </td>
+
+              <td data-label="Organisation" class="d-none d-md-table-cell align-middle text-muted"
+                  style="font-size: .82rem;">{{ req.organization|default:"&mdash;" }}</td>
+
+              <td data-label="Budget" class="d-none d-lg-table-cell align-middle text-muted"
+                  style="font-size: .82rem;">{{ req.budget|default:"&mdash;" }}</td>
+
+              <td data-label="Timeline" class="d-none d-lg-table-cell align-middle text-muted"
+                  style="font-size: .82rem;">{{ req.timeline|default:"&mdash;" }}</td>
+
+              <td data-label="Status" class="align-middle">
+                <div class="svc-cell">
+                <div class="d-flex align-items-center gap-2 justify-content-end">
+                  <select class="status-select"
+                          data-id="{{ req.id }}"
+                          data-current="{{ req.status }}"
+                          aria-label="Update status for {{ req.name }}">
+                    <option value="new"         {% if req.status == 'new'         %}selected{% endif %}>New</option>
+                    <option value="contacted"   {% if req.status == 'contacted'   %}selected{% endif %}>Contacted</option>
+                    <option value="in_progress" {% if req.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="completed"   {% if req.status == 'completed'   %}selected{% endif %}>Completed</option>
+                    <option value="closed"      {% if req.status == 'closed'      %}selected{% endif %}>Closed</option>
+                  </select>
+                  <span class="status-feedback" id="fb-{{ req.id }}" style="font-size: .78rem;"></span>
+                </div>
+                </div>
+              </td>
+
+              <td data-label="Date" class="d-none d-sm-table-cell align-middle text-muted"
+                  style="font-size: .82rem; white-space: nowrap;">
+                {{ req.created_at|date:"d M Y" }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <div class="text-center py-5" style="color: #7f8c8d;">
+        {% if q or status %}
+          <i class="fas fa-search"
+             style="font-size: 2.5rem; display: block; margin-bottom: 12px; color: #bdc3c7;"></i>
+          <strong>No requests found</strong>
+          <p class="small mt-1 mb-3">Try a different search term or adjust the filter.</p>
+          <a href="{% url 'core:requested_services' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-times me-1"></i>Clear Filters
+          </a>
+        {% else %}
+          <i class="fas fa-inbox"
+             style="font-size: 3rem; display: block; margin-bottom: 14px; color: #bdc3c7;"></i>
+          <strong class="fs-5">No service requests yet</strong>
+          <p class="small mt-2 mb-0">Requests will appear here once submitted.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if paginator.num_pages > 1 %}
+    <div class="card-footer bg-white py-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <small class="text-muted" aria-live="polite">
+          Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+          of {{ filtered_count }} request{{ filtered_count|pluralize }}
+        </small>
+        <nav aria-label="Service requests pagination">
+          <ul class="pagination pagination-sm mb-0 flex-wrap">
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+              {% if page_obj.has_previous %}
+              <a class="page-link"
+                 href="?q={{ q }}&status={{ status }}&page={{ page_obj.previous_page_number }}"
+                 aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+              {% endif %}
+            </li>
+            {% for item in page_window %}
+              {% if not item %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+              {% elif item == page_obj.number %}
+              <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+              {% else %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?q={{ q }}&status={{ status }}&page={{ item }}">{{ item }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+              {% if page_obj.has_next %}
+              <a class="page-link"
+                 href="?q={{ q }}&status={{ status }}&page={{ page_obj.next_page_number }}"
+                 aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+              {% else %}
+              <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+              {% endif %}
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+(function () {
+  const UPDATE_URL = "{% url 'core:update_service_status' %}";
+  const CSRF       = "{{ csrf_token }}";
+
+  const COLOURS = {
+    new:         { bg: '#cff4fc', color: '#055160' },
+    contacted:   { bg: '#fff3cd', color: '#664d03' },
+    in_progress: { bg: '#cfe2ff', color: '#084298' },
+    completed:   { bg: '#d1e7dd', color: '#0a3622' },
+    closed:      { bg: '#e2e3e5', color: '#41464b' },
+  };
+
+  function applyColour(sel, status) {
+    const c = COLOURS[status] || {};
+    sel.style.backgroundColor = c.bg    || '';
+    sel.style.color            = c.color || '';
+    sel.dataset.current = status;
+  }
+
+  function showFeedback(id, ok, msg) {
+    const fb = document.getElementById('fb-' + id);
+    if (!fb) return;
+    fb.textContent = msg;
+    fb.className = 'status-feedback ' + (ok ? 'ok' : 'err');
+    clearTimeout(fb._t);
+    fb._t = setTimeout(() => { fb.textContent = ''; fb.className = 'status-feedback'; }, 2500);
+  }
+
+  document.querySelectorAll('.status-select').forEach(sel => {
+    applyColour(sel, sel.dataset.current);
+
+    sel.addEventListener('change', async function () {
+      const id        = this.dataset.id;
+      const newStatus = this.value;
+      const prev      = this.dataset.current;
+
+      applyColour(this, newStatus);
+
+      const body = new URLSearchParams({ id, status: newStatus });
+      try {
+        const res  = await fetch(UPDATE_URL, {
+          method:  'POST',
+          headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body,
+        });
+        const data = await res.json();
+        if (data.success) {
+          showFeedback(id, true, '✓ Saved');
+        } else {
+          this.value = prev;
+          applyColour(this, prev);
+          showFeedback(id, false, '✗ ' + (data.message || 'Error'));
+        }
+      } catch {
+        this.value = prev;
+        applyColour(this, prev);
+        showFeedback(id, false, '✗ Network error');
+      }
+    });
+  });
+}());
+</script>
+
+{% endblock %}

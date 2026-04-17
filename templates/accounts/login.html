@@ -1,0 +1,557 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    /* ═══════════════════════════════════════════════
+       ANIMATIONS
+    ═════════════════════════════════════════════════ */
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes bounceIn {
+        0% { transform: scale(0); opacity: 0; }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ═══════════════════════════════════════════════
+       RESET & BASE
+    ═════════════════════════════════════════════════ */
+
+    * {
+        box-sizing: border-box;
+    }
+
+    /* ═══════════════════════════════════════════════
+       LOGIN WRAPPER
+    ═════════════════════════════════════════════════ */
+
+    .login-wrapper {
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f0f2f5;
+        padding: 20px;
+        animation: slideIn 0.6s ease-out;
+    }
+
+    .login-inner {
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════════
+       LOGIN CARD
+    ═════════════════════════════════════════════════ */
+
+    .login-card {
+        border: 0;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+        width: 100%;
+        transition: box-shadow 0.3s ease;
+        background: #fff;
+    }
+
+    .login-card:hover {
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ═══════════════════════════════════════════════
+       CARD HEADER
+    ═════════════════════════════════════════════════ */
+
+    .login-card-header {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        padding: 50px 20px 30px;
+        text-align: center;
+    }
+
+    .login-card-header h2 {
+        color: #fff;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .login-card-header .header-icon {
+        color: #fff;
+        font-size: 36px;
+        display: block;
+        margin-bottom: 15px;
+        animation: bounceIn 0.7s ease-out;
+    }
+
+    .login-card-header p {
+        color: rgba(255,255,255,0.9);
+        font-size: 14px;
+        margin: 0;
+        animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+
+    /* ═══════════════════════════════════════════════
+       CARD BODY
+    ═════════════════════════════════════════════════ */
+
+    .login-card-body {
+        padding: 40px;
+        background: #fff;
+    }
+
+    /* ═══════════════════════════════════════════════
+       ERROR MESSAGES
+    ═════════════════════════════════════════════════ */
+
+    .alert-danger {
+        border: 0 !important;
+        border-radius: 12px !important;
+        border-left: 4px solid #e74c3c !important;
+        background-color: rgba(231, 76, 60, 0.1) !important;
+        color: #c0392b !important;
+        animation: slideInDown 0.4s ease-out;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       FORM GROUPS
+    ═════════════════════════════════════════════════ */
+
+    .form-group {
+        margin-bottom: 20px;
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.3s; }
+    .form-group:nth-child(2) { animation-delay: 0.4s; }
+
+    .form-label {
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .form-label i {
+        color: #3498db;
+        width: 16px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       FORM INPUTS
+    ═════════════════════════════════════════════════ */
+
+    .form-control {
+        display: block;
+        width: 100%;
+        border-radius: 12px !important;
+        border: 2px solid #ecf0f1 !important;
+        padding: 13px 16px !important;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        outline: none;
+    }
+
+    .form-control:focus {
+        border-color: #3498db !important;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1) !important;
+        transform: translateY(-2px);
+    }
+
+    .form-control::placeholder {
+        color: #95a5a6;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SUBMIT BUTTON
+    ═════════════════════════════════════════════════ */
+
+    .btn-login {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        border: 0;
+        border-radius: 12px;
+        padding: 14px 20px;
+        font-weight: 600;
+        font-size: 15px;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 12px 28px rgba(52, 152, 219, 0.25);
+        animation: fadeInUp 0.6s ease-out 0.5s both;
+        opacity: 0;
+    }
+
+    .btn-login:hover {
+        background: linear-gradient(135deg, #2980b9 0%, #1f618d 100%);
+        transform: translateY(-4px);
+        box-shadow: 0 16px 32px rgba(52, 152, 219, 0.35);
+    }
+
+    .btn-login:active {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(52, 152, 219, 0.25);
+    }
+
+    .btn-login:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-login.loading {
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    .btn-login.loading i {
+        animation: spin 1s linear infinite;
+    }
+
+    /* ═══════════════════════════════════════════════
+       LINKS SECTION
+    ═════════════════════════════════════════════════ */
+
+    .login-links {
+        text-align: center;
+        margin-top: 28px;
+        animation: fadeInUp 0.6s ease-out 0.6s both;
+        opacity: 0;
+    }
+
+    .login-links a {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .login-links a:hover {
+        color: #2980b9;
+        text-decoration: underline;
+    }
+
+    .divider-text {
+        display: block;
+        text-align: center;
+        color: #95a5a6;
+        font-size: 13px;
+        margin: 16px 0;
+    }
+
+    .login-links p {
+        color: #7f8c8d;
+        font-size: 14px;
+        margin-bottom: 0;
+    }
+
+    /* ═══════════════════════════════════════════════
+       CARD FOOTER
+    ═════════════════════════════════════════════════ */
+
+    .login-card-footer {
+        background-color: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        animation: fadeInUp 0.6s ease-out 0.7s both;
+    }
+
+    .login-card-footer small {
+        color: #7f8c8d;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SECURITY TIP
+    ═════════════════════════════════════════════════ */
+
+    .security-tip {
+        border: 0;
+        border-radius: 16px;
+        border-left: 4px solid #3498db;
+        background-color: #d6eaf8;
+        color: #1a5f7a;
+        padding: 14px 18px;
+        margin-top: 20px;
+        font-size: 14px;
+        animation: fadeInUp 0.6s ease-out 0.8s both;
+        opacity: 0;
+    }
+
+    .security-tip strong {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       RESPONSIVE
+    ═════════════════════════════════════════════════ */
+
+    @media (max-width: 576px) {
+        .login-wrapper {
+            padding: 12px;
+            align-items: flex-start;
+            padding-top: 20px;
+        }
+
+        .login-inner {
+            max-width: 100%;
+        }
+
+        .login-card-header {
+            padding: 30px 16px 20px;
+        }
+
+        .login-card-header h2 {
+            font-size: 22px;
+        }
+
+        .login-card-header .header-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .login-card-header p {
+            font-size: 13px;
+        }
+
+        .login-card-body {
+            padding: 24px 20px;
+        }
+
+        .login-card-footer {
+            padding: 14px;
+        }
+
+        .form-label {
+            font-size: 13px;
+        }
+
+        .form-control {
+            padding: 11px 14px !important;
+            font-size: 14px;
+        }
+
+        .btn-login {
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+
+        .security-tip {
+            font-size: 12px;
+            padding: 12px 14px;
+        }
+
+        .login-links p,
+        .login-links a {
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .login-wrapper {
+            padding: 8px;
+            padding-top: 12px;
+        }
+
+        .login-card {
+            border-radius: 14px;
+        }
+
+        .login-card-header {
+            padding: 24px 14px 16px;
+            border-radius: 14px 14px 0 0;
+        }
+
+        .login-card-header h2 {
+            font-size: 19px;
+        }
+
+        .login-card-body {
+            padding: 20px 16px;
+        }
+
+        .form-control {
+            padding: 10px 12px !important;
+            font-size: 13px;
+        }
+
+        .btn-login {
+            padding: 11px 14px;
+            font-size: 13px;
+        }
+
+        .login-card-footer {
+            padding: 12px;
+            border-radius: 0 0 14px 14px;
+        }
+
+        .login-card-footer small {
+            font-size: 11px;
+        }
+    }
+</style>
+
+<div class="login-wrapper">
+  <div class="login-inner">
+
+    <!-- Login Card -->
+    <div class="login-card">
+
+      <!-- Card Header -->
+      <div class="login-card-header">
+        <i class="fas fa-sign-in-alt header-icon"></i>
+        <h2>Welcome Back</h2>
+        <p>Sign in to your account</p>
+      </div>
+
+      <!-- Card Body -->
+      <div class="login-card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <!-- Error Messages -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <strong><i class="fas fa-exclamation-circle"></i> Login Failed!</strong>
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endif %}
+
+          <!-- Username Field -->
+          <div class="form-group">
+            <label for="id_username" class="form-label">
+              <i class="fas fa-user"></i> Username
+            </label>
+            <input
+              type="text"
+              name="username"
+              required
+              class="form-control"
+              id="id_username"
+              placeholder="Enter your username"
+            >
+            {% if form.username.errors %}<small class="text-danger mt-1 d-block">{{ form.username.errors }}</small>{% endif %}
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label for="id_password" class="form-label">
+              <i class="fas fa-lock"></i> Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              required
+              class="form-control"
+              id="id_password"
+              placeholder="Enter your password"
+            >
+            {% if form.password.errors %}<small class="text-danger mt-1 d-block">{{ form.password.errors }}</small>{% endif %}
+          </div>
+
+          <!-- Login Button -->
+          <button type="submit" class="btn-login" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i> <span>Sign In</span>
+          </button>
+        </form>
+
+        <!-- Links -->
+        <div class="login-links">
+          <a href="{% url 'accounts:password_reset' %}">
+            <i class="fas fa-key"></i> Forgot Password?
+          </a>
+          <span class="divider-text">or</span>
+          <p>
+            Don't have an account?
+            <a href="{% url 'accounts:register' %}">Create one</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="login-card-footer">
+        <small>
+          <i class="fas fa-lock"></i> Your login is secure and encrypted
+        </small>
+      </div>
+    </div>
+
+    <!-- Security Tip -->
+    <div class="security-tip">
+      <strong><i class="fas fa-lightbulb"></i> Tip:</strong>
+      Make sure to use a strong password to keep your account secure.
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const loginForm = document.querySelector('form');
+    const loginBtn = document.getElementById('login-btn');
+    const pageLoadTime = Date.now();
+    const STALE_THRESHOLD_MS = 30 * 60 * 1000;
+
+    if (loginForm && loginBtn) {
+      loginForm.addEventListener('submit', function (e) {
+        if (Date.now() - pageLoadTime > STALE_THRESHOLD_MS) {
+          e.preventDefault();
+          window.location.reload();
+          return;
+        }
+        loginBtn.classList.add('loading');
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<i class="fas fa-spinner"></i> <span>Signing In...</span>';
+      });
+    }
+  });
+</script>
+
+{% endblock %}

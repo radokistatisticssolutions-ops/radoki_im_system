@@ -1,0 +1,468 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  body.authenticated { background: #f0f4f8 !important; }
+
+  .page-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(41,128,185,.2);
+  }
+  .page-banner h1 { color:#fff; font-size:1.4rem; font-weight:800; margin:0; display:flex; align-items:center; gap:10px; }
+  .page-banner p  { color:rgba(255,255,255,.78); margin:6px 0 0; font-size:.85rem; }
+  .back-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    color:rgba(255,255,255,.85); font-size:.82rem; font-weight:600;
+    text-decoration:none; margin-bottom:10px;
+    transition:color .2s;
+  }
+  .back-btn:hover { color:#fff; }
+
+  /* Stat cards */
+  .stat-cards { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px; }
+  @media(max-width:900px)  { .stat-cards { grid-template-columns:repeat(3,1fr); } }
+  @media(max-width:560px)  { .stat-cards { grid-template-columns:repeat(2,1fr); } }
+  .stat-card {
+    background:#fff; border-radius:12px; padding:16px 18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06); border:1px solid #e8edf2;
+    display:flex; align-items:center; gap:14px;
+    cursor:pointer; transition:box-shadow .18s, transform .18s;
+    text-decoration:none;
+  }
+  .stat-card:hover { box-shadow:0 6px 18px rgba(0,0,0,.1); transform:translateY(-2px); }
+  .stat-card.active { border-width:2px; }
+  .stat-card.active-blue   { border-color:#1d4ed8; }
+  .stat-card.active-green  { border-color:#065f46; }
+  .stat-card.active-yellow { border-color:#92400e; }
+  .stat-card.active-red    { border-color:#991b1b; }
+  .stat-card.active-gray   { border-color:#64748b; }
+  .stat-icon {
+    width:44px; height:44px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.2rem; flex-shrink:0;
+  }
+  .stat-icon-blue   { background:#dbeafe; color:#1d4ed8; }
+  .stat-icon-green  { background:#d1fae5; color:#065f46; }
+  .stat-icon-yellow { background:#fef3c7; color:#92400e; }
+  .stat-icon-red    { background:#fee2e2; color:#991b1b; }
+  .stat-icon-gray   { background:#f1f5f9; color:#64748b; }
+  .stat-label { font-size:.75rem; color:#7f8c8d; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .stat-value { font-size:1.5rem; font-weight:800; color:#1a1a2e; line-height:1.1; }
+
+  /* Filter card */
+  .filter-card {
+    background:#fff; border-radius:12px; padding:16px 18px;
+    margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,.06); border:1px solid #e8edf2;
+  }
+  .filter-title { font-size:.8rem; font-weight:700; text-transform:uppercase; color:#7f8c8d; letter-spacing:.08em; margin-bottom:12px; }
+  .filter-row { display:grid; grid-template-columns:1fr 180px 120px 120px; gap:10px; align-items:end; }
+  @media(max-width:900px) { .filter-row { grid-template-columns:1fr 1fr; } }
+  @media(max-width:560px) { .filter-row { grid-template-columns:1fr; } }
+  .filter-row .form-control,
+  .filter-row .form-select { border-radius:8px; border:1px solid #d6eaf8; font-size:.88rem; }
+  .filter-row .form-control:focus,
+  .filter-row .form-select:focus { border-color:#2980b9; box-shadow:0 0 0 3px rgba(41,128,185,.1); }
+  .btn-filter { background:#2980b9; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:600; font-size:.88rem; cursor:pointer; transition:background .2s; white-space:nowrap; }
+  .btn-filter:hover { background:#1a5276; }
+  .btn-clear  { background:#ecf0f1; color:#7f8c8d; border:none; border-radius:8px; padding:8px 14px; font-weight:600; font-size:.88rem; cursor:pointer; transition:background .2s; white-space:nowrap; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+  .btn-clear:hover { background:#d5dbdb; color:#5d6d7e; }
+
+  /* Table */
+  .table-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); border:1px solid #e8edf2; margin-bottom:20px; }
+  .table-info-bar { background:#f7fafc; border-bottom:1px solid #e8edf2; padding:10px 16px; font-size:.8rem; color:#7f8c8d; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .table { margin:0; border-collapse:collapse; }
+  .table thead th { background:#1e293b; color:#e2e8f0; padding:13px 14px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; white-space:nowrap; border:none; }
+  .table tbody tr { border-bottom:1px solid #f0f4f8; transition:background .12s; }
+  .table tbody tr:last-child { border-bottom:none; }
+  .table tbody tr:hover { background:#f8fbff; }
+  .table td { padding:13px 14px; vertical-align:middle; font-size:.875rem; }
+
+  /* Student cell */
+  .avatar {
+    width:34px; height:34px; border-radius:50%;
+    background:#dbeafe; color:#1d4ed8;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.85rem; flex-shrink:0;
+  }
+  .student-name { font-weight:600; color:#1e293b; font-size:.875rem; }
+  .student-sub  { font-size:.78rem; color:#94a3b8; }
+
+  /* Status badges */
+  .status-badge { display:inline-block; padding:4px 11px; border-radius:20px; font-size:.73rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+  .status-approved { background:#d1fae5; color:#065f46; }
+  .status-pending  { background:#fef3c7; color:#92400e; }
+  .status-rejected { background:#fee2e2; color:#991b1b; }
+  .status-no-pay   { background:#f1f5f9; color:#64748b; }
+
+  /* Action btn */
+  .action-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 11px; border-radius:6px; font-size:.76rem; font-weight:600; text-decoration:none; border:none; cursor:pointer; transition:all .18s; white-space:nowrap; }
+  .action-view    { background:#dbeafe; color:#1d4ed8; }
+  .action-view:hover { background:#bfdbfe; color:#1d4ed8; }
+
+  /* Empty state */
+  .empty-state { text-align:center; padding:60px 20px; }
+  .empty-state i { font-size:3rem; color:#d6eaf8; margin-bottom:12px; display:block; }
+  .empty-state p { color:#7f8c8d; margin:6px 0; }
+
+  /* Mobile */
+  @media(max-width:767.98px) {
+    .table, .table tbody, .table tr, .table td { display:block; width:100%; }
+    .table thead { display:none; }
+    .table tbody tr { border:1px solid #e8edf2; border-radius:10px; margin:10px 12px; width:calc(100% - 24px); box-shadow:0 1px 4px rgba(0,0,0,.05); padding:4px 0; }
+    .table td { display:flex; justify-content:space-between; align-items:center; padding:9px 14px; border-bottom:1px solid #f4f6f8; font-size:.84rem; gap:8px; }
+    .table td:last-child { border-bottom:none; }
+    .table td::before { content:attr(data-label); font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; flex-shrink:0; }
+    .rcp-cell { min-width:0; flex:1; text-align:right; }
+  }
+</style>
+
+<div class="container-fluid py-4">
+
+  <!-- Banner -->
+  <div class="page-banner">
+    <a href="{% url 'courses:instructor_courses' %}" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Back to My Courses
+    </a>
+    <h1><i class="fas fa-users"></i> {{ course.title }}</h1>
+    <p>Enrolled students and their payment status</p>
+  </div>
+
+  <!-- Everything from here down is swapped by AJAX — do not move this div -->
+  <div id="results-section">
+
+  <!-- Stat cards (clickable filters) -->
+  <div class="stat-cards">
+    <a href="?status=&search={{ search_query|urlencode }}"
+       class="stat-card {% if not status %}active active-blue{% endif %}">
+      <div class="stat-icon stat-icon-blue"><i class="fas fa-users"></i></div>
+      <div>
+        <div class="stat-label">Total</div>
+        <div class="stat-value">{{ total_count }}</div>
+      </div>
+    </a>
+    <a href="?status=approved&search={{ search_query|urlencode }}"
+       class="stat-card {% if status == 'approved' %}active active-green{% endif %}">
+      <div class="stat-icon stat-icon-green"><i class="fas fa-check-circle"></i></div>
+      <div>
+        <div class="stat-label">Approved</div>
+        <div class="stat-value">{{ approved_count }}</div>
+      </div>
+    </a>
+    <a href="?status=pending&search={{ search_query|urlencode }}"
+       class="stat-card {% if status == 'pending' %}active active-yellow{% endif %}">
+      <div class="stat-icon stat-icon-yellow"><i class="fas fa-hourglass-half"></i></div>
+      <div>
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">{{ pending_count }}</div>
+      </div>
+    </a>
+    <a href="?status=rejected&search={{ search_query|urlencode }}"
+       class="stat-card {% if status == 'rejected' %}active active-red{% endif %}">
+      <div class="stat-icon stat-icon-red"><i class="fas fa-times-circle"></i></div>
+      <div>
+        <div class="stat-label">Rejected</div>
+        <div class="stat-value">{{ rejected_count }}</div>
+      </div>
+    </a>
+    <a href="?status=no_payment&search={{ search_query|urlencode }}"
+       class="stat-card {% if status == 'no_payment' %}active active-gray{% endif %}">
+      <div class="stat-icon stat-icon-gray"><i class="fas fa-minus-circle"></i></div>
+      <div>
+        <div class="stat-label">No Payment</div>
+        <div class="stat-value">{{ no_payment_count }}</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="filter-card">
+    <div class="filter-title"><i class="fas fa-filter me-1"></i> Search & Filter</div>
+    <form method="get" class="filter-row">
+      <input type="text" name="search" class="form-control"
+             placeholder="Search by student name or username…"
+             value="{{ search_query }}">
+      <select name="status" class="form-select">
+        <option value="">All Statuses</option>
+        <option value="approved"   {% if status == 'approved'   %}selected{% endif %}>Approved</option>
+        <option value="pending"    {% if status == 'pending'    %}selected{% endif %}>Pending</option>
+        <option value="rejected"   {% if status == 'rejected'   %}selected{% endif %}>Rejected</option>
+        <option value="no_payment" {% if status == 'no_payment' %}selected{% endif %}>No Payment</option>
+      </select>
+      <button type="submit" class="btn-filter"><i class="fas fa-search me-1"></i> Search</button>
+      <a href="{% url 'courses:course_students' course.id %}" class="btn-clear">
+        <i class="fas fa-times me-1"></i> Clear
+      </a>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    {% if page_obj.object_list %}
+    <div class="table-info-bar">
+      <span>
+        Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+        of {{ filtered_count }} student{{ filtered_count|pluralize }}
+      </span>
+      {% if search_query or status %}
+      <span class="badge" style="background:#e8edf2;color:#475569;font-weight:600;">
+        Filtered from {{ total_count }} total
+      </span>
+      {% endif %}
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Enrolled On</th>
+            <th>Payment Status</th>
+            <th>Completion</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for enrollment in page_obj %}
+          {% with payment=enrollment.payment %}
+          <tr>
+            <!-- # -->
+            <td data-label="#">
+              <span class="student-sub">{{ forloop.counter0|add:page_obj.start_index }}</span>
+            </td>
+
+            <!-- Student -->
+            <td data-label="Student">
+              <div class="rcp-cell">
+                <div class="d-flex align-items-center gap-2 justify-content-end">
+                  {% if enrollment.student.profile_picture %}
+                    <img src="{{ enrollment.student.profile_picture.url }}"
+                         alt="" class="avatar" style="object-fit:cover;">
+                  {% else %}
+                    <div class="avatar"><i class="fas fa-user"></i></div>
+                  {% endif %}
+                  <div>
+                    <div class="student-name">{{ enrollment.student.get_full_name|default:enrollment.student.username }}</div>
+                    <div class="student-sub">@{{ enrollment.student.username }}</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Enrolled On -->
+            <td data-label="Enrolled On">
+              <div class="rcp-cell">
+                <div style="color:#1e293b;font-weight:500;">{{ enrollment.enrolled_at|date:"M d, Y" }}</div>
+                <div class="student-sub">{{ enrollment.enrolled_at|timesince }} ago</div>
+              </div>
+            </td>
+
+            <!-- Payment Status -->
+            <td data-label="Payment Status">
+              <div class="rcp-cell">
+                {% if payment %}
+                  {% if payment.approved %}
+                    <span class="status-badge status-approved"><i class="fas fa-check me-1"></i>Approved</span>
+                    <div class="student-sub mt-1">{{ payment.uploaded_at|date:"M d, Y" }}</div>
+                  {% elif payment.rejected %}
+                    <span class="status-badge status-rejected"><i class="fas fa-times me-1"></i>Rejected</span>
+                    {% if payment.rejection_reason %}
+                      <div class="student-sub mt-1" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ payment.rejection_reason }}">
+                        {{ payment.rejection_reason|truncatechars:35 }}
+                      </div>
+                    {% endif %}
+                  {% else %}
+                    <span class="status-badge status-pending"><i class="fas fa-hourglass-half me-1"></i>Pending</span>
+                    <div class="student-sub mt-1">{{ payment.uploaded_at|date:"M d, Y" }}</div>
+                  {% endif %}
+                {% elif enrollment.approved %}
+                  <span class="status-badge status-approved"><i class="fas fa-check me-1"></i>Approved</span>
+                  <div class="student-sub mt-1">Access granted</div>
+                {% else %}
+                  <span class="status-badge status-no-pay"><i class="fas fa-minus-circle me-1"></i>No Payment</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Completion -->
+            <td data-label="Completion">
+              <div class="rcp-cell">
+                <div style="font-weight:600;color:#1e293b;">{{ enrollment.completion_percentage }}%</div>
+                <div style="height:6px;background:#e8edf2;border-radius:4px;margin-top:4px;min-width:80px;">
+                  <div style="height:100%;width:{{ enrollment.completion_percentage }}%;background:{% if enrollment.completion_percentage == 100 %}#27ae60{% elif enrollment.completion_percentage >= 50 %}#f39c12{% else %}#3498db{% endif %};border-radius:4px;"></div>
+                </div>
+                {% if enrollment.completed %}
+                  <div class="student-sub mt-1" style="color:#27ae60;"><i class="fas fa-check-circle me-1"></i>Completed</div>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td data-label="Actions">
+              <div class="rcp-cell">
+                <a href="{% url 'courses:enrollment_detail' enrollment.id %}" class="action-btn action-view">
+                  <i class="fas fa-eye"></i> View
+                </a>
+              </div>
+            </td>
+
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-user-graduate"></i>
+      <p style="font-size:1.05rem;font-weight:600;color:#2c3e50;">No students found</p>
+      <p>
+        {% if search_query or status %}
+          No students match your filters. Try adjusting your search.
+        {% else %}
+          No students are enrolled in this course yet.
+        {% endif %}
+      </p>
+      {% if search_query or status %}
+      <a href="{% url 'courses:course_students' course.id %}" class="btn btn-primary btn-sm mt-3"
+         style="border-radius:8px;font-weight:600;">
+        <i class="fas fa-redo me-1"></i> Clear Filters
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Pagination -->
+  {% if paginator.num_pages > 1 %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2 px-1">
+    <small class="text-muted">Page {{ page_obj.number }} of {{ paginator.num_pages }}</small>
+    <nav>
+      <ul class="pagination pagination-sm mb-0 flex-wrap">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+          {% if page_obj.has_previous %}
+          <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status }}&page={{ page_obj.previous_page_number }}">
+            <i class="fas fa-chevron-left"></i></a>
+          {% else %}
+          <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+          {% endif %}
+        </li>
+        {% for item in page_window %}
+          {% if not item %}
+          <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% elif item == page_obj.number %}
+          <li class="page-item active"><span class="page-link">{{ item }}</span></li>
+          {% else %}
+          <li class="page-item">
+            <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status }}&page={{ item }}">{{ item }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+          {% if page_obj.has_next %}
+          <a class="page-link" href="?search={{ search_query|urlencode }}&status={{ status }}&page={{ page_obj.next_page_number }}">
+            <i class="fas fa-chevron-right"></i></a>
+          {% else %}
+          <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  </div><!-- /#results-section -->
+
+</div>
+
+<script>
+(function () {
+  function fetchResults(url) {
+    const section = document.getElementById('results-section');
+    section.style.opacity = '0.5';
+    section.style.pointerEvents = 'none';
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.text(); })
+      .then(function (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const next = doc.getElementById('results-section');
+        if (next) {
+          section.innerHTML = next.innerHTML;
+          section.style.opacity = '1';
+          section.style.pointerEvents = '';
+          attachListeners();
+        }
+      })
+      .catch(function () {
+        section.style.opacity = '1';
+        section.style.pointerEvents = '';
+      });
+
+    history.pushState({}, '', url);
+  }
+
+  function attachListeners() {
+    // Stat cards
+    document.querySelectorAll('#results-section .stat-card').forEach(function (card) {
+      card.addEventListener('click', function (e) {
+        e.preventDefault();
+        fetchResults(this.getAttribute('href'));
+      });
+    });
+
+    // Filter form submit (Search button)
+    var form = document.querySelector('#results-section .filter-row');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var params = new URLSearchParams(new FormData(this));
+        fetchResults('?' + params.toString());
+      });
+    }
+
+    // Clear button
+    var clearBtn = document.querySelector('#results-section .btn-clear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        // Also visually reset the inputs immediately
+        var searchInput = document.querySelector('#results-section input[name="search"]');
+        var statusSelect = document.querySelector('#results-section select[name="status"]');
+        if (searchInput)  searchInput.value = '';
+        if (statusSelect) statusSelect.value = '';
+        fetchResults(this.getAttribute('href'));
+      });
+    }
+
+    // Pagination links
+    document.querySelectorAll('#results-section .page-link[href]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        fetchResults(this.getAttribute('href'));
+      });
+    });
+
+    // Empty-state "Clear Filters" button
+    document.querySelectorAll('#results-section a.btn[href*="students"]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        fetchResults(this.getAttribute('href'));
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', attachListeners);
+
+  // Handle browser back/forward
+  window.addEventListener('popstate', function () {
+    fetchResults(window.location.href);
+  });
+}());
+</script>
+
+{% endblock %}

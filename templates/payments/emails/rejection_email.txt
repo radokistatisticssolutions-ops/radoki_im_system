@@ -1,0 +1,36 @@
+Payment Status Update
+=====================
+
+Dear {{ student_name }},
+
+Thank you for submitting your payment receipt. We've reviewed it and unfortunately, we're unable to approve it at this time.
+
+PAYMENT STATUS
+==============
+✗ Status: Rejected
+✗ Course: {{ course_name }}
+✗ Reviewed: Today
+
+REASON FOR REJECTION
+====================
+{{ rejection_reason }}
+
+WHAT YOU CAN DO
+===============
+1. Review the receipt: Check that all payment details are clearly visible and correct
+2. Verify your payment: Confirm with your payment provider that the transaction was successful
+3. Upload again: If you have a clearer receipt or made another payment, please upload it
+4. Contact support: If you believe this is an error, reach out to our support team for assistance
+
+You can upload a new receipt here:
+{{ course_url }}
+
+We're here to help! If you have any questions about the rejection or need assistance with the process, please don't hesitate to reach out to our support team. We want to ensure you get access to your course as quickly as possible.
+
+Best Regards,
+The Radoki Learning Team
+
+---
+You received this email because you enrolled in a course on Radoki Learning Management System.
+If you need help, please contact us at support@radoki.com
+© 2026 Radoki Learning. All rights reserved.

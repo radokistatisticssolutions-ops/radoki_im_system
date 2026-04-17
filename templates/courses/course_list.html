@@ -1,0 +1,563 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- ============================================================
+     RADOKI IMS — Course List Page (Redesigned)
+     Matches homepage design system: Plus Jakarta Sans +
+     Instrument Serif, blue-deep palette, card hover lift
+     ============================================================ -->
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap">
+
+<style>
+  :root {
+    --blue-deep:  #1a5276;
+    --blue-mid:   #2980b9;
+    --blue-light: #3498db;
+    --accent:     #f39c12;
+    --green:      #27ae60;
+    --bg-soft:    #f0f4f8;
+    --white:      #ffffff;
+    --text-dark:  #2c3e50;
+    --text-muted: #7f8c8d;
+    --border:     rgba(26,82,118,.09);
+    --radius-lg:  18px;
+    --radius-md:  12px;
+    --radius-sm:  8px;
+    --shadow-sm:  0 2px 12px rgba(26,82,118,.07);
+    --shadow-md:  0 8px 32px rgba(26,82,118,.13);
+    --shadow-lg:  0 20px 60px rgba(26,82,118,.17);
+  }
+
+  * { box-sizing: border-box; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-soft); color: var(--text-dark); }
+
+  /* ── PAGE HEADER ── */
+  .cl-header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2980b9 100%) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    display: block !important;
+    position: relative;
+    overflow: hidden;
+    /* Kill any white card/box shadow from parent wrappers */
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+  @media(max-width:768px) { 
+    .cl-header { 
+      padding-top: 66px !important;
+      padding-bottom: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    } 
+  }
+
+  /* Decorative watermark icon */
+  .cl-header::after {
+    content: '\f02d';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 5%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10rem;
+    opacity: .07;
+    color: #fff;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  /* Inner flex row — always on top of the gradient */
+  .cl-header-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 52px 40px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  @media(max-width: 768px) {
+    .cl-header-inner { padding: 36px 20px; gap: 16px; }
+    .cl-header::after { font-size: 6rem; }
+  }
+
+  /* Text block — always white, never inherits card colours */
+  .cl-header-text h1 {
+    font-family: 'Instrument Serif', serif !important;
+    font-size: clamp(1.8rem, 4vw, 2.6rem) !important;
+    color: #ffffff !important;
+    margin: 0 0 8px !important;
+    line-height: 1.2 !important;
+    text-shadow: 0 2px 12px rgba(0,0,0,.15);
+  }
+  .cl-header-text p {
+    color: rgba(255,255,255,.82) !important;
+    font-size: 1rem !important;
+    margin: 0 !important;
+    line-height: 1.5;
+  }
+  .btn-new-course {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff;
+    color: var(--blue-deep);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 28px;
+    font-weight: 700;
+    font-size: .92rem;
+    text-decoration: none;
+    transition: transform .25s, box-shadow .25s;
+    box-shadow: 0 4px 18px rgba(0,0,0,.12);
+    white-space: nowrap;
+  }
+  .btn-new-course:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.18); color: var(--blue-deep); }
+
+  /* ── SEARCH BAR ── */
+  .search-section { padding: 28px 24px 0; }
+  .search-wrap {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-field-wrap {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+  .search-field-wrap i {
+    position: absolute; left: 16px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted); font-size: .9rem;
+  }
+  .search-field-wrap input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 50px;
+    padding: 12px 18px 12px 42px;
+    font-size: .93rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-dark);
+    background: var(--bg-soft);
+    outline: none;
+    transition: border-color .2s, background .2s;
+  }
+  .search-field-wrap input:focus { border-color: var(--blue-mid); background: var(--white); }
+  .search-field-wrap input::placeholder { color: var(--text-muted); }
+
+  .btn-search {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--blue-mid);
+    color: #fff; border: none;
+    border-radius: 50px;
+    padding: 12px 28px;
+    font-weight: 700; font-size: .9rem;
+    cursor: pointer;
+    transition: background .2s, transform .2s;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .btn-search:hover { background: var(--blue-deep); transform: translateY(-1px); }
+
+  .btn-clear {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg-soft);
+    color: var(--text-dark);
+    border: 1.5px solid var(--border);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 600; font-size: .85rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .2s;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    white-space: nowrap;
+  }
+  .btn-clear:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+  /* ── STATS PILL ── */
+  .stats-pill-bar { padding: 16px 24px 0; }
+  .stats-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    box-shadow: var(--shadow-sm);
+  }
+  .stats-pill i { color: var(--blue-mid); }
+  .stats-pill span { color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+
+  /* ── COURSE GRID ── */
+  .course-grid { padding: 24px 24px 60px; display: grid; gap: 24px; }
+  @media(min-width:576px)  { .course-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media(min-width:992px)  { .course-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media(max-width:575px)  { .course-grid { grid-template-columns: 1fr; gap: 16px; } }
+
+  /* ── COURSE CARD ── */
+  .course-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    transition: transform .32s cubic-bezier(.25,.8,.25,1), box-shadow .32s;
+    animation: cardReveal .5s ease both;
+  }
+  .course-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); }
+
+  @keyframes cardReveal {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Stagger */
+  .course-card:nth-child(1)  { animation-delay: .05s }
+  .course-card:nth-child(2)  { animation-delay: .10s }
+  .course-card:nth-child(3)  { animation-delay: .15s }
+  .course-card:nth-child(4)  { animation-delay: .20s }
+  .course-card:nth-child(5)  { animation-delay: .25s }
+  .course-card:nth-child(6)  { animation-delay: .30s }
+  .course-card:nth-child(7)  { animation-delay: .35s }
+  .course-card:nth-child(8)  { animation-delay: .40s }
+  .course-card:nth-child(9)  { animation-delay: .45s }
+
+  /* Coloured top band */
+  .card-band {
+    height: 6px;
+    background: linear-gradient(90deg, var(--blue-deep), var(--blue-light));
+    flex-shrink: 0;
+  }
+
+  .card-main { padding: 22px 22px 18px; flex: 1; display: flex; flex-direction: column; }
+
+  /* Category pill */
+  .card-category {
+    display: inline-block;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: rgba(41,128,185,.1);
+    color: var(--blue-mid);
+    padding: 4px 12px;
+    border-radius: 50px;
+    margin-bottom: 12px;
+  }
+
+  .card-title-text {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+  }
+
+  .card-desc {
+    font-size: .84rem;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Meta chips grid */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+  }
+  .meta-chip-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem;
+    flex-shrink: 0;
+  }
+  .meta-chip-label { font-size: .65rem; color: var(--text-muted); font-weight: 500; line-height: 1; margin-bottom: 3px; }
+  .meta-chip-value { font-size: .8rem; font-weight: 700; color: var(--text-dark); line-height: 1; }
+
+  .meta-chip.full-width { grid-column: 1 / -1; }
+
+  /* Price + CTA footer */
+  .card-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  .price-tag {
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--blue-mid);
+    line-height: 1;
+  }
+  .price-tag small {
+    display: block;
+    font-size: .65rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .btn-view {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--blue-mid);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 22px;
+    font-weight: 700;
+    font-size: .85rem;
+    text-decoration: none;
+    transition: background .25s, transform .2s;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .btn-view:hover { background: var(--blue-deep); color: #fff; transform: translateY(-1px); }
+
+  /* ── PAGINATION ── */
+  .pagination-wrap { padding: 0 24px 48px; display: flex; justify-content: center; }
+  .pag { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; list-style: none; margin: 0; padding: 0; }
+  .pag li a,
+  .pag li span {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: .85rem;
+    text-decoration: none;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--text-dark);
+    transition: all .2s;
+    line-height: 1;
+  }
+  .pag li a:hover { background: var(--blue-deep); color: #fff; border-color: var(--blue-deep); }
+  .pag li.active span { background: var(--blue-mid); color: #fff; border-color: var(--blue-mid); }
+  .pag li.disabled span { opacity: .4; cursor: not-allowed; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    padding: 80px 24px;
+    text-align: center;
+  }
+  .empty-icon {
+    font-size: 4.5rem;
+    color: rgba(41,128,185,.18);
+    margin-bottom: 20px;
+  }
+  .empty-state h4 { font-weight: 700; font-size: 1.3rem; margin-bottom: 10px; }
+  .empty-state p { color: var(--text-muted); font-size: .95rem; max-width: 360px; margin: 0 auto 24px; }
+
+  /* ── RESPONSIVE TWEAKS ── */
+  @media(max-width:767px) {
+    .search-section, .stats-pill-bar, .course-grid, .pagination-wrap { padding-left: 14px; padding-right: 14px; }
+    .search-wrap { flex-direction: column; padding: 14px; gap: 10px; }
+    .search-field-wrap, .btn-search, .btn-clear { width: 100%; }
+    .btn-search, .btn-clear { justify-content: center; }
+  }
+  @media(max-width:575px) {
+    .cl-header-inner { padding: 28px 16px; }
+    .cl-header::after { font-size: 5rem; }
+    .course-grid { grid-template-columns: 1fr; gap: 14px; }
+    .card-main { padding: 16px 14px 12px; }
+    .card-footer-row { flex-direction: column; align-items: stretch; gap: 10px; }
+    .btn-view { justify-content: center; }
+    .pag li a, .pag li span { padding: 8px 12px; font-size: .8rem; }
+  }
+</style>
+
+
+<!-- ── PAGE HEADER ── -->
+<div class="cl-header">
+  <div class="cl-header-inner">
+    <div class="cl-header-text">
+      <h1><i class="fas fa-book-open"></i> Available Courses</h1>
+      <p>Explore all courses and start learning today</p>
+    </div>
+    {% if user.is_instructor %}
+      <a href="{% url 'courses:create_course' %}" class="btn-new-course">
+        <i class="fas fa-plus"></i> New Course
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+
+<!-- ── SEARCH BAR ── -->
+<div class="search-section" style="max-width:1280px; margin:0 auto;">
+  <div class="search-wrap">
+    <form method="get" style="display:contents;">
+      <div class="search-field-wrap">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          name="search"
+          placeholder="Search by title, description, or instructor…"
+          value="{{ search_query }}"
+        >
+      </div>
+      <button type="submit" class="btn-search"><i class="fas fa-search"></i> Search</button>
+    </form>
+
+    {% if search_query %}
+      <a href="{% url 'courses:course_list' %}" class="btn-clear"><i class="fas fa-times"></i> Clear</a>
+    {% endif %}
+  </div>
+</div>
+
+
+<!-- ── STATS PILL ── -->
+<div class="stats-pill-bar" style="max-width:1280px; margin:0 auto;">
+  <span class="stats-pill">
+    <i class="fas fa-layer-group"></i>
+    <strong>{{ total_courses }}</strong> total courses
+    <span>·</span>
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    {% if search_query %}
+      <span>·</span>
+      {{ courses|length }} result{{ courses|length|pluralize }} for "<em>{{ search_query }}</em>"
+    {% endif %}
+  </span>
+</div>
+
+
+<!-- ── COURSE GRID ── -->
+{% if courses %}
+  <div class="course-grid" style="max-width:1280px; margin:0 auto;">
+
+    {% for course in courses %}
+    <div class="course-card">
+
+      <!-- Coloured top band — cycles through accent colours -->
+      {% cycle '<div class="card-band" style="background:linear-gradient(90deg,#1a5276,#2980b9);"></div>' '<div class="card-band" style="background:linear-gradient(90deg,#145a32,#27ae60);"></div>' '<div class="card-band" style="background:linear-gradient(90deg,#1a5276,#3498db);"></div>' '<div class="card-band" style="background:linear-gradient(90deg,#7d6608,#f39c12);"></div>' '<div class="card-band" style="background:linear-gradient(90deg,#0e6655,#1abc9c);"></div>' '<div class="card-band" style="background:linear-gradient(90deg,#154360,#2980b9);"></div>' as band silent %}
+      {{ band }}
+
+      <div class="card-main">
+
+        <!-- Category label (using mode as category proxy) -->
+        <span class="card-category">{{ course.get_mode_display }}</span>
+
+        <!-- Title -->
+        <h6 class="card-title-text">{{ course.title }}</h6>
+
+        <!-- Description -->
+        <p class="card-desc">{{ course.description|truncatewords:18 }}</p>
+
+        <!-- Footer: price + CTA -->
+        <div class="card-footer-row">
+          <div class="price-tag">
+            TZS {{ course.price }}
+            <small>One-time</small>
+          </div>
+          <a href="{% url 'courses:course_detail' course.pk %}" class="btn-view">
+            View Course <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+
+      </div><!-- /card-main -->
+    </div><!-- /course-card -->
+    {% endfor %}
+
+  </div><!-- /course-grid -->
+
+
+  <!-- ── PAGINATION ── -->
+  {% if page_obj.has_other_pages %}
+    <div class="pagination-wrap" style="max-width:1280px; margin:0 auto;">
+      <ul class="pag">
+
+        {% if page_obj.has_previous %}
+          <li><a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}"><i class="fas fa-chevron-double-left fa-xs"></i> First</a></li>
+          <li><a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"><i class="fas fa-arrow-left fa-xs"></i> Prev</a></li>
+        {% else %}
+          <li class="disabled"><span><i class="fas fa-chevron-double-left fa-xs"></i> First</span></li>
+          <li class="disabled"><span><i class="fas fa-arrow-left fa-xs"></i> Prev</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="active"><span>{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li><a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li><a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next <i class="fas fa-arrow-right fa-xs"></i></a></li>
+          <li><a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last <i class="fas fa-chevron-double-right fa-xs"></i></a></li>
+        {% else %}
+          <li class="disabled"><span>Next <i class="fas fa-arrow-right fa-xs"></i></span></li>
+          <li class="disabled"><span>Last <i class="fas fa-chevron-double-right fa-xs"></i></span></li>
+        {% endif %}
+
+      </ul>
+    </div>
+  {% endif %}
+
+
+{% else %}
+  <!-- ── EMPTY STATE ── -->
+  <div class="empty-state" style="max-width:1280px; margin:0 auto;">
+    <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+    <h4>No courses found</h4>
+    <p>
+      {% if search_query %}
+        No courses match "{{ search_query }}". Try different keywords.
+      {% else %}
+        Check back soon — new courses are added regularly!
+      {% endif %}
+    </p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      {% if search_query %}
+        <a href="{% url 'courses:course_list' %}" class="btn-view"><i class="fas fa-redo"></i> Clear Search</a>
+      {% endif %}
+      {% if user.is_instructor %}
+        <a href="{% url 'courses:create_course' %}" style="display:inline-flex;align-items:center;gap:6px;background:var(--green);color:#fff;border:none;border-radius:50px;padding:10px 22px;font-weight:700;font-size:.85rem;text-decoration:none;">
+          <i class="fas fa-plus-circle"></i> Create First Course
+        </a>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

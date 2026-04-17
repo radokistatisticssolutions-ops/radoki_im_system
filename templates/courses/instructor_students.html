@@ -1,0 +1,476 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  /* Page background */
+  body.authenticated { background: #f0f4f8 !important; }
+
+  /* Banner */
+  .student-banner {
+    background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(41, 128, 185, 0.2);
+  }
+  .student-banner h1 {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .student-banner p {
+    color: rgba(255, 255, 255, 0.78);
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+  }
+  .student-count-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* Filter card */
+  .filter-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e8edf2;
+  }
+  .filter-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #7f8c8d;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 150px;
+    gap: 12px;
+    align-items: end;
+  }
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #d6eaf8;
+    font-size: 0.9rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.1);
+  }
+  .btn-filter {
+    background: #2980b9;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-filter:hover {
+    background: #1a5276;
+  }
+  .btn-clear {
+    background: #ecf0f1;
+    color: #7f8c8d;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-clear:hover {
+    background: #d5dbdb;
+  }
+
+  /* Table */
+  .students-table {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+  }
+  .table {
+    margin: 0;
+    border-collapse: collapse;
+  }
+  .table thead th {
+    background: #f7fafc;
+    border-bottom: 2px solid #e8edf2;
+    padding: 14px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .table tbody tr {
+    border-bottom: 1px solid #f0f4f8;
+    transition: background 0.12s;
+  }
+  .table tbody tr:last-child {
+    border-bottom: none;
+  }
+  .table tbody tr:hover {
+    background: #f8fbff;
+  }
+  .table td {
+    padding: 14px 16px;
+    vertical-align: middle;
+  }
+
+  /* Student name link */
+  .student-name-link {
+    color: #2980b9;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .student-name-link:hover {
+    color: #1a5276;
+    text-decoration: underline;
+  }
+
+  /* Status badges */
+  .status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .status-pending {
+    background: #fffbea;
+    color: #9a7d0a;
+  }
+  .status-approved {
+    background: #e8f8f5;
+    color: #1e8449;
+  }
+  .status-completed {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border-radius: 12px;
+  }
+  .empty-state i {
+    font-size: 3rem;
+    color: #d6eaf8;
+    margin-bottom: 12px;
+  }
+  .empty-state p {
+    font-size: 1rem;
+    color: #7f8c8d;
+    margin: 8px 0;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .pagination a, .pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid #e8edf2;
+  }
+  .pagination a {
+    color: #2980b9;
+    background: #fff;
+  }
+  .pagination a:hover {
+    background: #e8f4fd;
+    border-color: #2980b9;
+  }
+  .pagination .current {
+    background: #2980b9;
+    color: #fff;
+    border-color: #2980b9;
+  }
+  .pagination .dots {
+    padding: 0 4px;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .filter-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 768px) {
+    .student-banner h1 {
+      font-size: 1.15rem;
+    }
+    .filter-row {
+      grid-template-columns: 1fr;
+    }
+    .btn-filter, .btn-clear {
+      width: 100%;
+    }
+    .table {
+      font-size: 0.85rem;
+    }
+    .table th, .table td {
+      padding: 10px 8px;
+    }
+    .student-name-link {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  /* Table action buttons */
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .action-btn-view {
+    background: #d6eaf8;
+    color: #1a5276;
+  }
+  .action-btn-view:hover {
+    background: #bde2ed;
+  }
+  
+  /* Progress bar in table */
+  .completion-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .completion-bar {
+    flex: 0 0 100px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    height: 18px;
+    overflow: hidden;
+  }
+  .completion-fill {
+    background: linear-gradient(90deg, #2980b9 0%, #3498db 100%);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    font-weight: bold;
+  }
+  .completion-badge {
+    display: inline-block;
+    min-width: 40px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+</style>
+
+<div class="container-fluid py-4">
+  <!-- Banner -->
+  <div class="student-banner">
+    <h1><i class="fas fa-users"></i> My Students</h1>
+    <p>Manage and view students enrolled in your courses</p>
+    <div class="student-count-badge">
+      <i class="fas fa-graduation-cap me-1"></i> Total Students: <strong>{{ total_students }}</strong>
+    </div>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="filter-card">
+    <div class="filter-title"><i class="fas fa-filter me-1"></i> Search & Filter</div>
+    <form method="GET" class="filter-row">
+      <input
+        type="text"
+        name="search"
+        class="form-control"
+        placeholder="Search by name, username, or course..."
+        value="{{ search_query }}"
+      />
+      <select name="course" class="form-select">
+        <option value="">All Courses</option>
+        {% for course in instructor_courses %}
+          <option value="{{ course.id }}" {% if course_filter|add:"0" == course.id %}selected{% endif %}>
+            {{ course.title }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="status" class="form-select">
+        <option value="">All Status</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Payment</option>
+        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+      </select>
+      <div style="display: flex; gap: 8px;">
+        <button type="submit" class="btn-filter"><i class="fas fa-search me-1"></i> Search</button>
+        <a href="{% url 'courses:instructor_students' %}" class="btn-clear"><i class="fas fa-times me-1"></i> Clear</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Students Table -->
+  {% if page_obj %}
+  <div class="students-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Course</th>
+          <th>Completion</th>
+          <th>Details</th>
+          <th>Profile</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for enrollment in page_obj %}
+        <tr>
+          <td>
+            <a href="{% url 'accounts:profile_preview_student' enrollment.student.id %}" class="student-name-link" title="View {{ enrollment.student.get_full_name }}">
+              <i class="fas fa-user-circle"></i> {{ enrollment.student.first_name|default:"N/A" }}
+            </a>
+          </td>
+          <td>{{ enrollment.student.last_name|default:"N/A" }}</td>
+          <td>
+            <a href="{% url 'courses:course_detail' enrollment.course.id %}" style="color: #2980b9; text-decoration: none; font-weight: 500;">
+              {{ enrollment.course.title }}
+            </a>
+          </td>
+          <td>
+            <div class="completion-progress">
+              <div class="completion-bar">
+                <div class="completion-fill" style="width: {{ enrollment.completion_percentage }}%; color: {% if enrollment.completion_percentage >= 100 %}white{% else %}transparent{% endif %};">
+                  {% if enrollment.completion_percentage >= 10 %}{{ enrollment.completion_percentage }}%{% endif %}
+                </div>
+              </div>
+              <span class="completion-badge" style="color: {% if enrollment.completion_percentage >= 100 %}#27ae60{% elif enrollment.completion_percentage >= 75 %}#3498db{% elif enrollment.completion_percentage >= 50 %}#f39c12{% else %}#e74c3c{% endif %};">
+                {{ enrollment.completion_percentage }}%
+              </span>
+            </div>
+          </td>
+          <td>
+            <a href="{% url 'courses:enrollment_detail' enrollment.id %}" class="action-btn action-btn-view" title="View Enrollment Details">
+              <i class="fas fa-file-invoice"></i> Details
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'accounts:profile_preview_student' enrollment.student.id %}" class="action-btn action-btn-view" title="View Student Profile">
+              <i class="fas fa-eye"></i> Profile
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if paginator.num_pages > 1 %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 px-1">
+    <small class="text-muted" aria-live="polite">
+      Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}
+      of {{ filtered_count }} student{{ filtered_count|pluralize }}
+    </small>
+    <nav aria-label="Students pagination">
+      <ul class="pagination pagination-sm mb-0 flex-wrap">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+          {% if page_obj.has_previous %}
+          <a class="page-link"
+             href="?search={{ search_query|urlencode }}&course={{ course_filter }}&status={{ status_filter }}&page={{ page_obj.previous_page_number }}"
+             aria-label="Previous"><i class="fas fa-chevron-left"></i></a>
+          {% else %}
+          <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+          {% endif %}
+        </li>
+        {% for item in page_window %}
+          {% if not item %}
+          <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% elif item == page_obj.number %}
+          <li class="page-item active" aria-current="page"><span class="page-link">{{ item }}</span></li>
+          {% else %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?search={{ search_query|urlencode }}&course={{ course_filter }}&status={{ status_filter }}&page={{ item }}">{{ item }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+          {% if page_obj.has_next %}
+          <a class="page-link"
+             href="?search={{ search_query|urlencode }}&course={{ course_filter }}&status={{ status_filter }}&page={{ page_obj.next_page_number }}"
+             aria-label="Next"><i class="fas fa-chevron-right"></i></a>
+          {% else %}
+          <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="empty-state">
+    <i class="fas fa-inbox"></i>
+    <p style="font-size: 1.1rem; font-weight: 600; color: #2c3e50;">No students found</p>
+    <p>You don't have any students enrolled yet, or they don't match your filters.</p>
+    <a href="{% url 'courses:instructor_students' %}" class="btn btn-primary mt-3" style="border-radius: 8px; font-weight: 600;">
+      <i class="fas fa-redo me-1"></i> Clear Filters
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

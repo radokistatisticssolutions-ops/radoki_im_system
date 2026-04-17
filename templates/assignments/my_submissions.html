@@ -1,0 +1,312 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* Feedback expand/collapse */
+.feedback-row { display:none; }
+.feedback-row.open { display:table-row; }
+.feedback-panel {
+  background:#f8fbff; border-top:2px solid #d6eaf8;
+  padding:16px 20px 14px; border-radius:0 0 10px 10px;
+}
+.grade-pill {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:56px; padding:5px 14px; border-radius:20px;
+  font-size:.9rem; font-weight:700;
+  background:linear-gradient(135deg,#1a5276,#2980b9); color:#fff;
+  box-shadow:0 2px 8px rgba(41,128,185,.25);
+}
+.grade-pill.empty { background:#e9ecef; color:#aaa; font-weight:400; box-shadow:none; }
+/* Alert banners for resubmit */
+.needs-resubmit-banner {
+  background:#fff3cd; border-left:4px solid #ffc107;
+  border-radius:0 8px 8px 0; padding:10px 16px;
+  color:#664d03; font-size:.85rem;
+}
+</style>
+
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+      <h1 class="h3 mb-0" style="color:#2c3e50;"><i class="fas fa-history"></i> My Submissions</h1>
+      <p class="text-muted mt-1">Track your submitted assignments, grades, and instructor feedback</p>
+    </div>
+    <div class="col-md-6 text-end d-flex gap-2 justify-content-end flex-wrap">
+      <span class="badge bg-primary p-2" style="font-size:.9rem; align-self:center;">
+        Total: <strong>{{ total }}</strong>
+      </span>
+      <a href="{% url 'assignments:student_assignments' %}" class="btn btn-sm"
+         style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;">
+        <i class="fas fa-tasks me-1"></i> View Assignments
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label mb-1 small fw-semibold text-muted">Course</label>
+          <select name="course" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All Courses</option>
+            {% for c in enrolled_courses %}
+              <option value="{{ c.id }}" {% if course_filter == c.id|stringformat:'s' %}selected{% endif %}>{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1 small fw-semibold text-muted">Status</label>
+          <select name="status" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All Statuses</option>
+            {% for val, label in STATUS_CHOICES %}
+              <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-sm btn-primary w-100" style="border-radius:8px;">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+          <a href="{% url 'assignments:my_submissions' %}" class="btn btn-sm btn-outline-secondary w-100" style="border-radius:8px;">
+            <i class="fas fa-times"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Needs Resubmission Alert -->
+  {% for sub in page_obj %}
+    {% if sub.status == 'resubmit' %}
+    <div class="needs-resubmit-banner d-flex align-items-center justify-content-between mb-2 shadow-sm">
+      <div>
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <strong>{{ sub.assignment.title }}</strong> needs resubmission.
+        {% if sub.feedback %}
+          Instructor note: <em>{{ sub.feedback|truncatechars:80 }}</em>
+        {% endif %}
+      </div>
+      <a href="{% url 'assignments:submit_assignment' sub.assignment.id %}"
+         class="btn btn-sm ms-3"
+         style="background:#ffc107;color:#664d03;border-radius:8px;font-size:.8rem;font-weight:600;white-space:nowrap;">
+        <i class="fas fa-redo me-1"></i> Resubmit Now
+      </a>
+    </div>
+    {% endif %}
+  {% endfor %}
+
+  <!-- Table -->
+  <div class="card border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
+    <div class="card-body p-0">
+      {% if page_obj.object_list %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead style="background:linear-gradient(135deg,#1a5276 0%,#2980b9 100%); color:#fff;">
+            <tr>
+              <th class="py-3 px-3">#</th>
+              <th class="py-3 px-3">Assignment</th>
+              <th class="py-3 px-3">Course</th>
+              <th class="py-3 px-3">Submitted</th>
+              <th class="py-3 px-3 text-center">Status</th>
+              <th class="py-3 px-3 text-center">Grade</th>
+              <th class="py-3 px-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in page_obj %}
+            <!-- Main Row -->
+            <tr style="cursor:default;" id="main-{{ sub.id }}">
+              <td class="px-3 py-3 text-muted" style="font-size:.85rem;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+              <td class="px-3 py-3">
+                <span class="fw-semibold" style="font-size:.9rem; color:#2c3e50;">{{ sub.assignment.title }}</span>
+                {% if sub.assignment.due_date %}
+                <div class="text-muted" style="font-size:.75rem;">
+                  <i class="fas fa-calendar-alt me-1" style="color:#e67e22;"></i>
+                  Due: {{ sub.assignment.due_date|date:"d M Y" }}
+                </div>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3">
+                <span class="badge" style="background:#d6eaf8; color:#1a5276; border-radius:8px; font-size:.78rem;">
+                  {{ sub.assignment.course.title }}
+                </span>
+              </td>
+              <td class="px-3 py-3 text-muted" style="font-size:.82rem; white-space:nowrap;">
+                {{ sub.submitted_at|date:"d M Y" }}
+                <div style="font-size:.75rem;">{{ sub.submitted_at|date:"H:i" }}</div>
+              </td>
+              <td class="px-3 py-3 text-center">
+                {% if sub.status == 'submitted' %}
+                  <span class="badge" style="background:#cff4fc;color:#055160;border-radius:20px;padding:5px 12px;">Submitted</span>
+                {% elif sub.status == 'reviewed' %}
+                  <span class="badge" style="background:#fff3cd;color:#664d03;border-radius:20px;padding:5px 12px;">Reviewed</span>
+                {% elif sub.status == 'graded' %}
+                  <span class="badge" style="background:#d1e7dd;color:#0a3622;border-radius:20px;padding:5px 12px;">
+                    <i class="fas fa-check-circle me-1"></i>Graded
+                  </span>
+                {% elif sub.status == 'resubmit' %}
+                  <span class="badge" style="background:#f8d7da;color:#842029;border-radius:20px;padding:5px 12px;">
+                    <i class="fas fa-redo me-1"></i>Resubmit
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3 text-center">
+                {% if sub.grade %}
+                  <span class="grade-pill">{{ sub.grade }}</span>
+                {% else %}
+                  <span class="grade-pill empty">—</span>
+                {% endif %}
+              </td>
+              <td class="px-3 py-3 text-center">
+                <div class="d-flex gap-1 justify-content-center flex-wrap">
+                  <!-- View file -->
+                  <a href="{{ sub.file.url }}" target="_blank"
+                     class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-size:.78rem;"
+                     title="View submitted file">
+                    <i class="fas fa-download"></i>
+                  </a>
+                  <!-- Toggle feedback panel -->
+                  {% if sub.feedback or sub.grade or sub.notes %}
+                  <button class="btn btn-sm" title="View feedback & grade"
+                          style="background:#d6eaf8;color:#1a5276;border-radius:8px;font-size:.78rem;font-weight:600;"
+                          onclick="toggleFeedback({{ sub.id }}, this)">
+                    <i class="fas fa-comment-alt"></i>
+                  </button>
+                  {% endif %}
+                  <!-- Resubmit -->
+                  {% if sub.status == 'resubmit' %}
+                  <a href="{% url 'assignments:submit_assignment' sub.assignment.id %}"
+                     class="btn btn-sm" style="background:#f8d7da;color:#842029;border-radius:8px;font-size:.78rem;font-weight:600;"
+                     title="Resubmit">
+                    <i class="fas fa-redo"></i>
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+
+            <!-- Expandable Feedback Row -->
+            {% if sub.feedback or sub.grade or sub.notes %}
+            <tr class="feedback-row" id="feedback-{{ sub.id }}">
+              <td colspan="7" class="p-0">
+                <div class="feedback-panel">
+                  <div class="row g-3">
+
+                    {% if sub.grade %}
+                    <div class="col-md-2">
+                      <div class="text-muted mb-1" style="font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Grade</div>
+                      <span class="grade-pill" style="font-size:1.1rem; padding:8px 18px;">{{ sub.grade }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if sub.feedback %}
+                    <div class="col-md-{% if sub.grade %}7{% else %}9{% endif %}">
+                      <div class="text-muted mb-1" style="font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">
+                        <i class="fas fa-chalkboard-teacher me-1"></i> Instructor Feedback
+                      </div>
+                      <div style="font-size:.88rem; color:#2c3e50; line-height:1.6; background:#fff; border-radius:8px; padding:10px 14px; border:1px solid #d6eaf8;">
+                        {{ sub.feedback }}
+                      </div>
+                    </div>
+                    {% endif %}
+
+                    {% if sub.notes %}
+                    <div class="col-md-3">
+                      <div class="text-muted mb-1" style="font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">
+                        <i class="fas fa-sticky-note me-1"></i> Your Notes
+                      </div>
+                      <div style="font-size:.85rem; color:#555; background:#fffbf0; border-radius:8px; padding:10px 14px; border:1px solid #fde8a0;">
+                        {{ sub.notes }}
+                      </div>
+                    </div>
+                    {% endif %}
+
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% endif %}
+
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+      <div class="row mt-3 mb-3">
+        <div class="col-12">
+          <nav>
+            <ul class="pagination justify-content-center mb-0">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1&course={{ course_filter }}&status={{ status_filter }}" style="border-radius:10px 0 0 10px;">
+                    <i class="fas fa-chevron-left"></i> First
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}&course={{ course_filter }}&status={{ status_filter }}">
+                    <i class="fas fa-arrow-left"></i> Previous
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link" style="border-radius:10px 0 0 10px;"><i class="fas fa-chevron-left"></i> First</span></li>
+                <li class="page-item disabled"><span class="page-link"><i class="fas fa-arrow-left"></i> Previous</span></li>
+              {% endif %}
+
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}&course={{ course_filter }}&status={{ status_filter }}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}&course={{ course_filter }}&status={{ status_filter }}">Next <i class="fas fa-arrow-right"></i></a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&course={{ course_filter }}&status={{ status_filter }}" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next <i class="fas fa-arrow-right"></i></span></li>
+                <li class="page-item disabled"><span class="page-link" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-inbox fa-3x mb-3" style="color:#aed6f1;"></i>
+        <p class="text-muted mb-2">No submissions found{% if course_filter or status_filter %} for the selected filters{% endif %}.</p>
+        <a href="{% url 'assignments:student_assignments' %}" class="btn btn-sm btn-primary mt-1" style="border-radius:8px;">
+          <i class="fas fa-tasks me-1"></i> Browse Assignments
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleFeedback(id, btn) {
+  const row = document.getElementById('feedback-' + id);
+  if (!row) return;
+  const isOpen = row.classList.contains('open');
+  row.classList.toggle('open');
+  btn.style.background  = isOpen ? '#d6eaf8' : '#1a5276';
+  btn.style.color       = isOpen ? '#1a5276' : '#fff';
+}
+</script>
+{% endblock %}

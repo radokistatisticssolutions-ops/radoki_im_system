@@ -1,0 +1,153 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background:#f0f4f8; min-height:100vh;">
+
+  <!-- Header -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+      <h1 class="h3 mb-0" style="color:#2c3e50;"><i class="fas fa-tasks"></i> Assignments</h1>
+      <p class="text-muted mt-1">View and submit your course assignments</p>
+    </div>
+    <div class="col-md-6 text-end">
+      <a href="{% url 'assignments:my_submissions' %}" class="btn btn-sm"
+         style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;">
+        <i class="fas fa-history me-1"></i> My Submissions
+      </a>
+    </div>
+  </div>
+
+  <!-- Course Filter -->
+  <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label mb-1 small fw-semibold text-muted">Filter by Course</label>
+          <select name="course" class="form-select form-select-sm" style="border-radius:8px;">
+            <option value="">All Enrolled Courses</option>
+            {% for c in enrolled_courses %}
+              <option value="{{ c.id }}" {% if course_filter == c.id|stringformat:'s' %}selected{% endif %}>{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-sm btn-primary w-100" style="border-radius:8px;">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+          <a href="{% url 'assignments:student_assignments' %}" class="btn btn-sm btn-outline-secondary w-100" style="border-radius:8px;">
+            <i class="fas fa-times"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Assignments List -->
+  {% if page_obj.object_list %}
+    <div class="row g-3">
+      {% for assignment in page_obj %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100" style="border-radius:12px; transition:transform .15s;">
+          <div class="card-body d-flex flex-column p-4">
+            <!-- Course badge -->
+            <span class="badge mb-2" style="background:#d6eaf8; color:#1a5276; font-size:.75rem; border-radius:6px; width:fit-content;">
+              {{ assignment.course.title }}
+            </span>
+            <h5 class="fw-bold mb-1" style="color:#2c3e50; font-size:1rem;">{{ assignment.title }}</h5>
+            {% if assignment.description %}
+            <p class="text-muted mb-2" style="font-size:.85rem;">{{ assignment.description|truncatechars:100 }}</p>
+            {% endif %}
+
+            <div class="mt-auto pt-3 border-top">
+              {% if assignment.due_date %}
+              <div class="text-muted mb-2" style="font-size:.8rem;">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Due: <strong>{{ assignment.due_date|date:"d M Y, H:i" }}</strong>
+              </div>
+              {% endif %}
+
+              {% if assignment.id in submitted_ids %}
+                <div class="d-flex align-items-center justify-content-between">
+                  <span class="badge" style="background:#d1e7dd; color:#0a3622; border-radius:8px; font-size:.8rem; padding:6px 12px;">
+                    <i class="fas fa-check-circle me-1"></i> Submitted
+                  </span>
+                  <a href="{% url 'assignments:submit_assignment' assignment.id %}"
+                     class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-size:.8rem;">
+                    <i class="fas fa-redo me-1"></i> Resubmit
+                  </a>
+                </div>
+              {% else %}
+                <a href="{% url 'assignments:submit_assignment' assignment.id %}"
+                   class="btn btn-sm w-100"
+                   style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:8px;font-weight:600;font-size:.85rem;">
+                  <i class="fas fa-upload me-1"></i> Submit Assignment
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-4">
+      <div class="col-12">
+        <nav aria-label="Assignments pagination">
+          <ul class="pagination justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1&course={{ course_filter }}" style="border-radius:10px 0 0 10px;">
+                  <i class="fas fa-chevron-left"></i> First
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&course={{ course_filter }}">
+                  <i class="fas fa-arrow-left"></i> Previous
+                </a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link" style="border-radius:10px 0 0 10px;"><i class="fas fa-chevron-left"></i> First</span></li>
+              <li class="page-item disabled"><span class="page-link"><i class="fas fa-arrow-left"></i> Previous</span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}&course={{ course_filter }}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&course={{ course_filter }}">Next <i class="fas fa-arrow-right"></i></a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&course={{ course_filter }}" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Next <i class="fas fa-arrow-right"></i></span></li>
+              <li class="page-item disabled"><span class="page-link" style="border-radius:0 10px 10px 0;">Last <i class="fas fa-chevron-right"></i></span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+
+  {% else %}
+  <div class="card border-0 shadow-sm" style="border-radius:12px;">
+    <div class="card-body text-center py-5">
+      <i class="fas fa-clipboard fa-3x mb-3" style="color:#aed6f1;"></i>
+      <p class="text-muted mb-0">No assignments available{% if course_filter %} for the selected course{% endif %}.</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

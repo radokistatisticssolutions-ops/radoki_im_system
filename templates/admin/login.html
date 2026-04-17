@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RADOKI IMS - Admin Login{% endblock %}</title>
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap for responsive design -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #3498db;
+            --dark-blue: #2980b9;
+            --success-green: #27ae60;
+            --warning-orange: #f39c12;
+            --danger-red: #e74c3c;
+            --info-purple: #9b59b6;
+            --light-bg: #f8f9fa;
+            --text-dark: #2c3e50;
+            --border-light: #ecf0f1;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Main Container */
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Login Card */
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .login-card:hover {
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Header Section */
+        .login-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: white;
+            padding: 50px 30px 30px;
+            text-align: center;
+        }
+
+        .login-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: bounceIn 0.7s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .welcome-text {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tagline {
+            font-size: 13px;
+            opacity: 0.9;
+            margin: 0;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        /* Form Section */
+        .login-body {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-of-type {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group label i {
+            margin-right: 8px;
+            color: var(--primary-blue);
+            width: 16px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 13px 16px;
+            border: 2px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: var(--light-bg);
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group input::placeholder {
+            color: #95a5a6;
+        }
+
+        /* Error Messages */
+        .errorlist {
+            list-style: none;
+            margin-bottom: 20px;
+            padding: 12px 14px;
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger-red);
+            border-radius: 6px;
+            color: var(--danger-red);
+            font-size: 13px;
+            animation: slideInDown 0.4s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .errorlist li {
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .errorlist li:before {
+            content: "⚠ ";
+            margin-right: 6px;
+        }
+
+        /* Submit Button */
+        .btn-login {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            box-shadow: 0 12px 28px rgba(52, 152, 219, 0.35);
+            transform: translateY(-3px);
+        }
+
+        .btn-login:active {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.25);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-login i {
+            font-size: 16px;
+        }
+
+        /* Help Text & Links */
+        .login-footer {
+            padding: 0 40px 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+
+        .login-footer a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .login-footer a:hover {
+            color: var(--dark-blue);
+            text-decoration: underline;
+        }
+
+        .help-text {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--light-bg);
+            border-radius: 8px;
+            border-left: 3px solid var(--info-purple);
+        }
+
+        .help-text i {
+            color: var(--info-purple);
+            margin-right: 6px;
+        }
+
+        /* Remember Me Checkbox */
+        .form-check {
+            margin-top: 20px;
+            margin-bottom: 0;
+        }
+
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            margin-top: 3px;
+            border: 2px solid var(--border-light);
+            border-radius: 4px;
+            cursor: pointer;
+            accent-color: var(--primary-blue);
+            transition: all 0.3s ease;
+        }
+
+        .form-check-input:hover {
+            border-color: var(--primary-blue);
+        }
+
+        .form-check-input:checked {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .form-check-label {
+            margin-left: 8px;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .login-container {
+                max-width: 100%;
+            }
+
+            .login-header {
+                padding: 40px 20px 20px;
+            }
+
+            .login-body,
+            .login-footer {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .welcome-text {
+                font-size: 20px;
+            }
+
+            .login-icon {
+                font-size: 40px;
+            }
+        }
+
+        /* Loading State */
+        .btn-login.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn-login.loading span {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Typing Animation for Welcome Text */
+        .typing-animation {
+            border-right: 3px solid white;
+            padding-right: 8px;
+            animation: typing 2s steps(40, end), blink 0.75s step-end 2s infinite;
+        }
+
+        @keyframes typing {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes blink {
+            from, to {
+                border-right-color: transparent;
+            }
+            50% {
+                border-right-color: white;
+            }
+        }
+
+        /* Badge for Admin */
+        .admin-badge {
+            display: inline-block;
+            background: var(--success-green);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Header with Icon and Welcome Message -->
+            <div class="login-header">
+                <div class="login-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h1 class="welcome-text">
+                    Welcome to RADOKI IMS
+                    <span class="admin-badge">Admin</span>
+                </h1>
+                <p class="tagline">Learning Management System Administration</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="login-body">
+                {% if form.non_field_errors %}
+                    <ul class="errorlist">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <form method="post" action="{% url 'admin:login' %}" class="login-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next|default:'/admin/' }}">
+
+                    <!-- Username Field -->
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}">
+                            <i class="fas fa-user"></i>
+                            {{ form.username.label_tag|cut:"<label>"|cut:"</label>" }}
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <small style="color: var(--danger-red); margin-top: 6px; display: block;">
+                                <i class="fas fa-exclamation-circle"></i> {{ form.username.errors.0 }}
+                            </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label for="{{ form.password.id_for_label }}">
+                            <i class="fas fa-lock"></i>
+                            {{ form.password.label_tag|cut:"<label>"|cut:"</label>" }}
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <small style="color: var(--danger-red); margin-top: 6px; display: block;">
+                                <i class="fas fa-exclamation-circle"></i> {{ form.password.errors.0 }}
+                            </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Remember Me (if available) -->
+                    {% if form.remember_me %}
+                        <div class="form-check">
+                            {{ form.remember_me }}
+                            <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">
+                                {{ form.remember_me.label }}
+                            </label>
+                        </div>
+                    {% endif %}
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-login" id="login-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Sign In to Admin Panel</span>
+                    </button>
+                </form>
+
+                <!-- Help Text -->
+                <div class="help-text">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Admin Access Only</strong><br>
+                    Use your admin credentials to access the RADOKI IMS administration panel.
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p style="margin: 0; color: #95a5a6; font-size: 12px;">
+                    <i class="fas fa-lock"></i> Your login credentials are secure and encrypted.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Interactivity -->
+    <script>
+        // Loading animation on form submit
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.querySelector('.login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const pageLoadTime = Date.now();
+            const STALE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    // If the page has been idle for too long, the CSRF token may be stale.
+                    // Reload to get a fresh token instead of hitting a 403.
+                    if (Date.now() - pageLoadTime > STALE_THRESHOLD_MS) {
+                        e.preventDefault();
+                        window.location.reload();
+                        return;
+                    }
+                    loginBtn.classList.add('loading');
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = '<span><i class="fas fa-spinner"></i></span> Signing in...';
+                });
+            }
+
+            // Focus animation for input fields
+            const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.style.transform = 'scale(1.02)';
+                });
+                input.addEventListener('blur', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+
+            // Typing animation effect (optional - uncomment to use)
+            // const welcomeText = document.querySelector('.welcome-text');
+            // if (welcomeText) {
+            //     welcomeText.classList.add('typing-animation');
+            // }
+        });
+    </script>
+
+    <!-- Bootstrap JS (optional, for additional functionality) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

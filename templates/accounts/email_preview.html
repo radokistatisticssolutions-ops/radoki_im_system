@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+
+<div class="container-fluid py-5" style="background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf1 100%); min-height: 100vh;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <!-- Preview Header -->
+        <div class="card border-0 shadow-lg rounded-4 mb-4" style="overflow: hidden;">
+          <div class="card-header border-0 rounded-0 p-4" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+            <div class="text-white">
+              <h2 class="mb-2" style="font-size: 24px; font-weight: 700;">
+                <i class="fas fa-envelope"></i> Password Reset Email Preview
+              </h2>
+              <p class="mb-0" style="opacity: 0.95; font-size: 14px;">
+                This is how the email will appear in user inboxes
+              </p>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <p class="mb-1"><strong>To:</strong></p>
+                <p style="color: #666;">{{ user.email }}</p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-1"><strong>User:</strong></p>
+                <p style="color: #666;">{{ user.get_full_name }} ({{ user.username }})</p>
+              </div>
+            </div>
+            <div class="alert alert-info rounded-3" style="border: none; background-color: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db;">
+              <i class="fas fa-info-circle" style="color: #3498db; margin-right: 8px;"></i>
+              <strong>Note:</strong> This is a preview of the HTML email template. The actual email sent will include a real password reset token.
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Preview Container -->
+        <div class="card border-0 shadow-xl rounded-4" style="overflow: hidden; background: #ffffff;">
+          <div class="card-body p-0">
+            <!-- Email Frame -->
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
+              {{ email_html|safe }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Development Info -->
+        <div class="card border-0 shadow-lg rounded-4 mt-4" style="overflow: hidden; background: #f8f9fa;">
+          <div class="card-body p-4">
+            <h5 class="mb-3" style="color: #2c3e50; font-weight: 600;">
+              <i class="fas fa-code"></i> Email Template Information
+            </h5>
+            <ul style="color: #666; font-size: 14px; line-height: 1.8;">
+              <li><strong>Template:</strong> <code style="background: #f0f2f5; padding: 4px 8px; border-radius: 4px;">accounts/password_reset_email.html</code></li>
+              <li><strong>Subject Template:</strong> <code style="background: #f0f2f5; padding: 4px 8px; border-radius: 4px;">accounts/password_reset_subject.txt</code></li>
+              <li><strong>Plain Text Fallback:</strong> <code style="background: #f0f2f5; padding: 4px 8px; border-radius: 4px;">accounts/password_reset_email.txt</code></li>
+              <li><strong>Colors Used:</strong>
+                <span style="display: inline-block; background: #3498db; width: 16px; height: 16px; border-radius: 3px; vertical-align: middle; margin: 0 4px;"></span> #3498db
+                <span style="display: inline-block; background: #2980b9; width: 16px; height: 16px; border-radius: 3px; vertical-align: middle; margin: 0 4px;"></span> #2980b9
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Back Link -->
+        <div class="text-center mt-4 mb-4">
+          <a href="{% url 'core:home' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> Back to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .shadow-xl {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+  }
+</style>
+
+{% endblock %}
