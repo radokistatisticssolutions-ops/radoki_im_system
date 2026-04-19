@@ -181,17 +181,16 @@ TIME_ZONE = 'Africa/Dar_es_Salaam'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = env('STATIC_URL', default='/static/')
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Static files storage - WhiteNoise for production
-if not DEBUG:
-    # Production: Use WhiteNoise for serving static files
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-else:
-    # Development: Use default Django static files storage
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+# Use explicit safe defaults so collectstatic succeeds in Render build.
+STATICFILES_STORAGE = env(
+    'STATICFILES_STORAGE',
+    default='whitenoise.storage.CompressedManifestStaticFilesStorage' if not DEBUG else 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+)
 
 LOGIN_REDIRECT_URL = '/redirect-after-login/'
 
