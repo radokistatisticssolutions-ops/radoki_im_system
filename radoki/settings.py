@@ -6,22 +6,44 @@ import environ
 import os
 from pathlib import Path
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Initialize environment variables
 env = environ.Env(DEBUG=(bool, True))
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
 
-DEBUG = True
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env('DEBUG', default=False)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+# Production security settings
+if not DEBUG:
+    # Security settings for production
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev', 'https://*.ngrok.app', 'http://127.0.0.1:8000', 'http://localhost:8000']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+
+# CSRF trusted origins for development and production
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok.app'
+])
 
 # Keep CSRF cookie alive for 1 year (default) and session for 2 weeks (default).
-# CSRF_COOKIE_AGE is already 1 year by default; setting it explicitly ensures
-# the cookie outlives any idle period on the login page.
 CSRF_COOKIE_AGE = 31449600  # 1 year in seconds
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
@@ -92,9 +114,60 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'radoki.wsgi.application'
 
-DATABASES = {
-    'default': env.db('DATABASE_URL')
-}
+# Database Configuration
+# Production: Use Neon PostgreSQL or other production database
+# Development: Use SQLite or local PostgreSQL
+if 'DATABASE_URL' in os.environ and os.environ.get('DATABASE_URL'):
+    # Production database (Neon, RDS, etc.)
+    DATABASES = {
+        'default': env.db('DATABASE_URL')
+    }
+else:
+    # Development fallback - SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+# Cloudinary Configuration for Media Files
+# Only configure if Cloudinary credentials are provided
+CLOUDINARY_CLOUD_NAME = env('CLOUDINARY_CLOUD_NAME', default='')
+CLOUDINARY_API_KEY = env('CLOUDINARY_API_KEY', default='')
+CLOUDINARY_API_SECRET = env('CLOUDINARY_API_SECRET', default='')
+
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    # Production: Use Cloudinary for media files
+    try:
+        import cloudinary
+        import cloudinary.uploader
+        import cloudinary.api
+
+        cloudinary.config(
+            cloud_name=CLOUDINARY_CLOUD_NAME,
+            api_key=CLOUDINARY_API_KEY,
+            api_secret=CLOUDINARY_API_SECRET
+        )
+
+        # Use Cloudinary for media storage
+        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+        CLOUDINARY_STORAGE = {
+            'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+            'API_KEY': CLOUDINARY_API_KEY,
+            'API_SECRET': CLOUDINARY_API_SECRET,
+        }
+        # Cloudinary media URL
+        MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
+    except ImportError:
+        # Fallback if cloudinary is not installed
+        print("Warning: Cloudinary packages not installed. Using local media storage.")
+        MEDIA_URL = '/media/'
+        MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    # Development: Use local media storage
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -109,9 +182,16 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Static files storage - WhiteNoise for production
+if not DEBUG:
+    # Production: Use WhiteNoise for serving static files
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+else:
+    # Development: Use default Django static files storage
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 LOGIN_REDIRECT_URL = '/redirect-after-login/'
 

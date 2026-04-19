@@ -34,3 +34,8 @@ whitenoise==6.11.0
 
 # Optional: For Task Queue
 # celery==5.4.0
+
+# Added  for deployment
+cloudinary==1.36.0
+django-cloudinary-storage==0.3.0
+dj-database-url==2.1.0
