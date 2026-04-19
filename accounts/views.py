@@ -188,36 +188,61 @@ def profile_update(request):
         form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             try:
-                # Log Cloudinary configuration status
                 from django.conf import settings
+                import cloudinary.uploader
+                
+                # Log Cloudinary configuration status
                 logger.info(f'CLOUDINARY_CLOUD_NAME: {getattr(settings, "CLOUDINARY_CLOUD_NAME", "NOT SET")}')
                 logger.info(f'DEFAULT_FILE_STORAGE: {getattr(settings, "DEFAULT_FILE_STORAGE", "NOT SET")}')
                 logger.info(f'MEDIA_URL: {getattr(settings, "MEDIA_URL", "NOT SET")}')
+                
+                # Handle profile picture upload to Cloudinary manually
+                if 'profile_picture' in request.FILES:
+                    profile_pic_file = request.FILES['profile_picture']
+                    logger.info(f'Profile picture file received: {profile_pic_file.name}, size: {profile_pic_file.size}')
+                    
+                    try:
+                        # Manually upload to Cloudinary
+                        upload_response = cloudinary.uploader.upload(
+                            profile_pic_file,
+                            folder='profile_pics',
+                            resource_type='auto',
+                            overwrite=True,
+                            public_id=profile_pic_file.name.split('.')[0]  # Use filename as public_id
+                        )
+                        logger.info(f'Cloudinary upload response: {upload_response}')
+                        
+                        # Store the secure URL in the database
+                        from django.core.files.base import ContentFile
+                        from django.core.files.storage import default_storage
+                        
+                        # Store just the filename/path in the field (Cloudinary will serve it)
+                        filename = f'profile_pics/{upload_response.get("public_id", profile_pic_file.name)}'
+                        request.user.profile_picture = filename
+                        logger.info(f'Stored profile picture path: {filename}')
+                        
+                    except Exception as upload_e:
+                        logger.error(f'Manual Cloudinary upload failed: {str(upload_e)}', exc_info=True)
+                        messages.error(request, f'Failed to upload profile picture: {str(upload_e)}')
+                        return render(request, 'accounts/profile.html', {'form': form})
                 
                 user = form.save()
                 logger.info(f'Profile updated for user {user.username}')
                 
                 # Check if profile picture was uploaded
-                if 'profile_picture' in request.FILES:
-                    logger.info(f'Profile picture uploaded for user {user.username}: {user.profile_picture}')
-                    if user.profile_picture:
-                        logger.info(f'Profile picture URL: {user.profile_picture.url}')
-                        logger.info(f'Profile picture name: {user.profile_picture.name}')
-                        
-                        # Test Cloudinary connection
-                        try:
-                            import cloudinary
-                            logger.info(f'Cloudinary config: {cloudinary.config()}')
-                            
-                            # Try to get resource info to verify upload
-                            try:
-                                resource_info = cloudinary.api.resource(user.profile_picture.name)
-                                logger.info(f'Cloudinary resource info: {resource_info}')
-                            except Exception as res_e:
-                                logger.error(f'Cloudinary resource check failed: {str(res_e)}')
-                                
-                        except Exception as cloud_e:
-                            logger.error(f'Cloudinary import/config error: {str(cloud_e)}')
+                if user.profile_picture:
+                    logger.info(f'Profile picture URL: {user.profile_picture.url}')
+                    logger.info(f'Profile picture name: {user.profile_picture.name}')
+                    
+                    # Verify the resource exists on Cloudinary
+                    try:
+                        import cloudinary.api
+                        public_id = f'profile_pics/{user.profile_picture.name.split("/")[-1].split(".")[0]}'
+                        logger.info(f'Checking Cloudinary for public_id: {public_id}')
+                        resource_info = cloudinary.api.resource(public_id)
+                        logger.info(f'Cloudinary resource verified: {resource_info["public_id"]}')
+                    except Exception as res_e:
+                        logger.error(f'Cloudinary resource verification failed: {str(res_e)}')
                 
                 messages.success(request, 'Profile updated successfully!')
                 return redirect('accounts:profile_update')
