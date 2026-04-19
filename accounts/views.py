@@ -6,6 +6,9 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from .forms import RegisterForm, ProfileUpdateForm
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def register_view(request):
@@ -28,21 +31,29 @@ def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            
-            # Create referral record if code was provided
-            if referral_code and referral_link:
-                from referrals.models import Referral
-                Referral.objects.create(
-                    referral_link=referral_link,
-                    referred_user=user,
-                    status=Referral.Status.PENDING
-                )
-                messages.success(request, f'Account created! You were referred by someone earning them a reward!')
-            else:
-                messages.success(request, 'Account created successfully! Please log in.')
-            
-            return redirect('accounts:login')
+            try:
+                user = form.save()
+                
+                # Create referral record if code was provided
+                if referral_code and referral_link:
+                    from referrals.models import Referral
+                    try:
+                        Referral.objects.create(
+                            referral_link=referral_link,
+                            referred_user=user,
+                            status=Referral.Status.PENDING
+                        )
+                        messages.success(request, f'Account created! You were referred by someone earning them a reward!')
+                    except Exception as e:
+                        logger.warning(f'Failed to create referral record: {str(e)}')
+                        messages.success(request, 'Account created successfully! Please log in.')
+                else:
+                    messages.success(request, 'Account created successfully! Please log in.')
+                
+                return redirect('accounts:login')
+            except Exception as e:
+                logger.error(f'Registration error: {str(e)}', exc_info=True)
+                messages.error(request, f'Registration failed: {str(e)}')
     else:
         form = RegisterForm()
     

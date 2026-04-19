@@ -42,6 +42,21 @@ class RegisterForm(forms.ModelForm):
             'professional_qualification': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Bachelor\'s Degree'}),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+        
+        if not password1:
+            self.add_error('password1', 'Password is required.')
+        if not password2:
+            self.add_error('password2', 'Confirm Password is required.')
+        
+        if password1 and password2 and password1 != password2:
+            self.add_error('password2', "Passwords don't match.")
+        
+        return cleaned_data
+
     def clean_password2(self):
         p1 = self.cleaned_data.get('password1')
         p2 = self.cleaned_data.get('password2')
@@ -51,7 +66,9 @@ class RegisterForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data['password1'])
+        password = self.cleaned_data.get('password1')
+        if password:
+            user.set_password(password)
         if commit:
             user.save()
         return user
