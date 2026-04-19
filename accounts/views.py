@@ -187,9 +187,43 @@ def profile_update(request):
     if request.method == 'POST':
         form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('accounts:profile_update')
+            try:
+                # Log Cloudinary configuration status
+                from django.conf import settings
+                logger.info(f'CLOUDINARY_CLOUD_NAME: {getattr(settings, "CLOUDINARY_CLOUD_NAME", "NOT SET")}')
+                logger.info(f'DEFAULT_FILE_STORAGE: {getattr(settings, "DEFAULT_FILE_STORAGE", "NOT SET")}')
+                logger.info(f'MEDIA_URL: {getattr(settings, "MEDIA_URL", "NOT SET")}')
+                
+                user = form.save()
+                logger.info(f'Profile updated for user {user.username}')
+                
+                # Check if profile picture was uploaded
+                if 'profile_picture' in request.FILES:
+                    logger.info(f'Profile picture uploaded for user {user.username}: {user.profile_picture}')
+                    if user.profile_picture:
+                        logger.info(f'Profile picture URL: {user.profile_picture.url}')
+                        logger.info(f'Profile picture name: {user.profile_picture.name}')
+                        
+                        # Test Cloudinary connection
+                        try:
+                            import cloudinary
+                            logger.info(f'Cloudinary config: {cloudinary.config()}')
+                            
+                            # Try to get resource info to verify upload
+                            try:
+                                resource_info = cloudinary.api.resource(user.profile_picture.name)
+                                logger.info(f'Cloudinary resource info: {resource_info}')
+                            except Exception as res_e:
+                                logger.error(f'Cloudinary resource check failed: {str(res_e)}')
+                                
+                        except Exception as cloud_e:
+                            logger.error(f'Cloudinary import/config error: {str(cloud_e)}')
+                
+                messages.success(request, 'Profile updated successfully!')
+                return redirect('accounts:profile_update')
+            except Exception as e:
+                logger.error(f'Profile update error for user {request.user.username}: {str(e)}', exc_info=True)
+                messages.error(request, f'Profile update failed: {str(e)}')
     else:
         form = ProfileUpdateForm(instance=request.user)
     

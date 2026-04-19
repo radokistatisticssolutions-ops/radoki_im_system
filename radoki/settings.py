@@ -152,16 +152,18 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         import cloudinary
         import cloudinary.uploader
         import cloudinary.api
+        import cloudinary_storage  # Ensure cloudinary_storage is imported
+
+        # Set CLOUDINARY_URL environment variable for cloudinary_storage
+        os.environ.setdefault(
+            'CLOUDINARY_URL',
+            f'cloudinary://{CLOUDINARY_API_KEY}:{CLOUDINARY_API_SECRET}@{CLOUDINARY_CLOUD_NAME}'
+        )
 
         cloudinary.config(
             cloud_name=CLOUDINARY_CLOUD_NAME,
             api_key=CLOUDINARY_API_KEY,
             api_secret=CLOUDINARY_API_SECRET
-        )
-
-        os.environ.setdefault(
-            'CLOUDINARY_URL',
-            f'cloudinary://{CLOUDINARY_API_KEY}:{CLOUDINARY_API_SECRET}@{CLOUDINARY_CLOUD_NAME}'
         )
 
         # Use Cloudinary for media storage
