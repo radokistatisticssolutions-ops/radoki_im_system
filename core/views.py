@@ -1,8 +1,9 @@
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+from django.urls import reverse
 
 
 def admin_logout(request):
@@ -45,6 +46,29 @@ def _page_window(page_obj, on_each_side=2, on_ends=1):
 
 def home(request):
     return render(request, 'core/home.html')
+
+def sitemap(request):
+    """Render a simple sitemap.xml for public core pages."""
+    base_url = request.build_absolute_uri('/')[:-1]
+    urls = [
+        reverse('core:home'),
+        reverse('core:help_support'),
+        reverse('core:terms_privacy'),
+        reverse('core:contact_us'),
+        reverse('core:services'),
+    ]
+    xml_urls = ''.join(
+        f"  <url>\n    <loc>{base_url}{path}</loc>\n  </url>\n"
+        for path in urls
+    )
+    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{xml_urls}</urlset>'
+    return HttpResponse(xml, content_type='application/xml')
+
+def robots_txt(request):
+    """Serve robots.txt for search engines."""
+    sitemap_url = request.build_absolute_uri(reverse('core:sitemap'))
+    content = f"User-agent: *\nAllow: /\nSitemap: {sitemap_url}\n"
+    return HttpResponse(content, content_type='text/plain')
 
 def subscribe_newsletter(request):
     """Handle newsletter subscription"""
