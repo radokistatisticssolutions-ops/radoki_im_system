@@ -55,9 +55,14 @@ test_local_emails.py
 test_password_reset.py
 LOCAL_EMAIL_GUIDE.md
 
-# All test scripts (local development)
-test_*.py
-verify_*.py
+# Specific test scripts in root directory (local development only)
+test_claim.py
+test_completion_certificates.py
+test_coupons.py
+test_percentage_discount.py
+test_resource_notifications.py
+test_web.py
+verify_resource_notifications.py
 
 # Test coverage
 .coverage
