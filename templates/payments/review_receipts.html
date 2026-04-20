@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load cloudinary_tags %}
 
 {% block content %}
 <style>
@@ -359,9 +360,13 @@
             <!-- Receipt -->
             <td data-label="Receipt">
               <div class="rcp-cell">
-                <a href="{{ payment.receipt.url }}" target="_blank" class="action-btn action-view">
-                  <i class="fas fa-eye"></i> View
-                </a>
+                {% if payment.receipt %}
+                  <a href="{% url 'payments:view_receipt' payment.id %}" target="_blank" class="action-btn action-view">
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                {% else %}
+                  <span class="text-muted">No receipt</span>
+                {% endif %}
               </div>
             </td>
 

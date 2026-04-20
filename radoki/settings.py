@@ -173,7 +173,7 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
             'API_KEY': CLOUDINARY_API_KEY,
             'API_SECRET': CLOUDINARY_API_SECRET,
         }
-        # Cloudinary media URL
+        # Cloudinary media URL - use 'upload' delivery for all file types
         MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
     except ImportError:
         # Fallback if cloudinary is not installed
@@ -216,13 +216,35 @@ LOGIN_URL = 'accounts:login'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = env('EMAIL_HOST', default='localhost')
-EMAIL_PORT = env('EMAIL_PORT', default=587)
-EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
-EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@localhost')
+# Email Configuration
+# Force console backend for local development (when not in production)
+# Check if we're in production by looking for RENDER env var or specific production indicators
+IS_PRODUCTION = bool(
+    os.environ.get('RENDER') or  # Render deployment
+    os.environ.get('PRODUCTION') or  # Explicit production flag
+    (os.environ.get('DATABASE_URL') and not os.environ.get('LOCAL_DEV'))  # Has DB URL but not local dev flag
+)
+
+if not IS_PRODUCTION:
+    # Local development - emails go to console
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_HOST = 'localhost'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = ''
+    EMAIL_HOST_PASSWORD = ''
+    DEFAULT_FROM_EMAIL = 'test@localhost'
+    print("📧 Using CONSOLE email backend for local development")
+else:
+    # Production - use SMTP with environment variables
+    EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+    EMAIL_PORT = env('EMAIL_PORT', default=587)
+    EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+    DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@localhost')
+    print("📧 Using SMTP email backend for production")
 # Logging configuration for production
 LOGGING = {
     'version': 1,

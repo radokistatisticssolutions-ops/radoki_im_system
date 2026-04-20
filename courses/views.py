@@ -925,13 +925,8 @@ def download_resource(request, resource_id):
 
     # Read file and return as attachment for download
     try:
-        with resource.file.open('rb') as file_obj:
-            file_content = file_obj.read()
-
-        response = HttpResponse(file_content, content_type='application/octet-stream')
-        response['Content-Disposition'] = f'attachment; filename="{resource.file.name}"'
-        response['Content-Length'] = len(file_content)
-        return response
+        from core.file_utils import serve_file_response
+        return serve_file_response(resource.file, force_download=True)
     except Exception as e:
         raise PermissionDenied(f"Error reading file: {str(e)}")
 
@@ -966,14 +961,8 @@ def download_lesson_resource(request, lesson_id):
         LessonResourceDownload.objects.create(lesson=lesson, student=request.user)
 
     try:
-        import os
-        filename = os.path.basename(lesson.resource_file.name)
-        with lesson.resource_file.open('rb') as f:
-            file_content = f.read()
-        response = HttpResponse(file_content, content_type='application/octet-stream')
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        response['Content-Length'] = len(file_content)
-        return response
+        from core.file_utils import serve_file_response
+        return serve_file_response(lesson.resource_file, force_download=True)
     except Exception as e:
         raise PermissionDenied(f"Error reading file: {str(e)}")
 

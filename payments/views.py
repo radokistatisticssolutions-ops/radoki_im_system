@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.core.exceptions import PermissionDenied
 from courses.models import Enrollment
 from .models import Payment
 from .forms import PaymentForm
@@ -177,3 +178,29 @@ def reject_receipt(request, payment_id):
             messages.error(request, f"Error rejecting payment: {str(e)}")
 
     return redirect('payments:review_receipts')
+
+
+@login_required
+def view_receipt(request, payment_id):
+    """Serve a receipt file from Cloudinary or local storage."""
+    payment = get_object_or_404(Payment, id=payment_id)
+    
+    # Check permissions: student who uploaded it, or instructor reviewing it
+    is_student = payment.enrollment.student == request.user
+    is_instructor = payment.enrollment.course.instructor == request.user
+    is_superuser = request.user.is_superuser
+    
+    if not (is_student or is_instructor or is_superuser):
+        raise PermissionDenied("You don't have permission to view this receipt.")
+    
+    if not payment.receipt:
+        messages.error(request, "This payment has no receipt file.")
+        return redirect('dashboard:index')
+    
+    try:
+        from core.file_utils import serve_file_response
+        return serve_file_response(payment.receipt)
+    except Exception as e:
+        logger.error(f"Error serving receipt {payment_id}: {str(e)}", exc_info=True)
+        messages.error(request, f"Error downloading receipt: {str(e)}")
+        return redirect('payments:review_receipts')
