@@ -55,6 +55,10 @@ test_local_emails.py
 test_password_reset.py
 LOCAL_EMAIL_GUIDE.md
 
+# All test scripts (local development)
+test_*.py
+verify_*.py
+
 # Test coverage
 .coverage
 htmlcov/
