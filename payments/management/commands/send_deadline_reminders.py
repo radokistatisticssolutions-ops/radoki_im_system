@@ -8,6 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.conf import settings
 from courses.models import Enrollment
 from payments.models import Payment
 
@@ -78,7 +79,7 @@ class Command(BaseCommand):
                     send_mail(
                         subject,
                         '',  # Plain text version (optional)
-                        'noreply@radoki.com',
+                        settings.DEFAULT_FROM_EMAIL,
                         [student.email],
                         html_message=html_message,
                         fail_silently=False,
