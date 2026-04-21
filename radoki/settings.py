@@ -172,8 +172,13 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
             'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
             'API_KEY': CLOUDINARY_API_KEY,
             'API_SECRET': CLOUDINARY_API_SECRET,
+            'FOLDER': 'radoki_media',  # Organize files in a folder
+            'RESOURCE_TYPE': 'auto',  # Automatically determine resource type
+            'USE_FILENAME': True,  # Use original filename
+            'UNIQUE_FILENAME': True,  # Ensure unique filenames
         }
-        # Cloudinary media URL - use 'upload' delivery for all file types
+        # Cloudinary media URL - Note: this may vary based on file type
+        # The cloudinary_storage package will handle proper URL generation
         MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
     except ImportError:
         # Fallback if cloudinary is not installed

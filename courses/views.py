@@ -725,6 +725,7 @@ def delete_resource(request, resource_id):
 
 @login_required
 @never_cache
+@login_required
 def preview_resource(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
 
@@ -765,7 +766,7 @@ def preview_resource(request, resource_id):
     file_name = resource.file.name
     file_ext = file_name.split('.')[-1].lower() if '.' in file_name else ''
 
-    # URLs
+    # URLs - Using direct serve endpoint
     file_url = f'/courses/resource/{resource.id}/serve/'
 
     # Determine preview type for template
@@ -816,54 +817,28 @@ def serve_file(request, resource_id):
             if resource.course.instructor != request.user and not request.user.is_superuser:
                 raise PermissionDenied("🔒 Access Denied: You can only access resources from your own courses.")
 
-        # Get file extension and content type
+        # Use the improved file serving function that handles Cloudinary
+        from core.file_utils import serve_file_response
+        response = serve_file_response(resource.file, force_download=False)
+        
+        # Override content disposition to inline for preview
         file_name = resource.file.name
-        file_ext = file_name.split('.')[-1].lower() if '.' in file_name else ''
+        response['Content-Disposition'] = f'inline; filename="{file_name}"'
         
-        # Determine content type based on file extension
-        content_types = {
-            'pdf': 'application/pdf',
-        }
+        # Add caching headers for better performance
+        response['Cache-Control'] = 'public, max-age=2592000, immutable'
+        response['Pragma'] = 'cache'
+        response['Expires'] = 'Sun, 31 Dec 2026 23:59:59 GMT'
         
-        content_type = content_types.get(file_ext, 'application/octet-stream')
+        # Security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'SAMEORIGIN'
+        response['X-XSS-Protection'] = '1; mode=block'
         
-        # Read the file and serve with HttpResponse
-        try:
-            # Read file content
-            file_content = resource.file.read()
-            
-            # Check if file has content
-            if not file_content:
-                raise PermissionDenied("File is empty or could not be read")
-            
-            # Create response with file content
-            response = HttpResponse(file_content, content_type=content_type)
-            
-            # Serve PDF inline for preview
-            response['Content-Disposition'] = 'inline; filename="{}"'.format(file_name)
-            
-            # Aggressive caching for faster loads on subsequent requests
-            # Browser will cache for 30 days (2592000 seconds)
-            response['Cache-Control'] = 'public, max-age=2592000, immutable'
-            response['Pragma'] = 'cache'
-            response['Expires'] = 'Sun, 31 Dec 2026 23:59:59 GMT'
-            
-            # Security headers
-            response['X-Content-Type-Options'] = 'nosniff'
-            response['X-Frame-Options'] = 'SAMEORIGIN'
-            response['X-XSS-Protection'] = '1; mode=block'
-            
-            # Content-Length header for progress tracking
-            response['Content-Length'] = str(len(file_content))
-            
-            # Enable compression if supported
-            response['Vary'] = 'Accept-Encoding'
-            
-            return response
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            raise PermissionDenied(f"Error reading file: {str(e)}")
+        # Enable compression if supported
+        response['Vary'] = 'Accept-Encoding'
+        
+        return response
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -182,7 +182,7 @@ def reject_receipt(request, payment_id):
 
 @login_required
 def view_receipt(request, payment_id):
-    """Serve a receipt file from Cloudinary or local storage."""
+    """Serve a receipt file from Cloudinary or local storage for viewing/download."""
     payment = get_object_or_404(Payment, id=payment_id)
     
     # Check permissions: student who uploaded it, or instructor reviewing it
@@ -199,8 +199,9 @@ def view_receipt(request, payment_id):
     
     try:
         from core.file_utils import serve_file_response
-        return serve_file_response(payment.receipt)
+        # For receipts, serve inline (for viewing) not as attachment
+        return serve_file_response(payment.receipt, force_download=False)
     except Exception as e:
         logger.error(f"Error serving receipt {payment_id}: {str(e)}", exc_info=True)
-        messages.error(request, f"Error downloading receipt: {str(e)}")
+        messages.error(request, f"Error viewing receipt: {str(e)}")
         return redirect('payments:review_receipts')
