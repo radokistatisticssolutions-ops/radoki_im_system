@@ -226,7 +226,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_COOKIE_AGE = 60  # 1 minute in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser closes
 SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request
-SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript from accessing session cookie
+SESSION_COOKIE_COOKIE_HTTPONLY = True  # Prevent JavaScript from accessing session cookie
 
 # Email Configuration
 # Force console backend for local development (when not in production)

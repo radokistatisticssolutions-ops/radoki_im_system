@@ -409,71 +409,6 @@
               </div>
             </td>
           </tr>
-
-          <!-- Reject Modal (only for pending — not already approved or rejected) -->
-          {% if not payment.approved and not payment.rejection_reason %}
-          <div class="modal fade" id="rejectModal{{ payment.id }}" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content border-0 rounded-3 shadow">
-                <div class="modal-header border-0" style="background:#fee2e2;">
-                  <h5 class="modal-title fw-700" style="color:#991b1b;">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Rejection
-                  </h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <p class="mb-2">Are you sure you want to reject this receipt?</p>
-                  <p class="text-muted small mb-3">
-                    <strong>Student:</strong> {{ payment.enrollment.student.get_full_name|default:payment.enrollment.student.username }}<br>
-                    <strong>Course:</strong> {{ payment.enrollment.course.title }}
-                  </p>
-                  <form method="post" action="{% url 'payments:reject_receipt' payment.id %}" id="rejectForm{{ payment.id }}">
-                    {% csrf_token %}
-                    <div class="mb-2">
-                      <label for="rejectionReason{{ payment.id }}" class="form-label fw-semibold small">
-                        Rejection Reason <span class="text-danger">*</span>
-                      </label>
-                      <textarea class="form-control form-control-sm"
-                                id="rejectionReason{{ payment.id }}"
-                                name="rejection_reason"
-                                rows="3"
-                                placeholder="e.g., Receipt is blurry, wrong amount, missing details…"
-                                required
-                                style="border-color:#fca5a5; border-radius:8px;"></textarea>
-                      <div class="form-text">This feedback will be sent to the student.</div>
-                    </div>
-                  </form>
-                </div>
-                <div class="modal-footer border-0">
-                  <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="submit" form="rejectForm{{ payment.id }}" class="btn btn-sm btn-danger fw-semibold">
-                    <i class="fas fa-times me-1"></i>Yes, Reject
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-                      <textarea class="form-control form-control-sm"
-                                id="rejectionReason{{ payment.id }}"
-                                name="rejection_reason"
-                                rows="3"
-                                placeholder="e.g., Receipt is blurry, wrong amount, missing details…"
-                                required
-                                style="border-color:#fca5a5; border-radius:8px;"></textarea>
-                      <div class="form-text">This feedback will be sent to the student.</div>
-                    </div>
-                  </form>
-                </div>
-                <div class="modal-footer border-0">
-                  <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="submit" form="rejectForm{{ payment.id }}" class="btn btn-sm btn-danger fw-semibold">
-                    <i class="fas fa-times me-1"></i>Yes, Reject
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endif %}
           {% endfor %}
         </tbody>
       </table>
@@ -498,6 +433,54 @@
       {% endif %}
     </div>
     {% endif %}
+  </div>
+
+  <!-- Reject Modals (moved outside table for valid HTML) -->
+  {% for payment in page_obj %}
+    {% if not payment.approved and not payment.rejection_reason %}
+    <div class="modal fade" id="rejectModal{{ payment.id }}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-3 shadow">
+          <div class="modal-header border-0" style="background:#fee2e2;">
+            <h5 class="modal-title fw-700" style="color:#991b1b;">
+              <i class="fas fa-exclamation-triangle me-2"></i>Confirm Rejection
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-2">Are you sure you want to reject this receipt?</p>
+            <p class="text-muted small mb-3">
+              <strong>Student:</strong> {{ payment.enrollment.student.get_full_name|default:payment.enrollment.student.username }}<br>
+              <strong>Course:</strong> {{ payment.enrollment.course.title }}
+            </p>
+            <form method="post" action="{% url 'payments:reject_receipt' payment.id %}" id="rejectForm{{ payment.id }}">
+              {% csrf_token %}
+              <div class="mb-2">
+                <label for="rejectionReason{{ payment.id }}" class="form-label fw-semibold small">
+                  Rejection Reason <span class="text-danger">*</span>
+                </label>
+                <textarea class="form-control form-control-sm"
+                          id="rejectionReason{{ payment.id }}"
+                          name="rejection_reason"
+                          rows="3"
+                          placeholder="e.g., Receipt is blurry, wrong amount, missing details…"
+                          required
+                          style="border-color:#fca5a5; border-radius:8px;"></textarea>
+                <div class="form-text">This feedback will be sent to the student.</div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" form="rejectForm{{ payment.id }}" class="btn btn-sm btn-danger fw-semibold">
+              <i class="fas fa-times me-1"></i>Yes, Reject
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
   </div>
 
   <!-- Pagination -->
